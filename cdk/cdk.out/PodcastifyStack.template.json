@@ -1,0 +1,892 @@
+{
+ "Resources": {
+  "JobsBucket5EADC5CA": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "podcastify-jobs-445241615553",
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ],
+       "MaxAge": 3600
+      }
+     ]
+    },
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "ExpirationInDays": 1,
+       "Prefix": "jobs/",
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/JobsBucket/Resource"
+   }
+  },
+  "JobsBucketPolicy768DB567": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "JobsBucket5EADC5CA"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/JobsBucket/Policy/Resource"
+   }
+  },
+  "JobsBucketAutoDeleteObjectsCustomResource706F2144": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "JobsBucket5EADC5CA"
+    }
+   },
+   "DependsOn": [
+    "JobsBucketPolicy768DB567"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/JobsBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "JobsBucket5EADC5CA"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "JobQueueEE3AD499": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 3600,
+    "QueueName": "podcastify-jobs",
+    "VisibilityTimeout": 360
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/JobQueue/Resource"
+   }
+  },
+  "DispatcherServiceRole904BCD09": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Dispatcher/ServiceRole/Resource"
+   }
+  },
+  "DispatcherServiceRoleDefaultPolicyDA413007": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "JobQueueEE3AD499",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DispatcherServiceRoleDefaultPolicyDA413007",
+    "Roles": [
+     {
+      "Ref": "DispatcherServiceRole904BCD09"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Dispatcher/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DispatcherD4A12972": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "c65c5bc773a0cba5a61eb0667d5498548b4c5c5b6e2c7dbaeb5394ae7784a6c3.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "SQS_QUEUE_URL": {
+       "Ref": "JobQueueEE3AD499"
+      }
+     }
+    },
+    "FunctionName": "podcastify-dispatcher",
+    "Handler": "index.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "DispatcherServiceRole904BCD09",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "DispatcherServiceRoleDefaultPolicyDA413007",
+    "DispatcherServiceRole904BCD09"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Dispatcher/Resource",
+    "aws:asset:path": "asset.c65c5bc773a0cba5a61eb0667d5498548b4c5c5b6e2c7dbaeb5394ae7784a6c3",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StatusServiceRole4593B860": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Status/ServiceRole/Resource"
+   }
+  },
+  "StatusServiceRoleDefaultPolicy69AE1F0A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StatusServiceRoleDefaultPolicy69AE1F0A",
+    "Roles": [
+     {
+      "Ref": "StatusServiceRole4593B860"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Status/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "Status274336EC": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "59d8b5dbf49ed345b9f9792388603ef8aab337a502337049b9336a1764e787b5.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify"
+     }
+    },
+    "FunctionName": "podcastify-status",
+    "Handler": "index.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "StatusServiceRole4593B860",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "StatusServiceRoleDefaultPolicy69AE1F0A",
+    "StatusServiceRole4593B860"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Status/Resource",
+    "aws:asset:path": "asset.59d8b5dbf49ed345b9f9792388603ef8aab337a502337049b9336a1764e787b5",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "WorkerServiceRole8543584E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Worker/ServiceRole/Resource"
+   }
+  },
+  "WorkerServiceRoleDefaultPolicyAE71B5FA": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "JobQueueEE3AD499",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "WorkerServiceRoleDefaultPolicyAE71B5FA",
+    "Roles": [
+     {
+      "Ref": "WorkerServiceRole8543584E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Worker/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "Worker11F36D0F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "47b978f9300dc6a4d071d126ade2b71ff8352eabc8eb7225910c2303881b53c9.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "OPENAI_API_KEY": "REMOVED"
+     }
+    },
+    "FunctionName": "podcastify-worker",
+    "Handler": "index.handler",
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "WorkerServiceRole8543584E",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "WorkerServiceRoleDefaultPolicyAE71B5FA",
+    "WorkerServiceRole8543584E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Worker/Resource",
+    "aws:asset:path": "asset.47b978f9300dc6a4d071d126ade2b71ff8352eabc8eb7225910c2303881b53c9",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "WorkerSqsEventSourcePodcastifyStackJobQueue8E29D831B10901BC": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "JobQueueEE3AD499",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "Worker11F36D0F"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Worker/SqsEventSource:PodcastifyStackJobQueue8E29D831/Resource"
+   }
+  },
+  "ApiF70053CD": {
+   "Type": "AWS::ApiGatewayV2::Api",
+   "Properties": {
+    "CorsConfiguration": {
+     "AllowHeaders": [
+      "Authorization",
+      "Content-Type"
+     ],
+     "AllowMethods": [
+      "GET",
+      "POST",
+      "OPTIONS"
+     ],
+     "AllowOrigins": [
+      "*"
+     ]
+    },
+    "Name": "podcastify-api",
+    "ProtocolType": "HTTP"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/Resource"
+   }
+  },
+  "ApiDefaultStage189A7074": {
+   "Type": "AWS::ApiGatewayV2::Stage",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AutoDeploy": true,
+    "StageName": "$default"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/DefaultStage/Resource"
+   }
+  },
+  "ApiPOSTjobsDispatcherIntegration373C9E66": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs/DispatcherIntegration/Resource"
+   }
+  },
+  "ApiPOSTjobsDispatcherIntegrationPermissionA64FF731": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/jobs"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs/DispatcherIntegration-Permission"
+   }
+  },
+  "ApiPOSTjobs8401E9D5": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /jobs",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTjobsDispatcherIntegration373C9E66"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs/Resource"
+   }
+  },
+  "ApiGETjobsjobIdStatusIntegrationC26ED6C9": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "Status274336EC",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--jobs--{jobId}/StatusIntegration/Resource"
+   }
+  },
+  "ApiGETjobsjobIdStatusIntegrationPermission4B27A25D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "Status274336EC",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/jobs/{jobId}"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--jobs--{jobId}/StatusIntegration-Permission"
+   }
+  },
+  "ApiGETjobsjobId3B3AF0B7": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "GET /jobs/{jobId}",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiGETjobsjobIdStatusIntegrationC26ED6C9"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--jobs--{jobId}/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VQwU7DMAz9lvWchdGJC7etgOAAG+0RoSlrvSpdm5Ta6Zii/DtKMo2BuHB6z37280tSnt5c89lEHHBaVvtpK7fcFiTKPRMH3Ficc7s05R6IZTsV2ZtNOvkpVXKbXK75eZzzICGPowtD+g5aIFhtGygJE/fOorTWrSyP366x/od3XChIEHSgLq2XAsEx/EBuXw0Y8EcCcawV3bYSG6UraJC/BHgwqiSpFZOi4zbXbVgI+B0yMsdwvhGIQMgXHk6G3GY7dfa5H0FRoc1QwrPoe6lq7/B3dw1DJxGlVo6JXtaC4CCOY8rtI1G/6KUf8uDLgkQdwkXiW7k2FNmTIqgHERJkO/WrDHPOscwg6S4HDEGCcuY/pPWgR1nB4D+Thbf6o6fUK0O9Icf8P/IGr8Y05emMzyYNSjkdjCLZAc8jfgFQb0cpZAIAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "ApiBaseUrl": {
+   "Description": "Set as EXPO_PUBLIC_API_BASE in .env",
+   "Value": {
+    "Fn::GetAtt": [
+     "ApiF70053CD",
+     "ApiEndpoint"
+    ]
+   }
+  },
+  "JobsBucketName": {
+   "Value": {
+    "Ref": "JobsBucket5EADC5CA"
+   }
+  },
+  "JobQueueUrl": {
+   "Value": {
+    "Ref": "JobQueueEE3AD499"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

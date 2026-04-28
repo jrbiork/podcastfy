@@ -1,0 +1,195 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj -configuration Debug -scheme podcastifycdk -destination id=074E1694-51F7-450D-9E0D-6E77C0A93582
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'podcastifycdk' in project 'podcastifycdk' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/ibtool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk/Images.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 755c074b9610f1dd448d1aafd8b89eb9
+Build description path: /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/XCBuildData/755c074b9610f1dd448d1aafd8b89eb9.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.4.sdk /Users/rbiork/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.4-23E237-686eebb5dc1d8ecb277353a59184f4aa.sdkstatcache
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.4.sdk -o /Users/rbiork/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.4-23E237-686eebb5dc1d8ecb277353a59184f4aa.sdkstatcache
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    builtin-create-build-directory /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk-9ba0949632d816083328eaffec430689-VFS-iphonesimulator/all-product-headers.yaml
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk.xcodeproj
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk-9ba0949632d816083328eaffec430689-VFS-iphonesimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-all-target-headers.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-all-non-framework-target-headers.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-project-headers.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-project-headers.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-generated-files.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-generated-files.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.DependencyStaticMetadataFileList (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.DependencyMetadataFileList (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-DebugDylibPath-normal-arm64.txt (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-own-target-headers.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.hmap (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.hmap
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-DebugDylibInstallName-normal-arm64.txt (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-800E24972A6A228C8D4807E9.sh (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-800E24972A6A228C8D4807E9.sh
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-08A4A3CD28434E44B6B9DE2E.sh (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-08A4A3CD28434E44B6B9DE2E.sh
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-00DD1BFF1BD5951E006B06BC.sh (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-00DD1BFF1BD5951E006B06BC.sh
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk_const_extract_protocols.json (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.SwiftFileList (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.SwiftFileList
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.SwiftConstValuesFileList (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.LinkFileList (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk.LinkFileList
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk-OutputFileMap.json (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/podcastifycdk-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/7187679823f38a2a940e0043cdf9d637-common-args.resp (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Objects-normal/arm64/7187679823f38a2a940e0043cdf9d637-common-args.resp
+'-std=gnu99' -fmodules -gmodules '-fmodules-cache-path=/Users/rbiork/Library/Developer/Xcode/DerivedData/ModuleCache.noindex' -fpascal-strings -O0 -fno-common '-DDEBUG=1' '-DFB_SONARKIT_ENABLED=1' -g -iquote /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-generated-files.hmap -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-own-target-headers.hmap -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-all-target-headers.hmap -iquote /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk-project-headers.hmap -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator/include -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources-normal/arm64 -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources/arm64 -I/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources -F/Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources/podcastifycdk_vers.c (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources/podcastifycdk_vers.c
+
+WriteAuxiliaryFile /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources/Entitlements-Simulated.plist (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    write-file /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/DerivedSources/Entitlements-Simulated.plist
+
+MkDir /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator/podcastifycdk.app (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    /bin/mkdir -p /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Products/Debug-iphonesimulator/podcastifycdk.app
+
+ProcessProductPackaging /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk/podcastifycdk.entitlements /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "X2Q32F3AY3.com.rbiork.podcastify-cdk";
+}
+    
+    builtin-productPackagingUtility /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk/podcastifycdk.entitlements -entitlements -format xml -o /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent
+
+ProcessProductPackaging /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk/podcastifycdk.entitlements /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    
+    Entitlements:
+    
+    {
+}
+    
+    builtin-productPackagingUtility /Users/rbiork/Personal/Podcastify/cdk/ios/podcastifycdk/podcastifycdk.entitlements -entitlements -format xml -o /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent
+
+ProcessProductPackagingDER /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent.der (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    /usr/bin/derq query -f xml -i /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent -o /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app-Simulated.xcent.der --raw
+
+ProcessProductPackagingDER /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent.der (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    /usr/bin/derq query -f xml -i /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent -o /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/podcastifycdk.app.xcent.der --raw
+
+PhaseScriptExecution [CP]\ Check\ Pods\ Manifest.lock /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-08A4A3CD28434E44B6B9DE2E.sh (in target 'podcastifycdk' from project 'podcastifycdk')
+    cd /Users/rbiork/Personal/Podcastify/cdk/ios
+    /bin/sh -c /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-08A4A3CD28434E44B6B9DE2E.sh
+diff: /Podfile.lock: No such file or directory
+error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.
+
+note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'podcastifycdk' from project 'podcastifycdk')

@@ -1,0 +1,7 @@
+** BUILD FAILED **
+
+
+The following build commands failed:
+	PhaseScriptExecution [CP]\ Check\ Pods\ Manifest.lock /Users/rbiork/Library/Developer/Xcode/DerivedData/podcastifycdk-gxwgjsrxjphrtrdamonpioakricg/Build/Intermediates.noindex/podcastifycdk.build/Debug-iphonesimulator/podcastifycdk.build/Script-08A4A3CD28434E44B6B9DE2E.sh (in target 'podcastifycdk' from project 'podcastifycdk')
+	Building project podcastifycdk with scheme podcastifycdk and configuration Debug
+(2 failures)
