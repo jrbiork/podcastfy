@@ -1,0 +1,482 @@
+{
+  "/PodcastifyStack": [
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider": [
+    {
+      "type": "aws:cdk:is-custom-resource-handler-customResourceProvider",
+      "data": true
+    }
+  ],
+  "/PodcastifyStack/ApiBaseUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiBaseUrl"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:170:5)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/JobsBucketName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobsBucketName"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:175:5)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/JobQueueUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobQueueUrl"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:179:5)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib, node internals, @cspotcode/source-map-support...",
+        "(no user code in 9007199254740991 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/PodcastifyStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib, node internals, @cspotcode/source-map-support...",
+        "(no user code in 9007199254740991 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/PodcastifyStack/JobsBucket/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobsBucket5EADC5CA"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:25:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    },
+    {
+      "type": "aws:cdk:analytics:mixin",
+      "data": {
+        "mixin": "aws-cdk-lib.aws_s3.mixins.BucketAutoDeleteObjects"
+      }
+    }
+  ],
+  "/PodcastifyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:25:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:25:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/JobQueue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobQueueEE3AD499"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Queue2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:46:22)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Dispatcher/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DispatcherD4A12972"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:81:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Status/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Status274336EC"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:102:22)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Worker/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "Worker11F36D0F"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:120:20)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiF70053CD"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new HttpApi2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:148:17)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...aws-cdk-lib, node internals, @cspotcode/source-map-support...",
+        "(no user code in 9007199254740991 frames, use --stack-trace-limit to capture more)"
+      ]
+    }
+  ],
+  "/PodcastifyStack/JobsBucket/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobsBucketPolicy768DB567"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:25:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    },
+    {
+      "type": "aws:cdk:analytics:mixin",
+      "data": {
+        "mixin": "aws-cdk-lib.aws_s3.mixins.BucketPolicyStatements"
+      }
+    }
+  ],
+  "/PodcastifyStack/JobsBucket/AutoDeleteObjectsCustomResource/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "JobsBucketAutoDeleteObjectsCustomResource706F2144"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new Bucket2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:25:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Dispatcher/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DispatcherServiceRole904BCD09"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:81:24)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Status/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "StatusServiceRole4593B860"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:102:22)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Worker/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "WorkerServiceRole8543584E"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:120:20)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Worker/SqsEventSource:PodcastifyStackJobQueue8E29D831/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "WorkerSqsEventSourcePodcastifyStackJobQueue8E29D831B10901BC"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...NodejsFunction.addEventSource in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:140:12)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/DefaultStage/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiDefaultStage189A7074"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new HttpApi2 in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:148:17)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--jobs/DispatcherIntegration-Permission": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTjobsDispatcherIntegrationPermissionA64FF731"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:157:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--jobs/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTjobs8401E9D5"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:157:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/GET--jobs--{jobId}/StatusIntegration-Permission": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiGETjobsjobIdStatusIntegrationPermission4B27A25D"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:163:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/GET--jobs--{jobId}/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiGETjobsjobId3B3AF0B7"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:163:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Dispatcher/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DispatcherServiceRoleDefaultPolicyDA413007"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.grantWrite in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:98:16)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Status/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "StatusServiceRoleDefaultPolicy69AE1F0A"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.grantRead in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:116:16)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Worker/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "WorkerServiceRoleDefaultPolicyAE71B5FA"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.grantReadWrite in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:137:16)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--jobs/DispatcherIntegration/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTjobsDispatcherIntegration373C9E66"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:157:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/GET--jobs--{jobId}/StatusIntegration/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiGETjobsjobIdStatusIntegrationC26ED6C9"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:163:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ]
+}

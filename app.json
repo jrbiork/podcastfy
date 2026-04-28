@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "Podcastify",
+    "slug": "Podcastify",
+    "scheme": "podcastify",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A1A"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rbiork.Podcastify",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"],
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A1A"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.rbiork.Podcastify"
+    },
+    "web": {},
+    "plugins": [
+      "expo-av",
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929"
+        }
+      ],
+      [
+        "expo-share-extension",
+        {
+          "activationRules": [{ "type": "url" }],
+          "backgroundColor": {
+            "red": 10,
+            "green": 10,
+            "blue": 26,
+            "alpha": 255
+          },
+          "height": 200,
+          "excludedPackages": [
+            "expo-dev-client",
+            "expo-splash-screen",
+            "expo-updates",
+            "expo-font",
+            "react-native-purchases"
+          ]
+        }
+      ]
+    ],
+    "extra": {}
+  }
+}
