@@ -1,9 +1,24 @@
 import { SQSHandler, SQSRecord } from 'aws-lambda';
 import { extractArticle, ScraperError } from './scraper';
-import { generatePodcastScript, buildTtsScript } from './scriptWriter';
+import { generatePodcastScript, buildTtsScript, generateContextTitle } from './scriptWriter';
 import { generateAudio, estimateDurationSeconds } from './tts';
 import { writeStatus, uploadAudio, downloadBuffer } from '../shared/s3';
-import pdfParse from 'pdf-parse';
+
+// pdfjs-dist (bundled inside pdf-parse) calls `new DOMMatrix()` at module-load
+// time, which doesn't exist in Node.js — crashing the Lambda cold start.
+// Stub it out before the lazy import below runs.
+if (typeof (globalThis as any).DOMMatrix === 'undefined') {
+  (globalThis as any).DOMMatrix = class DOMMatrix {
+    constructor(_init?: string | number[]) {}
+    multiply() { return this; }
+    translate() { return this; }
+    scale() { return this; }
+    rotate() { return this; }
+    inverse() { return this; }
+    transformPoint(p: { x: number; y: number }) { return p; }
+    toString() { return 'matrix(1,0,0,1,0,0)'; }
+  };
+}
 
 interface JobMessage {
   jobId: string;
@@ -12,6 +27,25 @@ interface JobMessage {
   text?: string;
   title?: string;
   pdfKey?: string;
+}
+
+function normalizeInputTitle(value?: string): string {
+  return (value ?? '')
+    .replace(/\.[a-z0-9]{1,5}$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function shouldGenerateAiTitle(mode: JobMessage['mode'], title: string, hasPdf: boolean): boolean {
+  if (mode !== 'tts') return false;
+  const t = title.trim();
+  if (!t) return true;
+  if (/^untitled$/i.test(t)) return true;
+  if (/^pdf episode$/i.test(t)) return true;
+  // Typical uploaded filenames (uuid/random tokens) are not useful as episode titles.
+  if (hasPdf && /^[a-f0-9-]{16,}$/i.test(t.replace(/\s+/g, ''))) return true;
+  return false;
 }
 
 async function processJob(msg: JobMessage): Promise<void> {
@@ -37,9 +71,18 @@ async function processJob(msg: JobMessage): Promise<void> {
     console.log('[worker] parsing pdf from s3', { jobId, pdfKey });
     try {
       const pdfBuffer = await downloadBuffer(pdfKey);
-      const parsed = await pdfParse(pdfBuffer);
+      // pdf-parse v2 uses a class-based API: new PDFParse({ data }).getText()
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PDFParse } = require('pdf-parse') as {
+        PDFParse: new (opts: { data: Buffer | Uint8Array }) => {
+          getText(): Promise<{ text: string }>;
+          destroy(): Promise<void>;
+        };
+      };
+      const parser = new PDFParse({ data: pdfBuffer });
+      const parsed = await parser.getText().finally(() => parser.destroy());
       articleText = parsed.text.replace(/\s+/g, ' ').trim().slice(0, 12_000);
-      articleTitle = title || 'PDF Episode';
+      articleTitle = normalizeInputTitle(title) || 'PDF Episode';
       console.log('[worker] pdf parsed', { jobId, title: articleTitle, textLength: articleText.length });
     } catch (e) {
       console.error('[worker] pdf parse failed', { jobId, error: (e as Error).message });
@@ -47,10 +90,26 @@ async function processJob(msg: JobMessage): Promise<void> {
     }
   } else if (text) {
     articleText = text;
-    articleTitle = title ?? 'Untitled';
+    articleTitle = normalizeInputTitle(title) || 'Untitled';
     console.log('[worker] using provided text', { jobId, title: articleTitle, textLength: articleText.length });
   } else {
     throw new Error('no_input');
+  }
+
+  if (shouldGenerateAiTitle(mode, articleTitle, Boolean(pdfKey))) {
+    try {
+      const fallbackTitle = pdfKey ? 'PDF Episode' : 'Untitled Episode';
+      articleTitle = await generateContextTitle(articleText, fallbackTitle);
+      console.log('[worker] ai title generated', { jobId, title: articleTitle });
+    } catch (e) {
+      console.warn('[worker] ai title generation failed, using fallback', {
+        jobId,
+        error: (e as Error).message,
+      });
+      if (!articleTitle.trim()) {
+        articleTitle = pdfKey ? 'PDF Episode' : 'Untitled Episode';
+      }
+    }
   }
 
   await writeStatus(jobId, { status: 'scripting' });
