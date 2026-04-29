@@ -17,6 +17,7 @@ Rules:
 - Structure: Hook → Context → 3 main insights → Key takeaway → Outro
 - Each turn: 2–4 sentences max
 - Synthesize and entertain — do NOT just recite the article
+- NEVER reference photos, images, captions, charts, graphs, or any visual media — this is audio only
 
 Article title: ${title}
 Article: ${text}

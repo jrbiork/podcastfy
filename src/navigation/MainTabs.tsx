@@ -7,11 +7,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
+import { LibraryScreen } from '../screens/LibraryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { Colors, FontSize } from '../utils/theme';
 
 type TabParamList = {
   HomeTab: undefined;
+  LibraryTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -53,7 +55,8 @@ function TabBarButton({
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const isHomeActive = state.index === 0;
-  const isProfileActive = state.index === 1;
+  const isLibraryActive = state.index === 1;
+  const isProfileActive = state.index === 2;
 
   const blurProps = Platform.select({
     web: { experimentalBlurMethod: 'none' as const },
@@ -77,6 +80,21 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 color={isHomeActive ? Colors.primary : Colors.textDim}
               />
               <Text style={[tabStyles.label, isHomeActive && tabStyles.labelActive]}>Home</Text>
+            </TabBarButton>
+
+            <View style={tabStyles.tabDivider} />
+
+            <TabBarButton
+              active={isLibraryActive}
+              onPress={() => navigation.navigate('LibraryTab')}
+              style={[tabStyles.tab, isLibraryActive && tabStyles.tabActive]}
+            >
+              <Ionicons
+                name={isLibraryActive ? 'albums' : 'albums-outline'}
+                size={22}
+                color={isLibraryActive ? Colors.primary : Colors.textDim}
+              />
+              <Text style={[tabStyles.label, isLibraryActive && tabStyles.labelActive]}>Library</Text>
             </TabBarButton>
           </View>
         </View>
@@ -115,6 +133,7 @@ export function MainTabs() {
       initialRouteName="HomeTab"
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} />
+      <Tab.Screen name="LibraryTab" component={LibraryScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -157,6 +176,12 @@ const tabStyles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 6,
+  },
+  tabDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    marginHorizontal: 2,
   },
   glassCircle: {
     width: 56,

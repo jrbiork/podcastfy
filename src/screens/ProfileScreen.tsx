@@ -130,11 +130,23 @@ export function ProfileScreen() {
           <Text style={styles.displayName}>{session?.displayName ?? 'Podcastify User'}</Text>
           {session?.email ? <Text style={styles.email}>{session.email}</Text> : null}
 
-          {session && (
-            <View style={styles.providerBadge}>
-              <Text style={styles.providerText}>{providerLabel(session.provider)}</Text>
-            </View>
-          )}
+          <View style={styles.badgeRow}>
+            {session && (
+              <View style={styles.providerBadge}>
+                <Text style={styles.providerText}>{providerLabel(session.provider)}</Text>
+              </View>
+            )}
+            {isSubscribed ? (
+              <View style={styles.proBadgeHeader}>
+                <Ionicons name="sparkles" size={11} color="#A78BFA" />
+                <Text style={styles.proBadgeText}>Pro</Text>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.freeBadge} onPress={navigateToPaywall} activeOpacity={0.8}>
+                <Text style={styles.freeBadgeText}>Free</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* ── Subscription ───────────────────────────────────────────────── */}
@@ -280,6 +292,12 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
   providerBadge: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.full,
@@ -287,10 +305,38 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingHorizontal: 10,
     paddingVertical: 3,
-    marginTop: 2,
   },
   providerText: {
     color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: '600',
+  },
+  proBadgeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#A78BFA22',
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: '#A78BFA44',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  proBadgeText: {
+    color: '#A78BFA',
+    fontSize: FontSize.xs,
+    fontWeight: '700',
+  },
+  freeBadge: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  freeBadgeText: {
+    color: Colors.textDim,
     fontSize: FontSize.xs,
     fontWeight: '600',
   },

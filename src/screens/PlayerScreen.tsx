@@ -37,8 +37,19 @@ export function PlayerScreen() {
   const episode = params.episode;
   const [trackWidth, setTrackWidth] = useState(1);
 
-  const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart } =
+  const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate } =
     useAudioPlayer(episode.uri);
+
+  const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
+  const SPEEDS: (1 | 1.5 | 2)[] = [1, 1.5, 2];
+
+  const handleSpeedPress = useCallback(
+    async (s: 1 | 1.5 | 2) => {
+      setSpeed(s);
+      await setRate(s);
+    },
+    [setRate],
+  );
 
   const totalMs = durationMs || episode.durationSeconds * 1000 || 1;
   const progress = Math.min(1, positionMs / totalMs);
@@ -127,7 +138,14 @@ export function PlayerScreen() {
               </Text>
             ) : null}
             <View style={[styles.modeBadge, episode.mode === 'podcast' ? styles.badgePodcast : styles.badgeTts]}>
-              <Text style={styles.modeText}>{episode.mode === 'podcast' ? '🎙 Podcast' : '📖 TTS'}</Text>
+              <View style={styles.modeContent}>
+                <Ionicons
+                  name={episode.mode === 'podcast' ? 'mic' : 'document-text'}
+                  size={12}
+                  color={episode.mode === 'podcast' ? Colors.primary : Colors.accent}
+                />
+                <Text style={styles.modeText}>{episode.mode === 'podcast' ? 'Podcast' : 'TTS'}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -149,6 +167,22 @@ export function PlayerScreen() {
             <Text style={styles.timeText}>{formatDuration(Math.floor(positionMs / 1000))}</Text>
             <Text style={styles.timeText}>{formatDuration(Math.floor(totalMs / 1000))}</Text>
           </View>
+        </View>
+
+        {/* Speed */}
+        <View style={styles.speedRow}>
+          {SPEEDS.map((s) => (
+            <TouchableOpacity
+              key={s}
+              style={[styles.speedPill, speed === s && styles.speedPillActive]}
+              onPress={() => handleSpeedPress(s)}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.speedText, speed === s && styles.speedTextActive]}>
+                {s === 1 ? '1×' : `${s}×`}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Controls */}
@@ -243,6 +277,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
+  modeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   badgePodcast: { backgroundColor: Colors.primary + '22' },
   badgeTts: { backgroundColor: Colors.accent + '22' },
   modeText: { fontSize: FontSize.xs, color: Colors.textMuted },
@@ -275,6 +314,32 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontVariant: ['tabular-nums'],
+  },
+  speedRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  speedPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  speedPillActive: {
+    backgroundColor: Colors.primary + '20',
+    borderColor: Colors.primary + '60',
+  },
+  speedText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  speedTextActive: {
+    color: Colors.primary,
   },
   controls: {
     flexDirection: 'row',

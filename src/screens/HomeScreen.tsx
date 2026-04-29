@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,73 +7,88 @@ import {
   StatusBar,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
   Alert,
-  Image,
+  ScrollView,
+  Switch,
+  ActivityIndicator,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
-import { useEpisodes } from '../hooks/useEpisodes';
 import { useIncomingShare } from '../hooks/useIncomingShare';
-import { getTotalGeneratedSeconds, FREE_LIMIT_SECONDS } from '../services/subscription';
-import { formatDuration, formatDateCompact } from '../utils/format';
-import { Episode, GenerationInput } from '../types';
+import { hasReachedFreeLimit } from '../services/subscription';
+import { navigateToPaywall } from '../navigation/rootNavigationRef';
+import { GenerationInput } from '../types';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-type InputTab = 'url' | 'text';
 
-function isValidUrl(str: string): boolean {
-  try {
-    new URL(str);
-    return true;
-  } catch {
-    return false;
+function detectIsUrl(str: string): boolean {
+  const s = str.trim().toLowerCase();
+  if (s.includes(' ') || s.includes('\n')) return false;
+  if (s.startsWith('http://') || s.startsWith('https://')) {
+    try { new URL(s); return true; } catch { return false; }
   }
+  if (s.startsWith('www.')) {
+    try { new URL(`https://${s}`); return true; } catch { return false; }
+  }
+  return false;
+}
+
+function normalizeUrl(s: string): string {
+  const t = s.trim().toLowerCase();
+  return t.startsWith('http://') || t.startsWith('https://') ? t : `https://${t}`;
 }
 
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const { episodes, loading, load, remove } = useEpisodes();
+  const insets = useSafeAreaInsets();
 
-  const [tab, setTab] = useState<InputTab>('url');
-  const [urlInput, setUrlInput] = useState('');
-  const [textInput, setTextInput] = useState(
-    'This is a dummy test article for QA flows. It contains more than one hundred characters so the paste text input passes the minimum length validation during testing.'
-  );
-  const [clipboardBanner, setClipboardBanner] = useState<string | null>(null);
-  const [usedSeconds, setUsedSeconds] = useState(0);
+  const [inputText, setInputText] = useState('');
+  const [pdfInput, setPdfInput] = useState<{ uri: string; name: string } | null>(null);
+  const [mode, setMode] = useState<'podcast' | 'tts'>('tts');
+  const [summarize, setSummarize] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [cfBanner, setCfBanner] = useState(false);
-  const urlInputRef = useRef<TextInput>(null);
+  const [clipboardBanner, setClipboardBanner] = useState<string | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
-  useEffect(() => {
-    load();
-    getTotalGeneratedSeconds().then(setUsedSeconds);
-  }, [load]);
+  const isUrl = detectIsUrl(inputText);
+  const canGenerate = pdfInput !== null || inputText.trim().length > 0;
 
-  // Handle incoming share URL (deep link from share extension)
+  const onPickPdf = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const asset = result.assets[0];
+      if (asset.size && asset.size > 8 * 1024 * 1024) {
+        Alert.alert('PDF too large', 'Please choose a PDF under 8 MB.');
+        return;
+      }
+      setPdfInput({ uri: asset.uri, name: asset.name });
+      setInputText('');
+      setClipboardBanner(null);
+    } catch {
+      Alert.alert('Error', 'Could not open the file picker.');
+    }
+  };
+
   useIncomingShare((url) => {
-    setTab('url');
-    setUrlInput(url);
+    setInputText(url);
     setClipboardBanner(null);
   });
 
-  // Expose CF banner setter via navigation params so GeneratingScreen can trigger it
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      getTotalGeneratedSeconds().then(setUsedSeconds);
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  const onUrlFocus = async () => {
+  const onInputFocus = async () => {
     try {
       const text = await Clipboard.getStringAsync();
-      if (text && isValidUrl(text) && text !== urlInput) {
+      if (text && detectIsUrl(text) && text !== inputText) {
         setClipboardBanner(text);
       }
     } catch {
@@ -81,178 +96,231 @@ export function HomeScreen() {
     }
   };
 
-  const onNext = () => {
-    const input = buildInput();
-    if (!input) return;
-    navigation.navigate('ModePicker', { input });
-  };
+  const onGenerate = async () => {
+    if (!canGenerate) return;
 
-  const buildInput = (): GenerationInput | null => {
-    if (tab === 'url') {
-      const url = urlInput.trim();
-      if (!url) { Alert.alert('Enter a URL'); return null; }
-      if (!isValidUrl(url)) { Alert.alert('Invalid URL', 'Please enter a valid URL.'); return null; }
-      return { type: 'url', url };
-    } else {
-      const text = textInput.trim();
-      if (text.length < 100) { Alert.alert('Too short', 'Paste at least 100 characters of article text.'); return null; }
-      return { type: 'text', text };
+    setChecking(true);
+    try {
+      const limited = await hasReachedFreeLimit();
+      if (limited) {
+        navigateToPaywall();
+        return;
+      }
+
+      let input: GenerationInput;
+      if (pdfInput) {
+        input = { type: 'pdf', uri: pdfInput.uri, title: pdfInput.name, summarize };
+      } else {
+        const text = inputText.trim();
+        input = isUrl
+          ? { type: 'url', url: normalizeUrl(text), summarize }
+          : { type: 'text', text, summarize };
+      }
+
+      navigation.navigate('Generating', { input, mode });
+    } finally {
+      setChecking(false);
     }
   };
 
-  const usedMinutes = Math.floor(usedSeconds / 60);
-  const totalMinutes = FREE_LIMIT_SECONDS / 60;
-  const usedPercent = Math.min(1, usedSeconds / FREE_LIMIT_SECONDS);
-
-  const renderEpisode = ({ item }: { item: Episode }) => (
-    <TouchableOpacity
-      style={styles.episodeRow}
-      onPress={() => navigation.navigate('Player', { episode: item })}
-      activeOpacity={0.8}
-    >
-      {item.thumbnailUrl ? (
-        <Image source={{ uri: item.thumbnailUrl }} style={styles.thumbnail} />
-      ) : (
-        <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-          <Ionicons name="headset" size={24} color={Colors.primary} />
-        </View>
-      )}
-      <View style={styles.episodeMeta}>
-        <Text style={styles.episodeTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.episodeSubRow}>
-          <View style={[styles.modeBadge, item.mode === 'podcast' ? styles.badgePodcast : styles.badgeTts]}>
-            <Text style={styles.modeText}>{item.mode === 'podcast' ? '🎙 Podcast' : '📖 Read'}</Text>
-          </View>
-          <Text style={styles.episodeDuration}>{formatDuration(item.durationSeconds)}</Text>
-          <Text style={styles.episodeDate}>{formatDateCompact(item.createdAt)}</Text>
-        </View>
-      </View>
-      {!item.played && <View style={styles.unplayedDot} />}
-    </TouchableOpacity>
-  );
+  // Bottom offset accounts for the tab bar (which handles its own safe area)
+  const floatingBottom = insets.bottom + 72;
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
 
-      {cfBanner && (
-        <View style={styles.cfBanner}>
-          <Ionicons name="shield-outline" size={16} color={Colors.danger} />
-          <Text style={styles.cfBannerText}>
-            This site uses bot protection. Paste the article text instead.
-          </Text>
-          <TouchableOpacity onPress={() => { setCfBanner(false); setTab('text'); }}>
-            <Text style={styles.cfBannerAction}>Switch</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>Podcastify</Text>
-        <View style={styles.usageBarWrap}>
-          <Text style={styles.usageLabel}>{usedMinutes} / {totalMinutes} min free</Text>
-          <View style={styles.usageBar}>
-            <View style={[styles.usageFill, { width: `${usedPercent * 100}%` as `${number}%` }]} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: floatingBottom + 72 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {cfBanner && (
+          <View style={styles.cfBanner}>
+            <Ionicons name="shield-outline" size={16} color={Colors.danger} />
+            <Text style={styles.cfBannerText}>
+              This site uses bot protection. Paste the article text instead.
+            </Text>
+            <TouchableOpacity onPress={() => setCfBanner(false)}>
+              <Ionicons name="close" size={16} color={Colors.danger} />
+            </TouchableOpacity>
           </View>
-        </View>
-      </View>
-
-      {/* Input tabs */}
-      <View style={styles.tabRow}>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'url' && styles.tabActive]}
-          onPress={() => setTab('url')}
-        >
-          <Ionicons name="link" size={16} color={tab === 'url' ? Colors.primary : Colors.textMuted} />
-          <Text style={[styles.tabText, tab === 'url' && styles.tabTextActive]}>URL</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === 'text' && styles.tabActive]}
-          onPress={() => setTab('text')}
-        >
-          <Ionicons name="clipboard" size={16} color={tab === 'text' ? Colors.primary : Colors.textMuted} />
-          <Text style={[styles.tabText, tab === 'text' && styles.tabTextActive]}>Paste Text</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.inputArea}>
-        {tab === 'url' ? (
-          <>
-            <TextInput
-              ref={urlInputRef}
-              style={styles.urlInput}
-              value={urlInput}
-              onChangeText={(v) => { setUrlInput(v); setClipboardBanner(null); }}
-              onFocus={onUrlFocus}
-              placeholder="https://example.com/article"
-              placeholderTextColor={Colors.textDim}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-              returnKeyType="done"
-            />
-            {clipboardBanner && (
-              <TouchableOpacity
-                style={styles.clipboardBanner}
-                onPress={() => { setUrlInput(clipboardBanner); setClipboardBanner(null); }}
-              >
-                <Ionicons name="clipboard-outline" size={14} color={Colors.primary} />
-                <Text style={styles.clipboardText} numberOfLines={1}>
-                  Paste from clipboard: {clipboardBanner}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </>
-        ) : (
-          <>
-            <TextInput
-              style={styles.textInput}
-              value={textInput}
-              onChangeText={setTextInput}
-              placeholder="Paste article text here…"
-              placeholderTextColor={Colors.textDim}
-              multiline
-              textAlignVertical="top"
-              maxLength={14000}
-            />
-            <Text style={styles.charCount}>{textInput.length.toLocaleString()} / 14,000</Text>
-          </>
         )}
 
-        <TouchableOpacity style={styles.nextBtn} onPress={onNext} activeOpacity={0.85}>
-          <Text style={styles.nextBtnText}>Next</Text>
-          <Ionicons name="chevron-forward" size={20} color={Colors.bg} />
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <View style={styles.logoMark}>
+              <Ionicons name="mic" size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.appTitle}>Podcastify</Text>
+          </View>
+          <Text style={styles.subtitle}>Turn any article into a podcast</Text>
+        </View>
+
+        {/* Input card */}
+        <View style={styles.card}>
+
+          {/* Single smart input */}
+          <View style={styles.inputWrap}>
+            {pdfInput ? (
+              <View style={styles.pdfPill}>
+                <Ionicons name="document-attach-outline" size={16} color={Colors.primary} />
+                <Text style={styles.pdfPillText} numberOfLines={1}>{pdfInput.name}</Text>
+                <TouchableOpacity onPress={() => setPdfInput(null)} hitSlop={8}>
+                  <Ionicons name="close-circle" size={16} color={Colors.textDim} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.inputRow}>
+                <TextInput
+                  ref={inputRef}
+                  style={styles.textInput}
+                  value={inputText}
+                  onChangeText={(v) => { setInputText(v); setClipboardBanner(null); }}
+                  onFocus={onInputFocus}
+                  placeholder="Paste a URL or article text…"
+                  placeholderTextColor={Colors.textDim}
+                  multiline
+                  textAlignVertical="top"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  spellCheck={false}
+                />
+                <TouchableOpacity style={styles.attachBtn} onPress={onPickPdf} hitSlop={6}>
+                  <Ionicons name="attach-outline" size={22} color={Colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Detected type indicator */}
+            {!pdfInput && inputText.trim().length > 0 && (
+              <View style={styles.detectedRow}>
+                <Ionicons
+                  name={isUrl ? 'link-outline' : 'document-text-outline'}
+                  size={13}
+                  color={Colors.textDim}
+                />
+                <Text style={styles.detectedText}>
+                  {isUrl ? 'URL detected' : 'Article text'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => { setInputText(''); setClipboardBanner(null); }}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={15} color={Colors.textDim} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Clipboard suggestion */}
+            {!pdfInput && clipboardBanner && (
+              <TouchableOpacity
+                style={styles.clipboardBanner}
+                onPress={() => { setInputText(clipboardBanner); setClipboardBanner(null); }}
+              >
+                <Ionicons name="clipboard-outline" size={13} color={Colors.primary} />
+                <Text style={styles.clipboardText} numberOfLines={1}>
+                  Paste: {clipboardBanner}
+                </Text>
+                <Ionicons name="chevron-forward" size={13} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Format selector */}
+          <View style={styles.optionSection}>
+            <Text style={styles.optionLabel}>Format</Text>
+            <View style={styles.segmented}>
+              <TouchableOpacity
+                style={[styles.segment, mode === 'tts' && styles.segmentActive]}
+                onPress={() => setMode('tts')}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="document-text"
+                  size={14}
+                  color={mode === 'tts' ? Colors.text : Colors.textMuted}
+                />
+                <Text style={[styles.segmentText, mode === 'tts' && styles.segmentTextActive]}>
+                  Text to Speech
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.segment, mode === 'podcast' && styles.segmentActive]}
+                onPress={() => setMode('podcast')}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="mic"
+                  size={14}
+                  color={mode === 'podcast' ? Colors.text : Colors.textMuted}
+                />
+                <Text style={[styles.segmentText, mode === 'podcast' && styles.segmentTextActive]}>
+                  Podcast
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.optionHint}>
+              {mode === 'tts'
+                ? 'Single narrator reads the article · ~10s to generate'
+                : '2-speaker AI dialogue · ~30s to generate'}
+            </Text>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Summarize toggle */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelGroup}>
+              <Ionicons name="sparkles-outline" size={16} color={Colors.primary} />
+              <View>
+                <Text style={styles.switchLabel}>Summarize content</Text>
+                <Text style={styles.switchHint}>AI distills the key points</Text>
+              </View>
+            </View>
+            <Switch
+              value={summarize}
+              onValueChange={setSummarize}
+              trackColor={{ false: Colors.border, true: Colors.primary + '88' }}
+              thumbColor={summarize ? Colors.primary : Colors.textDim}
+              ios_backgroundColor={Colors.border}
+            />
+          </View>
+
+        </View>
+      </ScrollView>
+
+      {/* Floating Generate button */}
+      <View style={[styles.floatingContainer, { bottom: floatingBottom }]}>
+        <TouchableOpacity
+          style={[styles.generateBtn, (checking || !canGenerate) && styles.generateBtnDisabled]}
+          onPress={onGenerate}
+          activeOpacity={0.85}
+          disabled={checking || !canGenerate}
+        >
+          {checking ? (
+            <ActivityIndicator color={Colors.bg} size="small" />
+          ) : (
+            <>
+              <Ionicons name="sparkles" size={17} color={Colors.bg} />
+              <Text style={styles.generateBtnText}>Generate</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
-
-      {/* Episodes list */}
-      {loading ? (
-        <ActivityIndicator color={Colors.primary} style={{ marginTop: Spacing.xl }} />
-      ) : (
-        <FlatList
-          data={episodes}
-          keyExtractor={(e) => e.id}
-          renderItem={renderEpisode}
-          contentContainerStyle={styles.list}
-          ListHeaderComponent={
-            episodes.length > 0 ? <Text style={styles.listHeader}>Episodes</Text> : null
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="headset-outline" size={48} color={Colors.textDim} />
-              <Text style={styles.emptyText}>No episodes yet</Text>
-              <Text style={styles.emptySubtext}>Paste a URL or article text above to get started</Text>
-            </View>
-          }
-          onLongPress={undefined}
-        />
-      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
+  scroll: { paddingBottom: 32 },
+
   cfBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,44 +330,73 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   cfBannerText: { flex: 1, color: Colors.danger, fontSize: FontSize.xs },
-  cfBannerAction: { color: Colors.primary, fontSize: FontSize.xs, fontWeight: '700' },
-  header: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: Spacing.xs },
-  appTitle: { color: Colors.text, fontSize: FontSize.xl, fontWeight: '700', marginBottom: Spacing.xs },
-  usageBarWrap: { gap: 4 },
-  usageLabel: { color: Colors.textMuted, fontSize: FontSize.xs },
-  usageBar: { height: 3, backgroundColor: Colors.border, borderRadius: 2 },
-  usageFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 2 },
-  tabRow: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.sm,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    padding: 3,
-    gap: 3,
+
+  header: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+    gap: 4,
   },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  logoMark: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: Colors.primary + '20',
     justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingVertical: 8,
-    borderRadius: Radius.sm,
+    alignItems: 'center',
   },
-  tabActive: { backgroundColor: Colors.surfaceElevated },
-  tabText: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: '500' },
-  tabTextActive: { color: Colors.primary },
-  inputArea: { paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, gap: Spacing.sm },
-  urlInput: {
+  appTitle: { color: Colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  subtitle: { color: Colors.textMuted, fontSize: FontSize.sm, marginLeft: 46 },
+
+  card: {
+    marginHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+
+  inputWrap: { padding: Spacing.md, gap: Spacing.xs },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.xs },
+  textInput: {
+    flex: 1,
     color: Colors.text,
     fontSize: FontSize.sm,
+    minHeight: 100,
+    maxHeight: 200,
+  },
+  attachBtn: {
+    paddingTop: 2,
+    paddingLeft: Spacing.xs,
+  },
+  pdfPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.primary + '15',
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.primary + '40',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 10,
+  },
+  pdfPillText: {
+    flex: 1,
+    color: Colors.primary,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+  },
+  detectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  detectedText: {
+    flex: 1,
+    color: Colors.textDim,
+    fontSize: FontSize.xs,
   },
   clipboardBanner: {
     flexDirection: 'row',
@@ -311,68 +408,88 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   clipboardText: { flex: 1, color: Colors.primary, fontSize: FontSize.xs },
-  textInput: {
-    backgroundColor: Colors.surface,
+
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: Colors.border },
+
+  optionSection: {
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  optionLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  optionHint: {
+    color: Colors.textDim,
+    fontSize: FontSize.xs,
+    lineHeight: 17,
+  },
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: Colors.bg,
     borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    padding: 3,
+    gap: 3,
+  },
+  segment: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: Radius.sm,
+  },
+  segmentActive: { backgroundColor: Colors.surfaceElevated },
+  segmentText: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: '500' },
+  segmentTextActive: { color: Colors.text, fontWeight: '600' },
+
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12,
+    gap: Spacing.md,
+  },
+  switchLabelGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  switchLabel: {
     color: Colors.text,
     fontSize: FontSize.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
-    height: 130,
+    fontWeight: '500',
   },
-  charCount: { color: Colors.textDim, fontSize: FontSize.xs, textAlign: 'right' },
-  nextBtn: {
+  switchHint: {
+    color: Colors.textDim,
+    fontSize: FontSize.xs,
+    marginTop: 1,
+  },
+
+  floatingContainer: {
+    position: 'absolute',
+    left: Spacing.md,
+    right: Spacing.md,
+  },
+  generateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
-    paddingVertical: 14,
+    paddingVertical: 16,
+    shadowColor: Colors.primary,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
-  nextBtnText: { color: Colors.bg, fontSize: FontSize.md, fontWeight: '700' },
-  list: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.xxl },
-  listHeader: {
-    color: Colors.textMuted,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  episodeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  thumbnail: { width: 56, height: 56, borderRadius: Radius.sm },
-  thumbnailPlaceholder: {
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  episodeMeta: { flex: 1, gap: 4 },
-  episodeTitle: { color: Colors.text, fontSize: FontSize.sm, fontWeight: '600' },
-  episodeSubRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  modeBadge: { borderRadius: Radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
-  badgePodcast: { backgroundColor: Colors.primary + '22' },
-  badgeTts: { backgroundColor: Colors.accent + '22' },
-  modeText: { fontSize: 10, color: Colors.textMuted },
-  episodeDuration: { color: Colors.textMuted, fontSize: FontSize.xs },
-  episodeDate: { color: Colors.textDim, fontSize: FontSize.xs },
-  unplayedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-  },
-  empty: { alignItems: 'center', gap: Spacing.sm, paddingTop: Spacing.xxl },
-  emptyText: { color: Colors.textMuted, fontSize: FontSize.md, fontWeight: '600' },
-  emptySubtext: { color: Colors.textDim, fontSize: FontSize.sm, textAlign: 'center', maxWidth: 260 },
+  generateBtnDisabled: { opacity: 0.6 },
+  generateBtnText: { color: Colors.bg, fontSize: FontSize.md, fontWeight: '700' },
 });

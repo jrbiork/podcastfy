@@ -62,7 +62,7 @@ export function ModePickerScreen() {
               activeOpacity={0.85}
             >
               <View style={[styles.cardIcon, { backgroundColor: Colors.primary + '22' }]}>
-                <Text style={styles.cardEmoji}>🎙</Text>
+                <Ionicons name="mic" size={28} color={Colors.primary} />
               </View>
               <Text style={styles.cardTitle}>Podcast Style</Text>
               <Text style={styles.cardDesc}>
@@ -80,7 +80,7 @@ export function ModePickerScreen() {
               activeOpacity={0.85}
             >
               <View style={[styles.cardIcon, { backgroundColor: Colors.accent + '22' }]}>
-                <Text style={styles.cardEmoji}>📖</Text>
+                <Ionicons name="document-text" size={28} color={Colors.accent} />
               </View>
               <Text style={styles.cardTitle}>Text to Speech</Text>
               <Text style={styles.cardDesc}>
@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xs,
   },
-  cardEmoji: { fontSize: 28 },
   cardTitle: { color: Colors.text, fontSize: FontSize.lg, fontWeight: '700' },
   cardDesc: { color: Colors.textMuted, fontSize: FontSize.sm, lineHeight: 20 },
   cardBadge: {
