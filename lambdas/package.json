@@ -12,9 +12,11 @@
     "@aws-sdk/client-sqs": "^3.0.0",
     "@aws-sdk/s3-request-presigner": "^3.0.0",
     "@mozilla/readability": "^0.5.0",
+    "@types/pdf-parse": "^1.1.5",
     "jose": "^5.9.6",
     "jsdom": "^26.0.0",
     "openai": "^4.20.0",
+    "pdf-parse": "^2.4.5",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

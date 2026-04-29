@@ -2,7 +2,8 @@ import { SQSHandler, SQSRecord } from 'aws-lambda';
 import { extractArticle, ScraperError } from './scraper';
 import { generatePodcastScript, buildTtsScript } from './scriptWriter';
 import { generateAudio, estimateDurationSeconds } from './tts';
-import { writeStatus, uploadAudio } from '../shared/s3';
+import { writeStatus, uploadAudio, downloadBuffer } from '../shared/s3';
+import pdfParse from 'pdf-parse';
 
 interface JobMessage {
   jobId: string;
@@ -10,11 +11,12 @@ interface JobMessage {
   url?: string;
   text?: string;
   title?: string;
+  pdfKey?: string;
 }
 
 async function processJob(msg: JobMessage): Promise<void> {
-  const { jobId, mode, url, text, title } = msg;
-  console.log('[worker] job start', { jobId, mode, hasUrl: Boolean(url), textLength: text?.length ?? 0, title: title ?? null });
+  const { jobId, mode, url, text, title, pdfKey } = msg;
+  console.log('[worker] job start', { jobId, mode, hasUrl: Boolean(url), textLength: text?.length ?? 0, hasPdf: Boolean(pdfKey), title: title ?? null });
 
   await writeStatus(jobId, { status: 'processing' });
   console.log('[worker] status -> processing', { jobId });
@@ -31,6 +33,18 @@ async function processJob(msg: JobMessage): Promise<void> {
     articleText = article.text;
     thumbnailUrl = article.thumbnailUrl;
     console.log('[worker] article extracted', { jobId, title: articleTitle, textLength: articleText.length, hasThumbnail: Boolean(thumbnailUrl) });
+  } else if (pdfKey) {
+    console.log('[worker] parsing pdf from s3', { jobId, pdfKey });
+    try {
+      const pdfBuffer = await downloadBuffer(pdfKey);
+      const parsed = await pdfParse(pdfBuffer);
+      articleText = parsed.text.replace(/\s+/g, ' ').trim().slice(0, 12_000);
+      articleTitle = title || 'PDF Episode';
+      console.log('[worker] pdf parsed', { jobId, title: articleTitle, textLength: articleText.length });
+    } catch (e) {
+      console.error('[worker] pdf parse failed', { jobId, error: (e as Error).message });
+      throw new Error('scrape_failed');
+    }
   } else if (text) {
     articleText = text;
     articleTitle = title ?? 'Untitled';

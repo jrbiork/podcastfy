@@ -10,7 +10,8 @@ import { Construct } from 'constructs';
 import * as path from 'path';
 
 export interface PodcastifyStackProps extends cdk.StackProps {
-  googleClientId: string;
+  googleClientId: string;        // Web client ID
+  googleIosClientId?: string;    // iOS client ID (token aud on iOS)
   appleClientId: string;
   openAiApiKey: string;
 }
@@ -19,7 +20,7 @@ export class PodcastifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: PodcastifyStackProps) {
     super(scope, id, props);
 
-    const { googleClientId, appleClientId, openAiApiKey } = props;
+    const { googleClientId, googleIosClientId, appleClientId, openAiApiKey } = props;
 
     // ── S3: job storage ──────────────────────────────────────────────────────
     const jobsBucket = new s3.Bucket(this, 'JobsBucket', {
@@ -51,10 +52,11 @@ export class PodcastifyStack extends cdk.Stack {
     });
 
     // Shared Lambda environment for all functions
-    const sharedEnv = {
+    const sharedEnv: Record<string, string> = {
       S3_BUCKET: jobsBucket.bucketName,
       GOOGLE_CLIENT_ID: googleClientId,
       APPLE_CLIENT_ID: appleClientId,
+      ...(googleIosClientId ? { GOOGLE_IOS_CLIENT_ID: googleIosClientId } : {}),
     };
 
     const lambdaRoot = path.join(__dirname, '../../lambdas');
@@ -74,7 +76,7 @@ export class PodcastifyStack extends cdk.Stack {
     // bundle small (~1 MB) and avoids the xhr-sync-worker.js warning.
     const workerBundling: lambdaNode.BundlingOptions = {
       ...bundling,
-      nodeModules: ['jsdom', '@mozilla/readability'],
+      nodeModules: ['jsdom', '@mozilla/readability', 'pdf-parse'],
     };
 
     // ── Lambda: Dispatcher ────────────────────────────────────────────────────
@@ -86,8 +88,9 @@ export class PodcastifyStack extends cdk.Stack {
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      memorySize: 128,
-      timeout: cdk.Duration.seconds(10),
+      // Bumped: PDFs decoded from base64 + uploaded to S3 need more memory & time
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(30),
       bundling,
       environment: {
         ...sharedEnv,

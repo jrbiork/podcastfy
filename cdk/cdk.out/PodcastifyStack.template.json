@@ -305,15 +305,16 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "c65c5bc773a0cba5a61eb0667d5498548b4c5c5b6e2c7dbaeb5394ae7784a6c3.zip"
+     "S3Key": "12d42371a13a6bfc9dcafd9873252a24d9247d86c12202392103c30284f49649.zip"
     },
     "Environment": {
      "Variables": {
       "S3_BUCKET": {
        "Ref": "JobsBucket5EADC5CA"
       },
-      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
       "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
       "SQS_QUEUE_URL": {
        "Ref": "JobQueueEE3AD499"
       }
@@ -321,7 +322,7 @@
     },
     "FunctionName": "podcastify-dispatcher",
     "Handler": "index.handler",
-    "MemorySize": 128,
+    "MemorySize": 512,
     "Role": {
      "Fn::GetAtt": [
       "DispatcherServiceRole904BCD09",
@@ -329,7 +330,7 @@
      ]
     },
     "Runtime": "nodejs20.x",
-    "Timeout": 10
+    "Timeout": 30
    },
    "DependsOn": [
     "DispatcherServiceRoleDefaultPolicyDA413007",
@@ -337,7 +338,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Dispatcher/Resource",
-    "aws:asset:path": "asset.c65c5bc773a0cba5a61eb0667d5498548b4c5c5b6e2c7dbaeb5394ae7784a6c3",
+    "aws:asset:path": "asset.12d42371a13a6bfc9dcafd9873252a24d9247d86c12202392103c30284f49649",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -433,15 +434,16 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "59d8b5dbf49ed345b9f9792388603ef8aab337a502337049b9336a1764e787b5.zip"
+     "S3Key": "e1073014595ef735952210ffed4f8df8416210a1797007487a350f594179cb45.zip"
     },
     "Environment": {
      "Variables": {
       "S3_BUCKET": {
        "Ref": "JobsBucket5EADC5CA"
       },
-      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
-      "APPLE_CLIENT_ID": "com.rbiork.Podcastify"
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com"
      }
     },
     "FunctionName": "podcastify-status",
@@ -462,7 +464,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Status/Resource",
-    "aws:asset:path": "asset.59d8b5dbf49ed345b9f9792388603ef8aab337a502337049b9336a1764e787b5",
+    "aws:asset:path": "asset.e1073014595ef735952210ffed4f8df8416210a1797007487a350f594179cb45",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -581,15 +583,16 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "47b978f9300dc6a4d071d126ade2b71ff8352eabc8eb7225910c2303881b53c9.zip"
+     "S3Key": "1393afe6a6cc4f2bc8141a3c0cc89ae49def79607a2bb3c3159d843a07d04c3a.zip"
     },
     "Environment": {
      "Variables": {
       "S3_BUCKET": {
        "Ref": "JobsBucket5EADC5CA"
       },
-      "GOOGLE_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
       "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
       "OPENAI_API_KEY": "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"
      }
     },
@@ -611,7 +614,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.47b978f9300dc6a4d071d126ade2b71ff8352eabc8eb7225910c2303881b53c9",
+    "aws:asset:path": "asset.1393afe6a6cc4f2bc8141a3c0cc89ae49def79607a2bb3c3159d843a07d04c3a",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

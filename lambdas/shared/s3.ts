@@ -79,6 +79,19 @@ export async function uploadAudio(jobId: string, buffer: Buffer): Promise<void> 
   );
 }
 
+export async function uploadBuffer(key: string, buffer: Buffer, contentType: string): Promise<void> {
+  await s3.send(
+    new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: contentType })
+  );
+}
+
+export async function downloadBuffer(key: string): Promise<Buffer> {
+  const res = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+  const bytes = await res.Body?.transformToByteArray();
+  if (!bytes) throw new Error('Empty S3 object');
+  return Buffer.from(bytes);
+}
+
 export async function getPresignedAudioUrl(jobId: string): Promise<string> {
   return getSignedUrl(
     s3,

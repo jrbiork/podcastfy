@@ -13,6 +13,7 @@ new PodcastifyStack(app, 'PodcastifyStack', {
 
   // Pass secrets via environment variables — never hardcode these
   googleClientId: requireEnv('GOOGLE_CLIENT_ID'),
+  googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
   appleClientId: requireEnv('APPLE_CLIENT_ID'),
   openAiApiKey: requireEnv('OPENAI_API_KEY'),
 });

@@ -10,14 +10,56 @@ const BROWSER_HEADERS = {
   'Cache-Control': 'no-cache',
 };
 
-const CF_BODY_SIGNALS = [
+// Signals that indicate the page is technically blocking automated access
+// (bot challenges, CAPTCHAs, WAFs) — NOT content paywalls.
+// If the page loads with actual article content, let it through regardless.
+const BOT_PROTECTION_SIGNALS = [
+  // Cloudflare
   'Just a moment',
   'Checking your browser',
   'Enable JavaScript and cookies',
   'DDoS protection by Cloudflare',
   'cf-browser-verification',
   'Attention Required! | Cloudflare',
+  'challenges.cloudflare.com',
+  // Generic CAPTCHA / human verification
+  'Please verify you are human',
+  'Please complete the security check',
+  'Prove you are human',
+  'Are you a robot',
+  'Robot Check',
+  'Human Verification',
+  'Verifying you are human',
+  // reCAPTCHA
+  'www.google.com/recaptcha',
+  'g-recaptcha',
+  // hCaptcha
+  'hcaptcha.com',
+  'h-captcha',
+  // Imperva / Incapsula
+  'incapsula incident',
+  '_imp_apg_r_',
+  'site is protected by Imperva',
+  // PerimeterX
+  'px-captcha',
+  'PerimeterX',
+  '_pxCaptcha',
+  // DataDome
+  'datadome.co',
+  'Please enable cookies',
+  // Akamai Bot Manager
+  'akamai.com/bot-manager',
+  // Generic WAF / access denied pages (short pages with no article content)
+  '<title>Access Denied</title>',
+  '<title>403 Forbidden</title>',
+  '<title>blocked</title>',
 ];
+
+function isBotProtected(body: string, status: number): boolean {
+  if (status === 429) return true; // Too Many Requests — rate-limited by bot protection
+  const lower = body.toLowerCase();
+  return BOT_PROTECTION_SIGNALS.some((s) => lower.includes(s.toLowerCase()));
+}
 
 export class ScraperError extends Error {
   code: string;
@@ -52,13 +94,12 @@ export async function extractArticle(url: string): Promise<ArticleData> {
 
   const body = await res.text();
 
-  // Cloudflare detection
+  // Detect bot/scraper protection challenges before anything else
   const hasCfRay = !!res.headers.get('cf-ray');
   const isBlockedStatus = res.status === 403 || res.status === 503;
-  const hasBodySignal = CF_BODY_SIGNALS.some((s) => body.includes(s));
 
-  if ((hasCfRay && isBlockedStatus) || hasBodySignal) {
-    throw new ScraperError('cloudflare_blocked', true);
+  if ((hasCfRay && isBlockedStatus) || isBotProtected(body, res.status)) {
+    throw new ScraperError('scrape_protected', true);
   }
 
   if (!res.ok) throw new ScraperError('scrape_failed');

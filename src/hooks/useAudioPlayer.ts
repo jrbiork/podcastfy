@@ -78,5 +78,9 @@ export function useAudioPlayer(uri: string | null) {
     await soundRef.current?.playAsync();
   }, []);
 
-  return { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart };
+  const setRate = useCallback(async (rate: number) => {
+    await soundRef.current?.setRateAsync(rate, true);
+  }, []);
+
+  return { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate };
 }

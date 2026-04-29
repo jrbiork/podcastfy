@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 export const ENTITLEMENT_ID = 'premium';
-export const FREE_LIMIT_SECONDS = 15 * 60; // 15 minutes
+export const FREE_LIMIT_SECONDS = 60 * 60; // 1 hour
 
 const TOTAL_SECONDS_KEY = 'podcastify_total_seconds';
 
@@ -44,7 +44,11 @@ export async function getIsSubscribed(): Promise<boolean> {
   if (!configured) return false;
   try {
     const info = await Purchases.getCustomerInfo();
-    return info.entitlements.active[ENTITLEMENT_ID] != null;
+    // Check named entitlement first; fall back to any active subscription
+    return (
+      info.entitlements.active[ENTITLEMENT_ID] != null ||
+      info.activeSubscriptions.length > 0
+    );
   } catch {
     return false;
   }
@@ -74,13 +78,19 @@ export async function hasReachedFreeLimit(): Promise<boolean> {
 export async function purchaseOffering(packageToPurchase: Purchases.PurchasesPackage): Promise<boolean> {
   if (!configured) throw new Error('Subscriptions are not configured.');
   const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
-  return customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
+  return (
+    customerInfo.entitlements.active[ENTITLEMENT_ID] != null ||
+    customerInfo.activeSubscriptions.length > 0
+  );
 }
 
 export async function restorePurchases(): Promise<boolean> {
   if (!configured) throw new Error('Subscriptions are not configured.');
   const info = await Purchases.restorePurchases();
-  return info.entitlements.active[ENTITLEMENT_ID] != null;
+  return (
+    info.entitlements.active[ENTITLEMENT_ID] != null ||
+    info.activeSubscriptions.length > 0
+  );
 }
 
 export async function clearLocalData(): Promise<void> {

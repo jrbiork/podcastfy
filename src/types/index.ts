@@ -17,6 +17,8 @@ export interface Episode {
   thumbnailUrl?: string;
   positionMs?: number;
   folderId?: string;
+  deletedAt?: number;
+  deletedFromFolderId?: string;
 }
 
 export type JobStatus =
@@ -28,5 +30,6 @@ export type JobStatus =
   | { status: 'error'; error: string };
 
 export type GenerationInput =
-  | { type: 'url'; url: string }
-  | { type: 'text'; text: string; title?: string };
+  | { type: 'url'; url: string; summarize?: boolean }
+  | { type: 'text'; text: string; title?: string; summarize?: boolean }
+  | { type: 'pdf'; uri: string; title?: string; summarize?: boolean };
