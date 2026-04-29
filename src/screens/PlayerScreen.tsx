@@ -38,7 +38,12 @@ export function PlayerScreen() {
   const [trackWidth, setTrackWidth] = useState(1);
 
   const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate } =
-    useAudioPlayer(episode.uri);
+    useAudioPlayer(episode.uri, {
+      title: episode.title,
+      artist: sourceDomain(episode.sourceUrl) || 'Podcastify',
+      artwork: episode.thumbnailUrl,
+      durationSeconds: episode.durationSeconds,
+    });
 
   const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
   const SPEEDS: (1 | 1.5 | 2)[] = [1, 1.5, 2];
