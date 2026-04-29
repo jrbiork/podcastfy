@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -203,11 +203,6 @@ function EpisodeRow({
   onPermanentDelete,
 }: EpisodeRowProps) {
   const swipeRef = useRef<Swipeable>(null);
-  const folder = item.folderId
-    ? folders.find((f) => f.id === item.folderId)
-    : null;
-  const folderBorderStyle =
-    !isTrashView && folder ? { borderColor: folder.color, borderWidth: 2 } : null;
 
   const close = () => swipeRef.current?.close();
 
@@ -303,9 +298,9 @@ function EpisodeRow({
       >
         <View style={styles.thumbWrap}>
           {item.thumbnailUrl ? (
-            <Image source={{ uri: item.thumbnailUrl }} style={[styles.thumb, folderBorderStyle]} />
+            <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
           ) : (
-            <View style={[styles.thumb, styles.thumbPlaceholder, folderBorderStyle]}>
+            <View style={[styles.thumb, styles.thumbPlaceholder]}>
               <Ionicons name="headset" size={22} color={Colors.primary} />
             </View>
           )}
@@ -449,6 +444,10 @@ export function LibraryScreen() {
     if (selectedFolderId === 'all') return e.folderId !== TRASH_FOLDER_ID;
     return e.folderId === selectedFolderId;
   });
+  const sortedEpisodes = useMemo(
+    () => [...filteredEpisodes].sort((a, b) => b.createdAt - a.createdAt),
+    [filteredEpisodes],
+  );
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -743,7 +742,7 @@ export function LibraryScreen() {
       {/* Episode list */}
       <FlatList
         ref={listRef}
-        data={filteredEpisodes}
+        data={sortedEpisodes}
         keyExtractor={(e) => e.id}
         ListHeaderComponent={
           pendingGenerations.length > 0 &&
@@ -1017,8 +1016,6 @@ const styles = StyleSheet.create({
   thumb: { width: 64, height: 64, borderRadius: Radius.sm },
   thumbPlaceholder: {
     backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1042,7 +1039,7 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  durationWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  durationWrap: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 16 },
   modeBadge: {
     borderRadius: Radius.sm,
     paddingHorizontal: 5,
@@ -1055,6 +1052,7 @@ const styles = StyleSheet.create({
     color: Colors.textDim,
     fontSize: FontSize.xs,
     textAlign: 'center',
+    lineHeight: 16,
   },
   pdfTag: {
     flexDirection: 'row',

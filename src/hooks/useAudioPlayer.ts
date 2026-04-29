@@ -1,85 +1,139 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Audio, AVPlaybackStatus, InterruptionModeIOS } from 'expo-av';
+import { useState, useCallback, useEffect } from 'react';
+import TrackPlayer, {
+  AppKilledPlaybackBehavior,
+  Capability,
+  Event,
+  IOSCategory,
+  IOSCategoryMode,
+  IOSCategoryOptions,
+  State,
+  usePlaybackState,
+  useProgress,
+} from 'react-native-track-player';
 
-export function useAudioPlayer(uri: string | null) {
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [positionMs, setPositionMs] = useState(0);
-  const [durationMs, setDurationMs] = useState(0);
+type AudioTrackMeta = {
+  title: string;
+  artist?: string;
+  artwork?: string | null;
+  durationSeconds?: number;
+};
+
+let playerSetupPromise: Promise<void> | null = null;
+
+async function ensurePlayerSetup() {
+  if (!playerSetupPromise) {
+    playerSetupPromise = (async () => {
+      await TrackPlayer.setupPlayer({
+        iosCategory: IOSCategory.Playback,
+        iosCategoryMode: IOSCategoryMode.Default,
+        iosCategoryOptions: [IOSCategoryOptions.AllowBluetooth, IOSCategoryOptions.AllowAirPlay],
+      });
+      await TrackPlayer.updateOptions({
+        capabilities: [
+          Capability.Play,
+          Capability.Pause,
+          Capability.SeekTo,
+          Capability.JumpForward,
+          Capability.JumpBackward,
+          Capability.Stop,
+        ],
+        compactCapabilities: [Capability.Play, Capability.Pause],
+        progressUpdateEventInterval: 1,
+        forwardJumpInterval: 30,
+        backwardJumpInterval: 15,
+        android: {
+          appKilledPlaybackBehavior: AppKilledPlaybackBehavior.ContinuePlayback,
+        },
+      });
+    })();
+  }
+
+  await playerSetupPromise;
+}
+
+export function useAudioPlayer(uri: string | null, meta?: AudioTrackMeta) {
   const [hasEnded, setHasEnded] = useState(false);
-
-  const onPlaybackStatus = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    setPositionMs(status.positionMillis);
-    setDurationMs(status.durationMillis ?? 0);
-    setIsPlaying(status.isPlaying);
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-      setPositionMs(0);
-      setHasEnded(true);
-    }
-  }, []);
+  const playbackState = usePlaybackState();
+  const progress = useProgress(250);
+  const positionMs = Math.floor(progress.position * 1000);
+  const durationMs = Math.floor(progress.duration * 1000);
+  const isPlaying = playbackState.state === State.Playing;
 
   useEffect(() => {
-    let sound: Audio.Sound | null = null;
-    setHasEnded(false);
-    setPositionMs(0);
-    setDurationMs(0);
+    let isCancelled = false;
 
-    const load = async () => {
+    const setupTrack = async () => {
       if (!uri) return;
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      await ensurePlayerSetup();
+      if (isCancelled) return;
+
+      await TrackPlayer.reset();
+      const track = {
+        id: uri,
+        url: uri,
+        title: meta?.title ?? 'Podcastify',
+        artist: meta?.artist ?? 'Podcastify',
+        artwork: meta?.artwork ?? undefined,
+        duration: meta?.durationSeconds,
+      };
+      await TrackPlayer.load(track);
+      await TrackPlayer.updateNowPlayingMetadata({
+        title: track.title,
+        artist: track.artist,
+        artwork: track.artwork,
+        duration: track.duration,
       });
-      const { sound: s } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: false },
-        onPlaybackStatus
-      );
-      sound = s;
-      soundRef.current = s;
+      if (!isCancelled) {
+        setHasEnded(false);
+      }
     };
 
-    load().catch(console.error);
-
+    setupTrack().catch(console.error);
     return () => {
-      sound?.unloadAsync().catch(() => {});
+      isCancelled = true;
     };
-  }, [uri, onPlaybackStatus]);
+  }, [uri, meta?.title, meta?.artist, meta?.artwork, meta?.durationSeconds]);
+
+  useEffect(() => {
+    const queueEndedSub = TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
+      setHasEnded(true);
+    });
+    return () => {
+      queueEndedSub.remove();
+    };
+  }, []);
 
   const play = useCallback(async () => {
     setHasEnded(false);
-    await soundRef.current?.playAsync();
+    await TrackPlayer.play();
   }, []);
 
   const pause = useCallback(async () => {
-    await soundRef.current?.pauseAsync();
+    await TrackPlayer.pause();
   }, []);
 
   const seek = useCallback(async (ms: number) => {
     setHasEnded(false);
-    await soundRef.current?.setPositionAsync(ms);
+    await TrackPlayer.seekTo(ms / 1000);
   }, []);
 
   const skip = useCallback(
     async (deltaMs: number) => {
-      const next = Math.max(0, Math.min(durationMs, positionMs + deltaMs));
+      const next = Math.max(0, Math.min(durationMs || 0, positionMs + deltaMs));
       setHasEnded(false);
-      await soundRef.current?.setPositionAsync(next);
+      await TrackPlayer.seekTo(next / 1000);
     },
     [positionMs, durationMs]
   );
 
   const restart = useCallback(async () => {
     setHasEnded(false);
-    await soundRef.current?.setPositionAsync(0);
-    await soundRef.current?.playAsync();
+    await TrackPlayer.seekTo(0);
+    await TrackPlayer.play();
   }, []);
 
   const setRate = useCallback(async (rate: number) => {
-    await soundRef.current?.setRateAsync(rate, true);
+    await TrackPlayer.setRate(rate);
   }, []);
 
   return { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate };
