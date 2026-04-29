@@ -16,7 +16,9 @@ export function formatDate(timestamp: number): string {
 
 export function formatDateCompact(timestamp: number): string {
   const d = new Date(timestamp);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+  const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `${date} ${time}`;
 }
 
 export function generateId(): string {

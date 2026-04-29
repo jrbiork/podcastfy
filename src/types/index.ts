@@ -9,6 +9,7 @@ export interface Episode {
   id: string;
   title: string;
   sourceUrl: string;
+  sourceType?: 'url' | 'text' | 'pdf';
   uri: string;
   durationSeconds: number;
   createdAt: number;

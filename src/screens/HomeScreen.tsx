@@ -189,6 +189,9 @@ export function HomeScreen() {
                 />
                 <TouchableOpacity style={styles.attachBtn} onPress={onPickPdf} hitSlop={6}>
                   <Ionicons name="attach-outline" size={22} color={Colors.textMuted} />
+                  <View style={styles.attachPdfBadge}>
+                    <Text style={styles.attachPdfBadgeText}>PDF</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             )}
@@ -370,6 +373,22 @@ const styles = StyleSheet.create({
   attachBtn: {
     paddingTop: 2,
     paddingLeft: Spacing.xs,
+    alignItems: 'center',
+    gap: 4,
+  },
+  attachPdfBadge: {
+    backgroundColor: Colors.primary + '20',
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.primary + '45',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  attachPdfBadgeText: {
+    color: Colors.primary,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   pdfPill: {
     flexDirection: 'row',

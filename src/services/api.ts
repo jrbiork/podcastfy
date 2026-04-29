@@ -29,46 +29,38 @@ async function fetchWithTimeout(
 }
 
 async function getFreshToken(session: Awaited<ReturnType<typeof loadSession>>): Promise<string> {
-  // DIAGNOSTIC MODE: use the stored token directly (saved during signIn()).
-  // We previously tried getTokens()/signInSilently() to refresh, but those may
-  // return tokens with the wrong audience on some SDK versions. The token from
-  // the original signIn() is known-good for the configured webClientId.
-  const stored = session?.oidcIdToken;
+  let token = session?.oidcIdToken;
 
+  // Google ID tokens expire quickly; fetch a fresh one for API calls and cache it.
   if (session?.provider === 'google') {
-    // Best-effort: try to get a fresher token, but only USE it if it looks valid
     try {
       const tokens = await GoogleSignin.getTokens();
       if (tokens.idToken) {
-        console.log('[api] getTokens returned idToken', {
-          len: tokens.idToken.length,
-          sameAsStored: tokens.idToken === stored,
-        });
-        // Compare the audiences via base64 decode of the JWT payload
-        const decode = (jwt: string) => {
-          try {
-            const part = jwt.split('.')[1];
-            const padded = part + '='.repeat((4 - (part.length % 4)) % 4);
-            return JSON.parse(atob(padded.replace(/-/g, '+').replace(/_/g, '/')));
-          } catch { return null; }
-        };
-        const newPayload = decode(tokens.idToken);
-        const oldPayload = stored ? decode(stored) : null;
-        console.log('[api] token audiences', {
-          newAud: newPayload?.aud,
-          newExp: newPayload?.exp,
-          oldAud: oldPayload?.aud,
-          oldExp: oldPayload?.exp,
-          now: Math.floor(Date.now() / 1000),
-        });
+        token = tokens.idToken;
       }
     } catch (e: any) {
-      console.log('[api] getTokens failed', { msg: e?.message });
+      console.log('[api] getTokens failed; using cached token', { msg: e?.message });
+      try {
+        const silent = await GoogleSignin.signInSilently();
+        if ((silent as any)?.type === 'success') {
+          const silentIdToken = (silent as any)?.data?.idToken;
+          if (silentIdToken) token = silentIdToken;
+        }
+      } catch (silentErr: any) {
+        console.log('[api] signInSilently failed; using cached token', {
+          msg: silentErr?.message,
+        });
+      }
     }
   }
 
-  if (!stored) throw Object.assign(new Error('not_signed_in'), { code: 'not_signed_in' });
-  return stored;
+  if (!token) throw Object.assign(new Error('not_signed_in'), { code: 'not_signed_in' });
+
+  if (token !== session?.oidcIdToken && session) {
+    await saveSession({ ...session, oidcIdToken: token });
+  }
+
+  return token;
 }
 
 async function authHeaders(): Promise<Record<string, string>> {

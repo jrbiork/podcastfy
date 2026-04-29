@@ -583,7 +583,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "1393afe6a6cc4f2bc8141a3c0cc89ae49def79607a2bb3c3159d843a07d04c3a.zip"
+     "S3Key": "2f0e69712d3d211e8f3196683abc1202906fa27d5155b7cae3cfb3d9c9630146.zip"
     },
     "Environment": {
      "Variables": {
@@ -614,7 +614,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.1393afe6a6cc4f2bc8141a3c0cc89ae49def79607a2bb3c3159d843a07d04c3a",
+    "aws:asset:path": "asset.2f0e69712d3d211e8f3196683abc1202906fa27d5155b7cae3cfb3d9c9630146",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

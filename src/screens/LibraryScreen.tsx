@@ -12,6 +12,7 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  TextInput,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
@@ -32,9 +33,25 @@ import type { RootStackParamList } from '../navigation/rootNavigationRef';
 type Nav = StackNavigationProp<RootStackParamList>;
 
 const FOLDER_COLORS = [
-  '#60A5FA', '#34D399', '#F472B6', '#FBBF24',
-  '#A78BFA', '#F87171', '#38BDF8', '#FB923C',
+  '#60A5FA',
+  '#34D399',
+  '#F472B6',
+  '#FBBF24',
+  '#A78BFA',
+  '#F87171',
+  '#38BDF8',
+  '#FB923C',
 ];
+
+function formatFolderName(name: string): string {
+  const normalized = name.trim().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+
+  return (
+    normalized.charAt(0).toLocaleUpperCase() +
+    normalized.slice(1).toLocaleLowerCase()
+  );
+}
 
 // ── Move-to-folder modal ──────────────────────────────────────────────────────
 
@@ -53,7 +70,12 @@ function MoveModal({
 }) {
   if (!episode) return null;
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onDismiss}
+    >
       <Pressable style={moveStyles.backdrop} onPress={onDismiss} />
       <View style={moveStyles.sheet}>
         <View style={moveStyles.handle} />
@@ -66,28 +88,42 @@ function MoveModal({
         >
           <View style={[moveStyles.dot, { backgroundColor: Colors.textDim }]} />
           <Text style={moveStyles.rowLabel}>No Folder</Text>
-          {!episode.folderId && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
+          {!episode.folderId && (
+            <Ionicons name="checkmark" size={18} color={Colors.primary} />
+          )}
         </TouchableOpacity>
 
-        {folders.filter((f) => f.id !== TRASH_FOLDER_ID).map((f) => (
-          <TouchableOpacity
-            key={f.id}
-            style={[moveStyles.row, episode.folderId === f.id && moveStyles.rowSelected]}
-            onPress={() => onMove(f.id)}
-            activeOpacity={0.7}
-          >
-            <View style={[moveStyles.dot, { backgroundColor: f.color }]} />
-            <Text style={moveStyles.rowLabel}>{f.name}</Text>
-            {episode.folderId === f.id && <Ionicons name="checkmark" size={18} color={Colors.primary} />}
-          </TouchableOpacity>
-        ))}
+        {folders
+          .filter((f) => f.id !== TRASH_FOLDER_ID)
+          .map((f) => (
+            <TouchableOpacity
+              key={f.id}
+              style={[
+                moveStyles.row,
+                episode.folderId === f.id && moveStyles.rowSelected,
+              ]}
+              onPress={() => onMove(f.id)}
+              activeOpacity={0.7}
+            >
+              <View style={[moveStyles.dot, { backgroundColor: f.color }]} />
+              <Text style={moveStyles.rowLabel}>
+                {formatFolderName(f.name)}
+              </Text>
+              {episode.folderId === f.id && (
+                <Ionicons name="checkmark" size={18} color={Colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
       </View>
     </Modal>
   );
 }
 
 const moveStyles = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   sheet: {
     position: 'absolute',
     bottom: 0,
@@ -129,7 +165,12 @@ const moveStyles = StyleSheet.create({
   },
   rowSelected: { backgroundColor: Colors.primary + '10' },
   dot: { width: 12, height: 12, borderRadius: 6 },
-  rowLabel: { flex: 1, color: Colors.text, fontSize: FontSize.md, fontWeight: '500' },
+  rowLabel: {
+    flex: 1,
+    color: Colors.text,
+    fontSize: FontSize.md,
+    fontWeight: '500',
+  },
 });
 
 // ── Episode row with swipe ────────────────────────────────────────────────────
@@ -162,16 +203,23 @@ function EpisodeRow({
   onPermanentDelete,
 }: EpisodeRowProps) {
   const swipeRef = useRef<Swipeable>(null);
-  const folder = item.folderId ? folders.find((f) => f.id === item.folderId) : null;
+  const folder = item.folderId
+    ? folders.find((f) => f.id === item.folderId)
+    : null;
+  const folderBorderStyle =
+    !isTrashView && folder ? { borderColor: folder.color, borderWidth: 2 } : null;
 
   const close = () => swipeRef.current?.close();
 
-  const renderRightActions = () => (
+  const renderRightActions = () =>
     isTrashView ? (
       <View style={swipeStyles.row}>
         <TouchableOpacity
           style={[swipeStyles.action, swipeStyles.restoreAction]}
-          onPress={() => { close(); onRestore(item); }}
+          onPress={() => {
+            close();
+            onRestore(item);
+          }}
           activeOpacity={0.85}
         >
           <Ionicons name="refresh" size={18} color="#fff" />
@@ -179,7 +227,10 @@ function EpisodeRow({
         </TouchableOpacity>
         <TouchableOpacity
           style={[swipeStyles.action, { backgroundColor: Colors.danger }]}
-          onPress={() => { close(); onPermanentDelete(item); }}
+          onPress={() => {
+            close();
+            onPermanentDelete(item);
+          }}
           activeOpacity={0.85}
         >
           <Ionicons name="trash-outline" size={18} color="#fff" />
@@ -222,8 +273,7 @@ function EpisodeRow({
           <Text style={swipeStyles.actionLabel}>Delete</Text>
         </TouchableOpacity>
       </View>
-    )
-  );
+    );
 
   return (
     <Swipeable
@@ -232,7 +282,10 @@ function EpisodeRow({
       rightThreshold={40}
       renderRightActions={renderRightActions}
       onSwipeableOpen={() => {
-        if (openSwipeable.current && openSwipeable.current !== swipeRef.current) {
+        if (
+          openSwipeable.current &&
+          openSwipeable.current !== swipeRef.current
+        ) {
           openSwipeable.current.close();
         }
         openSwipeable.current = swipeRef.current;
@@ -248,44 +301,64 @@ function EpisodeRow({
         onPress={() => onPress(item)}
         activeOpacity={0.8}
       >
-        {item.thumbnailUrl ? (
-          <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
-        ) : (
-          <View style={[styles.thumb, styles.thumbPlaceholder]}>
-            <Ionicons name="headset" size={22} color={Colors.primary} />
+        <View style={styles.thumbWrap}>
+          {item.thumbnailUrl ? (
+            <Image source={{ uri: item.thumbnailUrl }} style={[styles.thumb, folderBorderStyle]} />
+          ) : (
+            <View style={[styles.thumb, styles.thumbPlaceholder, folderBorderStyle]}>
+              <Ionicons name="headset" size={22} color={Colors.primary} />
+            </View>
+          )}
+          <View style={styles.thumbBadges}>
+            {item.sourceType === 'pdf' && (
+              <View style={styles.pdfTagOnThumb}>
+                <Ionicons
+                  name="document-outline"
+                  size={9}
+                  color={Colors.primary}
+                />
+                <Text style={styles.pdfTagTextOnThumb}>PDF</Text>
+              </View>
+            )}
           </View>
-        )}
+        </View>
         <View style={styles.episodeMeta}>
-          <Text style={styles.episodeTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.episodeTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
           <View style={styles.episodeSubRow}>
-            <View style={[styles.modeBadge, item.mode === 'podcast' ? styles.badgePodcast : styles.badgeTts]}>
+            <View
+              style={[
+                styles.modeBadge,
+                item.mode === 'podcast' ? styles.badgePodcast : styles.badgeTts,
+              ]}
+            >
               <Ionicons
                 name={item.mode === 'podcast' ? 'mic' : 'document-text'}
                 size={11}
                 color={item.mode === 'podcast' ? Colors.primary : Colors.accent}
               />
             </View>
-            <Text style={styles.meta2}>{formatDuration(item.durationSeconds)}</Text>
-            <Text style={styles.meta2}>{formatDateCompact(item.createdAt)}</Text>
-            {!isTrashView && folder && (
-              <View style={[styles.folderTag, { backgroundColor: folder.color + '22' }]}>
-                <View style={[styles.folderDot, { backgroundColor: folder.color }]} />
-                <Text style={[styles.folderTagText, { color: folder.color }]}>{folder.name}</Text>
+            <Text style={styles.metaDate}>
+              {formatDateCompact(item.createdAt)}
+            </Text>
+            <View style={styles.trailingMeta}>
+              <View style={styles.durationWrap}>
+                <Ionicons
+                  name="time-outline"
+                  size={12}
+                  color={Colors.primary}
+                />
+                <Text style={styles.meta2}>
+                  {formatDuration(item.durationSeconds)}
+                </Text>
               </View>
-            )}
+              {!item.played && !isTrashView && (
+                <View style={styles.unplayedDot} />
+              )}
+            </View>
           </View>
-          {isTrashView && item.deletedAt ? (() => {
-            const days = Math.floor((Date.now() - item.deletedAt) / (24 * 60 * 60 * 1000));
-            const label = days === 0 ? 'Deleted today' : `Deleted ${days}d ago`;
-            return (
-              <View style={styles.deletedTag}>
-                <Ionicons name="time-outline" size={10} color={Colors.danger} />
-                <Text style={styles.deletedTagText}>{label}</Text>
-              </View>
-            );
-          })() : null}
         </View>
-        {!item.played && !isTrashView && <View style={styles.unplayedDot} />}
       </TouchableOpacity>
     </Swipeable>
   );
@@ -323,19 +396,34 @@ export function LibraryScreen() {
     permanentRemove,
     clearTrash,
   } = useEpisodes();
-  const { folders, load: loadFolders, add: addFolder, update: updateFolder, remove: removeFolder } = useFolders();
+  const {
+    folders,
+    load: loadFolders,
+    add: addFolder,
+    update: updateFolder,
+    remove: removeFolder,
+  } = useFolders();
 
-  const [selectedFolderId, setSelectedFolderId] = useState<string | 'all'>('all');
+  const [selectedFolderId, setSelectedFolderId] = useState<string | 'all'>(
+    'all',
+  );
   const [movingEpisode, setMovingEpisode] = useState<Episode | null>(null);
-  const [pendingGenerations, setPendingGenerations] = useState<PendingGeneration[]>(() => generationStore.get());
+  const [pendingGenerations, setPendingGenerations] = useState<
+    PendingGeneration[]
+  >(() => generationStore.get());
+  const [folderNameVisible, setFolderNameVisible] = useState(false);
+  const [folderNameDraft, setFolderNameDraft] = useState('');
+  const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeable = useRef<Swipeable | null>(null);
+  const listRef = useRef<FlatList<Episode>>(null);
 
   // Load on mount and on every focus (covers returning from Player)
   useFocusEffect(
     useCallback(() => {
       loadEpisodes();
       loadFolders();
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
     }, [loadEpisodes, loadFolders]),
   );
 
@@ -362,16 +450,27 @@ export function LibraryScreen() {
     return e.folderId === selectedFolderId;
   });
 
-  const episodeCountFor = (folderId: string) => episodes.filter((e) => e.folderId === folderId).length;
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selectedFolderId, filteredEpisodes.length]);
+
+  const episodeCountFor = (folderId: string) =>
+    episodes.filter((e) => e.folderId === folderId).length;
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  const handleEpisodePress = useCallback(async (episode: Episode) => {
-    if (!episode.played) {
-      await updateEpisode({ ...episode, played: true });
-    }
-    navigation.navigate('Player', { episode: { ...episode, played: true } });
-  }, [navigation, updateEpisode]);
+  const handleEpisodePress = useCallback(
+    async (episode: Episode) => {
+      if (!episode.played) {
+        await updateEpisode({ ...episode, played: true });
+      }
+      navigation.navigate('Player', { episode: { ...episode, played: true } });
+    },
+    [navigation, updateEpisode],
+  );
 
   const handleRenameEpisode = (episode: Episode) => {
     Alert.prompt(
@@ -392,10 +491,18 @@ export function LibraryScreen() {
   };
 
   const handleDeleteEpisode = (episode: Episode) => {
-    Alert.alert('Move to Trash', 'This audio will stay in Trash for 30 days and can be restored.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Move', style: 'destructive', onPress: () => removeEpisode(episode.id) },
-    ]);
+    Alert.alert(
+      'Move to Trash',
+      'This audio will stay in Trash for 30 days and can be restored.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Move',
+          style: 'destructive',
+          onPress: () => removeEpisode(episode.id),
+        },
+      ],
+    );
   };
 
   const handleRestoreEpisode = async (episode: Episode) => {
@@ -403,83 +510,103 @@ export function LibraryScreen() {
   };
 
   const handlePermanentDelete = (episode: Episode) => {
-    Alert.alert('Delete Forever', 'This audio will be permanently deleted and cannot be recovered.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => permanentRemove(episode.id) },
-    ]);
+    Alert.alert(
+      'Delete Forever',
+      'This audio will be permanently deleted and cannot be recovered.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => permanentRemove(episode.id),
+        },
+      ],
+    );
   };
 
   const handleEmptyTrash = () => {
     const count = episodes.filter((e) => e.folderId === TRASH_FOLDER_ID).length;
     if (count === 0) return;
-    Alert.alert('Empty Trash', `Permanently delete all ${count} audio${count === 1 ? '' : 's'}? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete All', style: 'destructive', onPress: () => clearTrash() },
-    ]);
+    Alert.alert(
+      'Empty Trash',
+      `Permanently delete all ${count} audio${count === 1 ? '' : 's'}? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: () => clearTrash(),
+        },
+      ],
+    );
+  };
+
+  const closeFolderNameModal = () => {
+    setFolderNameVisible(false);
+    setFolderNameDraft('');
+    setRenamingFolder(null);
+  };
+
+  const submitFolderName = () => {
+    const normalized = formatFolderName(folderNameDraft);
+    if (!normalized) return;
+
+    if (renamingFolder) {
+      updateFolder({ ...renamingFolder, name: normalized });
+      closeFolderNameModal();
+      return;
+    }
+
+    addFolder({
+      id: generateId(),
+      name: normalized,
+      color: FOLDER_COLORS[folders.length % FOLDER_COLORS.length],
+      createdAt: Date.now(),
+    });
+    closeFolderNameModal();
   };
 
   const onFolderLongPress = (folder: Folder) => {
     if (folder.id === TRASH_FOLDER_ID) return;
     const { ActionSheetIOS } = require('react-native');
     ActionSheetIOS.showActionSheetWithOptions(
-      { options: ['Cancel', 'Rename', 'Delete'], destructiveButtonIndex: 2, cancelButtonIndex: 0 },
+      {
+        options: ['Cancel', 'Rename', 'Delete'],
+        destructiveButtonIndex: 2,
+        cancelButtonIndex: 0,
+      },
       (index: number) => {
         if (index === 1) {
-          Alert.prompt(
-            'Rename Folder',
-            '',
+          setRenamingFolder(folder);
+          setFolderNameDraft(folder.name);
+          setFolderNameVisible(true);
+        }
+        if (index === 2) {
+          Alert.alert(
+            'Delete Folder',
+            'Episodes inside will be moved to All.',
             [
               { text: 'Cancel', style: 'cancel' },
               {
-                text: 'Save',
-                onPress: (name) => {
-                  if (name?.trim()) updateFolder({ ...folder, name: name.trim() });
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => {
+                  removeFolder(folder.id);
+                  if (selectedFolderId === folder.id)
+                    setSelectedFolderId('all');
                 },
               },
             ],
-            'plain-text',
-            folder.name,
           );
-        }
-        if (index === 2) {
-          Alert.alert('Delete Folder', 'Episodes inside will be moved to All.', [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Delete',
-              style: 'destructive',
-              onPress: () => {
-                removeFolder(folder.id);
-                if (selectedFolderId === folder.id) setSelectedFolderId('all');
-              },
-            },
-          ]);
         }
       },
     );
   };
 
   const onNewFolder = () => {
-    Alert.prompt(
-      'New Folder',
-      '',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Create',
-          onPress: (name) => {
-            if (name?.trim()) {
-              addFolder({
-                id: generateId(),
-                name: name.trim(),
-                color: FOLDER_COLORS[folders.length % FOLDER_COLORS.length],
-                createdAt: Date.now(),
-              });
-            }
-          },
-        },
-      ],
-      'plain-text',
-    );
+    setRenamingFolder(null);
+    setFolderNameDraft('');
+    setFolderNameVisible(true);
   };
 
   const onMoveConfirm = async (folderId: string | undefined) => {
@@ -496,13 +623,25 @@ export function LibraryScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Library</Text>
         {selectedFolderId === TRASH_FOLDER_ID ? (
-          <TouchableOpacity style={styles.deleteAllBtn} onPress={handleEmptyTrash} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.deleteAllBtn}
+            onPress={handleEmptyTrash}
+            activeOpacity={0.8}
+          >
             <Ionicons name="trash-outline" size={14} color={Colors.danger} />
             <Text style={styles.deleteAllText}>Delete All</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.newFolderBtn} onPress={onNewFolder} activeOpacity={0.8}>
-            <Ionicons name="folder-open-outline" size={15} color={Colors.primary} />
+          <TouchableOpacity
+            style={styles.newFolderBtn}
+            onPress={onNewFolder}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="folder-open-outline"
+              size={15}
+              color={Colors.primary}
+            />
             <Text style={styles.newFolderText}>New Folder</Text>
           </TouchableOpacity>
         )}
@@ -512,24 +651,42 @@ export function LibraryScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.folderCarousel}
         contentContainerStyle={styles.folderRow}
       >
         <TouchableOpacity
-          style={[styles.folderChip, selectedFolderId === 'all' && styles.folderChipActive]}
+          style={[
+            styles.folderChip,
+            selectedFolderId === 'all' && styles.folderChipActive,
+          ]}
           onPress={() => setSelectedFolderId('all')}
           activeOpacity={0.8}
         >
-          <View style={[styles.allFolderIconWrap, selectedFolderId === 'all' && styles.allFolderIconWrapActive]}>
+          <View
+            style={[
+              styles.allFolderIconWrap,
+              selectedFolderId === 'all' && styles.allFolderIconWrapActive,
+            ]}
+          >
             <Ionicons
               name="albums-outline"
               size={10}
-              color={selectedFolderId === 'all' ? Colors.primary : Colors.textMuted}
+              color={
+                selectedFolderId === 'all' ? Colors.primary : Colors.textMuted
+              }
             />
           </View>
-          <Text style={[styles.folderChipText, selectedFolderId === 'all' && styles.folderChipTextActive]}>
+          <Text
+            style={[
+              styles.folderChipText,
+              selectedFolderId === 'all' && styles.folderChipTextActive,
+            ]}
+          >
             All
           </Text>
-          <Text style={styles.folderChipCount}>{episodes.filter((e) => e.folderId !== TRASH_FOLDER_ID).length}</Text>
+          <Text style={styles.folderChipCount}>
+            {episodes.filter((e) => e.folderId !== TRASH_FOLDER_ID).length}
+          </Text>
         </TouchableOpacity>
 
         {folders.map((folder) => (
@@ -538,7 +695,9 @@ export function LibraryScreen() {
             style={[
               styles.folderChip,
               selectedFolderId === folder.id && styles.folderChipActive,
-              selectedFolderId === folder.id && { borderColor: folder.color + '66' },
+              selectedFolderId === folder.id && {
+                borderColor: folder.color + '66',
+              },
             ]}
             onPress={() => setSelectedFolderId(folder.id)}
             onLongPress={() => onFolderLongPress(folder)}
@@ -549,31 +708,46 @@ export function LibraryScreen() {
               <Ionicons
                 name="trash-outline"
                 size={12}
-                color={selectedFolderId === folder.id ? Colors.danger : Colors.textMuted}
+                color={
+                  selectedFolderId === folder.id
+                    ? Colors.danger
+                    : Colors.textMuted
+                }
               />
             ) : (
-              <View style={[styles.folderColorDot, { backgroundColor: folder.color }]} />
+              <View
+                style={[
+                  styles.folderColorDot,
+                  { backgroundColor: folder.color },
+                ]}
+              />
             )}
             <Text
               style={[
                 styles.folderChipText,
                 selectedFolderId === folder.id &&
-                  (folder.id === TRASH_FOLDER_ID ? { color: Colors.danger } : { color: folder.color }),
+                  (folder.id === TRASH_FOLDER_ID
+                    ? { color: Colors.danger }
+                    : { color: folder.color }),
               ]}
             >
-              {folder.name}
+              {formatFolderName(folder.name)}
             </Text>
-            <Text style={styles.folderChipCount}>{episodeCountFor(folder.id)}</Text>
+            <Text style={styles.folderChipCount}>
+              {episodeCountFor(folder.id)}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       {/* Episode list */}
       <FlatList
+        ref={listRef}
         data={filteredEpisodes}
         keyExtractor={(e) => e.id}
         ListHeaderComponent={
-          pendingGenerations.length > 0 && selectedFolderId !== TRASH_FOLDER_ID ? (
+          pendingGenerations.length > 0 &&
+          selectedFolderId !== TRASH_FOLDER_ID ? (
             <View style={styles.generatingBanner}>
               <ActivityIndicator size="small" color={Colors.primary} />
               <Text style={styles.generatingText}>
@@ -640,6 +814,53 @@ export function LibraryScreen() {
         onMove={onMoveConfirm}
         onDismiss={() => setMovingEpisode(null)}
       />
+
+      <Modal
+        visible={folderNameVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeFolderNameModal}
+      >
+        <Pressable
+          style={styles.folderModalBackdrop}
+          onPress={closeFolderNameModal}
+        />
+        <View style={styles.folderModalCard}>
+          <Text style={styles.folderModalTitle}>
+            {renamingFolder ? 'Rename Folder' : 'New Folder'}
+          </Text>
+          <TextInput
+            value={folderNameDraft}
+            onChangeText={setFolderNameDraft}
+            placeholder="Folder name"
+            placeholderTextColor={Colors.textDim}
+            autoFocus
+            autoCorrect={false}
+            autoCapitalize="sentences"
+            style={styles.folderNameInput}
+            returnKeyType={renamingFolder ? 'done' : 'go'}
+            onSubmitEditing={submitFolderName}
+          />
+          <View style={styles.folderModalActions}>
+            <TouchableOpacity
+              style={[styles.folderModalBtn, styles.folderModalBtnGhost]}
+              onPress={closeFolderNameModal}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.folderModalBtnGhostText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.folderModalBtn, styles.folderModalBtnPrimary]}
+              onPress={submitFolderName}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.folderModalBtnPrimaryText}>
+                {renamingFolder ? 'Save' : 'Create'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -695,16 +916,22 @@ const styles = StyleSheet.create({
 
   folderRow: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 8,
     gap: Spacing.xs,
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  folderCarousel: {
+    flexGrow: 0,
+    height: 60,
   },
   folderChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'center',
     gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    height: 44,
     borderRadius: Radius.md,
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -744,7 +971,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  listContent: { paddingBottom: 100 },
+  listContent: {
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.xs,
+    paddingBottom: 100,
+  },
   generatingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -775,7 +1006,15 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
     backgroundColor: Colors.bg,
   },
-  thumb: { width: 52, height: 52, borderRadius: Radius.sm },
+  thumbWrap: { position: 'relative' },
+  thumbBadges: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  thumb: { width: 64, height: 64, borderRadius: Radius.sm },
   thumbPlaceholder: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -784,12 +1023,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   episodeMeta: { flex: 1, gap: 4 },
-  episodeTitle: { color: Colors.text, fontSize: FontSize.sm, fontWeight: '600', lineHeight: 20 },
-  episodeSubRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  modeBadge: { borderRadius: Radius.sm, paddingHorizontal: 5, paddingVertical: 2 },
+  episodeTitle: {
+    color: Colors.text,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  episodeSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  trailingMeta: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  durationWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  modeBadge: {
+    borderRadius: Radius.sm,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
   badgePodcast: { backgroundColor: Colors.primary + '22' },
   badgeTts: { backgroundColor: Colors.accent + '22' },
   meta2: { color: Colors.textDim, fontSize: FontSize.xs },
+  metaDate: {
+    color: Colors.textDim,
+    fontSize: FontSize.xs,
+    textAlign: 'center',
+  },
+  pdfTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primary + '18',
+    borderRadius: Radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  pdfTagText: { color: Colors.primary, fontSize: 10, fontWeight: '700' },
   folderTag: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -798,19 +1074,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  folderDot: { width: 6, height: 6, borderRadius: 3 },
-  folderTagText: { fontSize: 10, fontWeight: '600' },
-  deletedTag: {
+  pdfTagOnThumb: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 3,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Colors.primary + '55',
   },
-  deletedTagText: {
-    color: Colors.danger,
-    fontSize: 10,
-    fontWeight: '600',
-  },
+  pdfTagTextOnThumb: { color: Colors.primary, fontSize: 9, fontWeight: '700' },
   unplayedDot: {
     width: 7,
     height: 7,
@@ -819,7 +1094,11 @@ const styles = StyleSheet.create({
   },
 
   empty: { alignItems: 'center', gap: Spacing.sm, paddingTop: 60 },
-  emptyTitle: { color: Colors.textMuted, fontSize: FontSize.md, fontWeight: '600' },
+  emptyTitle: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
   emptySub: {
     color: Colors.textDim,
     fontSize: FontSize.sm,

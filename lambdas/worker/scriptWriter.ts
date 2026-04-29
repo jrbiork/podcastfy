@@ -51,6 +51,47 @@ export async function generatePodcastScript(article: {
   return script;
 }
 
+const TITLE_PROMPT = (text: string) => `
+Generate a short, clear episode title for this spoken audio.
+
+Rules:
+- 3 to 8 words
+- Plain title case
+- No quotes
+- No punctuation at the end
+- Focus on the core topic
+
+Content:
+${text.slice(0, 4000)}
+
+Output ONLY valid JSON: { "title": "..." }
+`.trim();
+
+export async function generateContextTitle(
+  text: string,
+  fallback = 'Untitled Episode'
+): Promise<string> {
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You write concise episode titles. Output only valid JSON with a "title" string.',
+      },
+      { role: 'user', content: TITLE_PROMPT(text) },
+    ],
+    max_tokens: 40,
+  });
+
+  const raw = JSON.parse(completion.choices[0].message.content ?? '{"title":""}') as {
+    title?: string;
+  };
+  const title = (raw.title ?? '').replace(/\s+/g, ' ').trim();
+  return title || fallback;
+}
+
 export function buildTtsScript(text: string): ScriptTurn[] {
   // Split into ~300-word chunks for ElevenLabs
   const words = text.split(/\s+/);

@@ -10,6 +10,7 @@ import { generationStore } from '../utils/generationStore';
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+const MAX_FILE_TITLE_LENGTH = 80;
 
 const ERROR_LABELS: Record<string, string> = {
   scrape_protected: 'That site blocks automated access. Try pasting the article text instead.',
@@ -32,6 +33,16 @@ function errorLabel(code: string): string {
   return ERROR_LABELS[code] ?? ERROR_LABELS.unknown_error;
 }
 
+function sanitizeTitleForFilename(title: string): string {
+  const normalized = title
+    .replace(/\.[a-z0-9]{1,5}$/i, '')
+    .replace(/[^a-z0-9 _-]+/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return normalized.slice(0, MAX_FILE_TITLE_LENGTH) || 'Untitled Episode';
+}
+
 export async function startGeneration(
   input: GenerationInput,
   mode: 'podcast' | 'tts',
@@ -43,7 +54,6 @@ export async function startGeneration(
     const jobId = await dispatchJob(input, mode);
 
     const episodeId = generateId();
-    const destUri = `${FileSystem.documentDirectory}${episodeId}.mp3`;
 
     const startTime = Date.now();
     let finalStatus: Extract<JobStatus, { status: 'done' }> | null = null;
@@ -65,13 +75,24 @@ export async function startGeneration(
 
     if (!finalStatus) throw new Error('timeout');
 
+    const resolvedTitle =
+      finalStatus.title ||
+      (input.type === 'url'
+        ? input.url
+        : input.type === 'pdf'
+          ? input.title ?? 'Untitled Episode'
+          : input.title ?? 'Untitled Episode');
+    const safeFileTitle = sanitizeTitleForFilename(resolvedTitle);
+    const destUri = `${FileSystem.documentDirectory}${episodeId}-${safeFileTitle}.mp3`;
+
     await downloadAudio(finalStatus.audioUrl, destUri);
     await addGeneratedSeconds(finalStatus.durationSeconds);
 
     await saveEpisode({
       id: episodeId,
-      title: finalStatus.title || (input.type === 'url' ? input.url : 'Untitled Episode'),
+      title: resolvedTitle,
       sourceUrl: input.type === 'url' ? input.url : '',
+      sourceType: input.type,
       uri: destUri,
       durationSeconds: finalStatus.durationSeconds,
       createdAt: Date.now(),
