@@ -127,7 +127,7 @@ export function ProfileScreen() {
             )}
           </View>
 
-          <Text style={styles.displayName}>{session?.displayName ?? 'Podcastify User'}</Text>
+          <Text style={styles.displayName}>{session?.displayName ?? 'Sonera User'}</Text>
           {session?.email ? <Text style={styles.email}>{session.email}</Text> : null}
 
           <View style={styles.badgeRow}>

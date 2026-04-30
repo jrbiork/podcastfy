@@ -75,7 +75,9 @@ function MoveModal({
           onPress={() => onMove(undefined)}
           activeOpacity={0.7}
         >
-          <View style={[moveStyles.dot, { backgroundColor: Colors.textDim }]} />
+          <View style={[moveStyles.iconWrap, { backgroundColor: Colors.textDim + '22', borderColor: Colors.textDim + '44' }]}>
+            <Ionicons name="albums-outline" size={14} color={Colors.textDim} />
+          </View>
           <Text style={moveStyles.rowLabel}>No Folder</Text>
           {!episode.folderId && (
             <Ionicons name="checkmark" size={18} color={Colors.primary} />
@@ -94,7 +96,13 @@ function MoveModal({
               onPress={() => onMove(f.id)}
               activeOpacity={0.7}
             >
-              <View style={[moveStyles.dot, { backgroundColor: f.color }]} />
+              <View style={[moveStyles.iconWrap, { backgroundColor: f.color + '22', borderColor: f.color + '55' }]}>
+                <Ionicons
+                  name={(f.iconName ?? 'folder-outline') as any}
+                  size={14}
+                  color={f.color}
+                />
+              </View>
               <Text style={moveStyles.rowLabel}>
                 {formatFolderName(f.name)}
               </Text>
@@ -153,7 +161,14 @@ const moveStyles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   rowSelected: { backgroundColor: Colors.primary + '10' },
-  dot: { width: 12, height: 12, borderRadius: 6 },
+  iconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   rowLabel: {
     flex: 1,
     color: Colors.text,
@@ -192,6 +207,9 @@ function EpisodeRow({
   onPermanentDelete,
 }: EpisodeRowProps) {
   const swipeRef = useRef<Swipeable>(null);
+  const folderColor = item.folderId && item.folderId !== TRASH_FOLDER_ID
+    ? folders.find((f) => f.id === item.folderId)?.color
+    : undefined;
 
   const close = () => swipeRef.current?.close();
 
@@ -285,6 +303,9 @@ function EpisodeRow({
         onPress={() => onPress(item)}
         activeOpacity={0.8}
       >
+        {folderColor && (
+          <View style={[styles.folderPip, { backgroundColor: folderColor }]} />
+        )}
         <View style={styles.thumbWrap}>
           {item.thumbnailUrl ? (
             <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
@@ -676,24 +697,17 @@ export function LibraryScreen() {
             activeOpacity={0.8}
             delayLongPress={400}
           >
-            {folder.id === TRASH_FOLDER_ID ? (
-              <Ionicons
-                name="trash-outline"
-                size={12}
-                color={
-                  selectedFolderId === folder.id
+            <Ionicons
+              name={(folder.iconName ?? (folder.id === TRASH_FOLDER_ID ? 'trash-outline' : 'folder-outline')) as any}
+              size={12}
+              color={
+                selectedFolderId === folder.id
+                  ? folder.id === TRASH_FOLDER_ID
                     ? Colors.danger
-                    : Colors.textMuted
-                }
-              />
-            ) : (
-              <View
-                style={[
-                  styles.folderColorDot,
-                  { backgroundColor: folder.color },
-                ]}
-              />
-            )}
+                    : folder.color
+                  : Colors.textMuted
+              }
+            />
             <Text
               style={[
                 styles.folderChipText,
@@ -890,17 +904,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary + '22',
   },
   folderChipText: {
-    color: Colors.textMuted,
+    color: Colors.text,
     fontSize: 11,
     fontWeight: '600',
+    opacity: 0.8,
   },
   folderChipTextActive: {
     color: Colors.primary,
+    opacity: 1,
   },
   folderChipCount: {
-    color: Colors.textDim,
+    color: Colors.text,
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
+    opacity: 0.7,
   },
 
   listContent: {
@@ -926,6 +943,15 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: FontSize.sm,
     fontWeight: '600',
+  },
+
+  folderPip: {
+    position: 'absolute',
+    left: 6,
+    width: 2,
+    height: 20,
+    borderRadius: 1,
+    opacity: 0.7,
   },
 
   episodeRow: {
@@ -980,10 +1006,12 @@ const styles = StyleSheet.create({
   },
   badgePodcast: { backgroundColor: Colors.primary + '22' },
   badgeTts: { backgroundColor: Colors.accent + '22' },
-  meta2: { color: Colors.textDim, fontSize: FontSize.xs },
+  meta2: { color: Colors.text, fontSize: FontSize.xs, fontWeight: '500', opacity: 0.75 },
   metaDate: {
-    color: Colors.textDim,
+    color: Colors.text,
     fontSize: FontSize.xs,
+    fontWeight: '500',
+    opacity: 0.75,
     textAlign: 'center',
     lineHeight: 16,
   },

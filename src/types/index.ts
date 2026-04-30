@@ -32,6 +32,6 @@ export type JobStatus =
   | { status: 'error'; error: string };
 
 export type GenerationInput =
-  | { type: 'url'; url: string; summarize?: boolean }
-  | { type: 'text'; text: string; title?: string; summarize?: boolean }
-  | { type: 'pdf'; uri: string; title?: string; summarize?: boolean };
+  | { type: 'url'; url: string; voice?: string; language?: string; summarize?: boolean }
+  | { type: 'text'; text: string; title?: string; voice?: string; language?: string; summarize?: boolean }
+  | { type: 'pdf'; uri: string; title?: string; voice?: string; language?: string; summarize?: boolean };

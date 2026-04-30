@@ -44,6 +44,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const text = typeof body.text === 'string' ? body.text.trim() : null;
   const pdfBase64 = typeof body.pdf_base64 === 'string' ? body.pdf_base64 : null;
   const title = typeof body.title === 'string' ? body.title.trim() : '';
+  const VALID_VOICES = ['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer'];
+  const voice = typeof body.voice === 'string' && VALID_VOICES.includes(body.voice) ? body.voice : null;
+  const VALID_LANGS = ['es', 'fr', 'de', 'pt-BR'];
+  const language = typeof body.language === 'string' && VALID_LANGS.includes(body.language) ? body.language : null;
 
   if (!url && !text && !pdfBase64) {
     console.warn('[dispatcher] missing input', { requestId, mode });
@@ -70,11 +74,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     const pdfKey = `jobs/${jobId}/input.pdf`;
     await uploadBuffer(pdfKey, pdfBuffer, 'application/pdf');
     console.log('[dispatcher] pdf uploaded to s3', { requestId, jobId, bytes: pdfBuffer.length });
-    message = { jobId, mode, pdfKey, title };
+    message = { jobId, mode, pdfKey, title, ...(voice ? { voice } : {}), ...(language ? { language } : {}) };
   } else if (url) {
-    message = { jobId, mode, url };
+    message = { jobId, mode, url, ...(voice ? { voice } : {}), ...(language ? { language } : {}) };
   } else {
-    message = { jobId, mode, text, title };
+    message = { jobId, mode, text, title, ...(voice ? { voice } : {}), ...(language ? { language } : {}) };
   }
 
   await sqs.send(

@@ -71,8 +71,8 @@ export function useAudioPlayer(uri: string | null, meta?: AudioTrackMeta) {
       const track = {
         id: uri,
         url: uri,
-        title: meta?.title ?? 'Podcastify',
-        artist: meta?.artist ?? 'Podcastify',
+        title: meta?.title ?? 'Sonera',
+        artist: meta?.artist ?? 'Sonera',
         artwork: meta?.artwork ?? undefined,
         duration: meta?.durationSeconds,
       };
