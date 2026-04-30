@@ -9,6 +9,7 @@ const TRASH_FOLDER: Folder = {
   id: TRASH_FOLDER_ID,
   name: 'Trash',
   color: '#EF4444',
+  iconName: 'trash-outline',
   createdAt: 0,
 };
 
