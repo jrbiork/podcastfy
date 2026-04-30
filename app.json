@@ -8,20 +8,18 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
+      "image": "./assets/splash-sonera.png",
       "resizeMode": "contain",
       "backgroundColor": "#0A0A1A"
     },
     "ios": {
+      "icon": "./assets/ios-icon-sonera.png",
       "supportsTablet": false,
       "bundleIdentifier": "com.rbiork.Podcastify",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"],
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929"
-            ]
-          }
+        "CFBundleDisplayName": "Sonera",
+        "UIBackgroundModes": [
+          "audio"
         ]
       }
     },
@@ -30,7 +28,11 @@
         "backgroundColor": "#0A0A1A"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.rbiork.Podcastify"
+      "package": "com.rbiork.Podcastify",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {},
     "plugins": [
@@ -45,7 +47,17 @@
       [
         "expo-share-extension",
         {
-          "activationRules": [{ "type": "url" }],
+          "activationRules": [
+            {
+              "type": "url"
+            },
+            {
+              "type": "file",
+              "utis": [
+                "com.adobe.pdf"
+              ]
+            }
+          ],
           "backgroundColor": {
             "red": 10,
             "green": 10,
@@ -63,6 +75,29 @@
         }
       ]
     ],
-    "extra": {}
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "PodcastifyShareExtension",
+                  "bundleIdentifier": "com.rbiork.Podcastify.ShareExtension",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.rbiork.Podcastify"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "09265e56-fd9c-41cc-a5a2-dfed5eba771e"
+      },
+      "appleApplicationGroup": "group.com.rbiork.Podcastify"
+    },
+    "owner": "rbiork"
   }
 }

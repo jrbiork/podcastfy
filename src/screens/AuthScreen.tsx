@@ -17,10 +17,7 @@ import { createGuestSession, saveSession } from '../services/auth';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 GoogleSignin.configure({
-  // Native iOS sign-in should work with the iOS OAuth client alone.
-  // Providing an invalid/unconfigured server audience (webClientId) causes:
-  // invalid_audience: "Audience is not a valid client ID."
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  iosClientId: '979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com',
 });
 
 type Nav = StackNavigationProp<RootStackParamList, 'Auth'>;
@@ -87,7 +84,7 @@ export function AuthScreen() {
         <View style={styles.logoWrap}>
           <Ionicons name="headset" size={56} color={Colors.primary} />
         </View>
-        <Text style={styles.title}>Podcastify</Text>
+        <Text style={styles.title}>Sonera</Text>
         <Text style={styles.subtitle}>Turn articles into audio</Text>
 
         <View style={styles.buttons}>

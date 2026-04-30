@@ -19,13 +19,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDES = [
   {
     icon: 'headset' as const,
-    title: 'Turn any article into a podcast',
-    body: 'Share a URL or paste text — Podcastify converts it into an audio episode you can listen to anywhere.',
+    title: 'Turn any article into audio',
+    body: 'Share a URL or paste text — Sonera converts it into an audio episode you can listen to anywhere.',
   },
   {
     icon: 'share-social' as const,
     title: 'Share from any app',
-    body: 'Use the iOS share sheet from Safari, Chrome, or any app to instantly send articles to Podcastify.',
+    body: 'Use the iOS share sheet from Safari, Chrome, or any app to instantly send articles to Sonera.',
   },
   {
     icon: 'cloud-offline' as const,

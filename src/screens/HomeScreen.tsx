@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -22,8 +22,13 @@ import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { useIncomingShare } from '../hooks/useIncomingShare';
 import { hasReachedFreeLimit } from '../services/subscription';
 import { navigateToPaywall } from '../navigation/rootNavigationRef';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GenerationInput } from '../types';
+import { VoicePickerModal } from '../components/VoicePickerModal';
+import { LanguageWheelPicker, LANGUAGES } from '../components/LanguageWheelPicker';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+
+const TTS_VOICE_KEY = 'podcastify_tts_voice';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 
@@ -52,6 +57,20 @@ export function HomeScreen() {
   const [pdfInput, setPdfInput] = useState<{ uri: string; name: string } | null>(null);
   const [mode, setMode] = useState<'podcast' | 'tts'>('tts');
   const [summarize, setSummarize] = useState(true);
+  const [ttsVoice, setTtsVoice] = useState('alloy');
+  const [ttsLanguage, setTtsLanguage] = useState('');
+  const [voicePickerVisible, setVoicePickerVisible] = useState(false);
+  const [langPickerVisible, setLangPickerVisible] = useState(false);
+
+  // Load persisted voice on mount
+  useEffect(() => {
+    AsyncStorage.getItem(TTS_VOICE_KEY).then((v) => { if (v) setTtsVoice(v); }).catch(() => {});
+  }, []);
+
+  const handleVoiceSelect = useCallback((voice: string) => {
+    setTtsVoice(voice);
+    AsyncStorage.setItem(TTS_VOICE_KEY, voice).catch(() => {});
+  }, []);
   const [checking, setChecking] = useState(false);
   const [cfBanner, setCfBanner] = useState(false);
   const [clipboardBanner, setClipboardBanner] = useState<string | null>(null);
@@ -80,10 +99,19 @@ export function HomeScreen() {
     }
   };
 
-  useIncomingShare((url) => {
-    setInputText(url);
-    setClipboardBanner(null);
-  });
+  useIncomingShare(
+    (url) => {
+      setInputText(url);
+      setPdfInput(null);
+      setClipboardBanner(null);
+    },
+    (fileUri) => {
+      const name = fileUri.split('/').pop() ?? 'document.pdf';
+      setPdfInput({ uri: fileUri, name });
+      setInputText('');
+      setClipboardBanner(null);
+    },
+  );
 
   const onInputFocus = async () => {
     try {
@@ -107,14 +135,17 @@ export function HomeScreen() {
         return;
       }
 
+      const voiceOpts = mode === 'tts'
+        ? { voice: ttsVoice, language: ttsLanguage || undefined }
+        : {};
       let input: GenerationInput;
       if (pdfInput) {
-        input = { type: 'pdf', uri: pdfInput.uri, title: pdfInput.name, summarize };
+        input = { type: 'pdf', uri: pdfInput.uri, title: pdfInput.name, summarize, ...voiceOpts };
       } else {
         const text = inputText.trim();
         input = isUrl
-          ? { type: 'url', url: normalizeUrl(text), summarize }
-          : { type: 'text', text, summarize };
+          ? { type: 'url', url: normalizeUrl(text), summarize, ...voiceOpts }
+          : { type: 'text', text, summarize, ...voiceOpts };
       }
 
       navigation.navigate('Generating', { input, mode });
@@ -150,12 +181,9 @@ export function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <View style={styles.logoMark}>
-              <Ionicons name="mic" size={18} color={Colors.primary} />
-            </View>
-            <Text style={styles.appTitle}>Podcastify</Text>
+            <Text style={styles.appTitle}>Sonera</Text>
           </View>
-          <Text style={styles.subtitle}>Turn any article into a podcast</Text>
+          <Text style={styles.subtitle}>Turn any content into audio in seconds</Text>
         </View>
 
         {/* Input card */}
@@ -180,7 +208,7 @@ export function HomeScreen() {
                   onChangeText={(v) => { setInputText(v); setClipboardBanner(null); }}
                   onFocus={onInputFocus}
                   placeholder="Paste a URL or article text…"
-                  placeholderTextColor={Colors.textDim}
+                  placeholderTextColor={Colors.textMuted}
                   multiline
                   textAlignVertical="top"
                   autoCapitalize="none"
@@ -236,7 +264,6 @@ export function HomeScreen() {
 
           {/* Format selector */}
           <View style={styles.optionSection}>
-            <Text style={styles.optionLabel}>Format</Text>
             <View style={styles.segmented}>
               <TouchableOpacity
                 style={[styles.segment, mode === 'tts' && styles.segmentActive]}
@@ -246,7 +273,7 @@ export function HomeScreen() {
                 <Ionicons
                   name="document-text"
                   size={14}
-                  color={mode === 'tts' ? Colors.text : Colors.textMuted}
+                  color={Colors.primary}
                 />
                 <Text style={[styles.segmentText, mode === 'tts' && styles.segmentTextActive]}>
                   Text to Speech
@@ -260,18 +287,13 @@ export function HomeScreen() {
                 <Ionicons
                   name="mic"
                   size={14}
-                  color={mode === 'podcast' ? Colors.text : Colors.textMuted}
+                  color={Colors.primary}
                 />
                 <Text style={[styles.segmentText, mode === 'podcast' && styles.segmentTextActive]}>
-                  Podcast
+                  Audio
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.optionHint}>
-              {mode === 'tts'
-                ? 'Single narrator reads the article · ~10s to generate'
-                : '2-speaker AI dialogue · ~30s to generate'}
-            </Text>
           </View>
 
           {/* Divider */}
@@ -283,7 +305,6 @@ export function HomeScreen() {
               <Ionicons name="sparkles-outline" size={16} color={Colors.primary} />
               <View>
                 <Text style={styles.switchLabel}>Summarize content</Text>
-                <Text style={styles.switchHint}>AI distills the key points</Text>
               </View>
             </View>
             <Switch
@@ -294,6 +315,49 @@ export function HomeScreen() {
               ios_backgroundColor={Colors.border}
             />
           </View>
+
+          {/* TTS-only: voice + language */}
+          {mode === 'tts' && (
+            <>
+              <View style={styles.divider} />
+
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabelGroup}>
+                  <Ionicons name="mic-outline" size={16} color={Colors.primary} />
+                  <Text style={styles.switchLabel}>Voice</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.voiceChip}
+                  onPress={() => setVoicePickerVisible(true)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.voiceChipText}>
+                    {ttsVoice.charAt(0).toUpperCase() + ttsVoice.slice(1)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabelGroup}>
+                  <Ionicons name="language-outline" size={16} color={Colors.primary} />
+                  <Text style={styles.switchLabel}>Translate audio</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.voiceChip}
+                  onPress={() => setLangPickerVisible(true)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.voiceChipText}>
+                    {LANGUAGES.find((l) => l.code === ttsLanguage)?.label ?? 'Auto'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={14} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
         </View>
       </ScrollView>
@@ -316,6 +380,19 @@ export function HomeScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      <VoicePickerModal
+        visible={voicePickerVisible}
+        selectedVoice={ttsVoice}
+        onSelect={handleVoiceSelect}
+        onClose={() => setVoicePickerVisible(false)}
+      />
+      <LanguageWheelPicker
+        visible={langPickerVisible}
+        selectedCode={ttsLanguage}
+        onSelect={setTtsLanguage}
+        onClose={() => setLangPickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -341,16 +418,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  logoMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: Colors.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   appTitle: { color: Colors.text, fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  subtitle: { color: Colors.textMuted, fontSize: FontSize.sm, marginLeft: 46 },
+  subtitle: { color: Colors.text, fontSize: FontSize.sm, fontWeight: '500', opacity: 0.8 },
 
   card: {
     marginHorizontal: Spacing.md,
@@ -434,18 +503,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     gap: Spacing.sm,
   },
-  optionLabel: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  optionHint: {
-    color: Colors.textDim,
-    fontSize: FontSize.xs,
-    lineHeight: 17,
-  },
   segmented: {
     flexDirection: 'row',
     backgroundColor: Colors.bg,
@@ -462,7 +519,11 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: Radius.sm,
   },
-  segmentActive: { backgroundColor: Colors.surfaceElevated },
+  segmentActive: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
   segmentText: { color: Colors.textMuted, fontSize: FontSize.sm, fontWeight: '500' },
   segmentTextActive: { color: Colors.text, fontWeight: '600' },
 
@@ -484,12 +545,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: '500',
   },
-  switchHint: {
-    color: Colors.textDim,
-    fontSize: FontSize.xs,
-    marginTop: 1,
+  voiceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.primary + '15',
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: Colors.primary + '40',
   },
-
+  voiceChipText: {
+    color: Colors.primary,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+  },
   floatingContainer: {
     position: 'absolute',
     left: Spacing.md,

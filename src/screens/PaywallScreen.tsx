@@ -28,7 +28,7 @@ import type { RootStackParamList } from '../navigation/rootNavigationRef';
 type Nav = StackNavigationProp<RootStackParamList, 'Paywall'>;
 
 const BENEFITS = [
-  'Unlimited podcast generation',
+  'Unlimited audio generation',
   'Unlimited text-to-speech',
   'All future features included',
 ];

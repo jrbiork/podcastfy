@@ -3,17 +3,24 @@ import type { ScriptTurn } from './scriptWriter';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const VOICES: Record<string, 'nova' | 'onyx' | 'alloy'> = {
+type OAIVoice = 'alloy' | 'echo' | 'fable' | 'nova' | 'onyx' | 'shimmer';
+
+const VOICES: Record<string, OAIVoice> = {
   host: 'nova',
   guest: 'onyx',
   narrator: 'alloy',
 };
 
-export async function generateAudio(script: ScriptTurn[]): Promise<Buffer> {
+const VALID_VOICES = new Set<string>(['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']);
+
+export async function generateAudio(script: ScriptTurn[], ttsVoice?: string): Promise<Buffer> {
   const chunks: Buffer[] = [];
 
   for (const turn of script) {
-    const voice = VOICES[turn.speaker] ?? VOICES.narrator;
+    const voice: OAIVoice =
+      turn.speaker === 'narrator' && ttsVoice && VALID_VOICES.has(ttsVoice)
+        ? (ttsVoice as OAIVoice)
+        : (VOICES[turn.speaker] ?? VOICES.narrator);
     const response = await openai.audio.speech.create({
       model: 'tts-1',
       voice,

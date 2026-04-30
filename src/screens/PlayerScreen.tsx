@@ -40,16 +40,16 @@ export function PlayerScreen() {
   const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate } =
     useAudioPlayer(episode.uri, {
       title: episode.title,
-      artist: sourceDomain(episode.sourceUrl) || 'Podcastify',
+      artist: sourceDomain(episode.sourceUrl) || 'Sonera',
       artwork: episode.thumbnailUrl,
       durationSeconds: episode.durationSeconds,
     });
 
-  const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
-  const SPEEDS: (1 | 1.5 | 2)[] = [1, 1.5, 2];
+  const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);
+  const SPEEDS: (0.5 | 0.75 | 1 | 1.5 | 2)[] = [0.5, 0.75, 1, 1.5, 2];
 
   const handleSpeedPress = useCallback(
-    async (s: 1 | 1.5 | 2) => {
+    async (s: 0.5 | 0.75 | 1 | 1.5 | 2) => {
       setSpeed(s);
       await setRate(s);
     },
@@ -149,7 +149,7 @@ export function PlayerScreen() {
                   size={12}
                   color={episode.mode === 'podcast' ? Colors.primary : Colors.accent}
                 />
-                <Text style={styles.modeText}>{episode.mode === 'podcast' ? 'Podcast' : 'TTS'}</Text>
+                <Text style={styles.modeText}>{episode.mode === 'podcast' ? 'Audio' : 'TTS'}</Text>
               </View>
             </View>
           </View>

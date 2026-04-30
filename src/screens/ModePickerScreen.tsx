@@ -64,7 +64,7 @@ export function ModePickerScreen() {
               <View style={[styles.cardIcon, { backgroundColor: Colors.primary + '22' }]}>
                 <Ionicons name="mic" size={28} color={Colors.primary} />
               </View>
-              <Text style={styles.cardTitle}>Podcast Style</Text>
+              <Text style={styles.cardTitle}>Audio Style</Text>
               <Text style={styles.cardDesc}>
                 AI rewrites the article as a lively 2-speaker dialogue with Host &amp; Guest
               </Text>

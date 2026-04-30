@@ -84,6 +84,8 @@ export async function dispatchJob(
   } else {
     body = { text: input.text, title: input.title ?? '', mode };
   }
+  if (input.voice) body.voice = input.voice;
+  if (input.language) body.language = input.language;
   const headers = await authHeaders();
   const bodyJson = JSON.stringify(body);
   console.log('[api] dispatch request', {

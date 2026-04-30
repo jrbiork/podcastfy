@@ -2,6 +2,7 @@ import { SQSHandler, SQSRecord } from 'aws-lambda';
 import { extractArticle, ScraperError } from './scraper';
 import { generatePodcastScript, buildTtsScript, generateContextTitle } from './scriptWriter';
 import { generateAudio, estimateDurationSeconds } from './tts';
+import { translateText } from './translator';
 import { writeStatus, uploadAudio, downloadBuffer } from '../shared/s3';
 
 // pdfjs-dist (bundled inside pdf-parse) calls `new DOMMatrix()` at module-load
@@ -27,6 +28,8 @@ interface JobMessage {
   text?: string;
   title?: string;
   pdfKey?: string;
+  voice?: string;
+  language?: string;
 }
 
 function normalizeInputTitle(value?: string): string {
@@ -49,7 +52,7 @@ function shouldGenerateAiTitle(mode: JobMessage['mode'], title: string, hasPdf: 
 }
 
 async function processJob(msg: JobMessage): Promise<void> {
-  const { jobId, mode, url, text, title, pdfKey } = msg;
+  const { jobId, mode, url, text, title, pdfKey, voice, language } = msg;
   console.log('[worker] job start', { jobId, mode, hasUrl: Boolean(url), textLength: text?.length ?? 0, hasPdf: Boolean(pdfKey), title: title ?? null });
 
   await writeStatus(jobId, { status: 'processing' });
@@ -115,6 +118,16 @@ async function processJob(msg: JobMessage): Promise<void> {
   await writeStatus(jobId, { status: 'scripting' });
   console.log('[worker] status -> scripting', { jobId });
 
+  // Translate content if a non-English language was requested for TTS
+  if (mode === 'tts' && language && language !== 'en') {
+    try {
+      articleText = await translateText(articleText, language);
+      console.log('[worker] text translated', { jobId, language, textLength: articleText.length });
+    } catch (e) {
+      console.warn('[worker] translation failed, using original', { jobId, error: (e as Error).message });
+    }
+  }
+
   // Step 2: generate script
   const script =
     mode === 'podcast'
@@ -126,7 +139,7 @@ async function processJob(msg: JobMessage): Promise<void> {
   console.log('[worker] status -> generating_audio', { jobId });
 
   // Step 3: generate audio
-  const audioBuffer = await generateAudio(script);
+  const audioBuffer = await generateAudio(script, mode === 'tts' ? voice : undefined);
   const durationSeconds = estimateDurationSeconds(script);
   console.log('[worker] audio generated', { jobId, bytes: audioBuffer.byteLength, durationSeconds });
 
