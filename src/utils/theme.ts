@@ -48,3 +48,37 @@ export const FontSize = {
   xxl: 26,
   xxxl: 34,
 };
+
+export const FOLDER_COLORS = [
+  '#60A5FA',
+  '#34D399',
+  '#F472B6',
+  '#FBBF24',
+  '#A78BFA',
+  '#F87171',
+  '#38BDF8',
+  '#FB923C',
+];
+
+export const FOLDER_ICONS = [
+  'headset-outline',
+  'folder-outline',
+  'mic-outline',
+  'briefcase-outline',
+  'book-outline',
+  'home-outline',
+  'heart-outline',
+  'star-outline',
+  'school-outline',
+  'cafe-outline',
+  'musical-notes-outline',
+  'camera-outline',
+  'globe-outline',
+  'people-outline',
+  'bulb-outline',
+  'rocket-outline',
+  'trophy-outline',
+  'leaf-outline',
+  'fitness-outline',
+  'medical-outline',
+];

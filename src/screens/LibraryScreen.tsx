@@ -12,10 +12,10 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { FolderModal } from '../components/FolderModal';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -31,17 +31,6 @@ import { TRASH_FOLDER_ID } from '../services/storage';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-
-const FOLDER_COLORS = [
-  '#60A5FA',
-  '#34D399',
-  '#F472B6',
-  '#FBBF24',
-  '#A78BFA',
-  '#F87171',
-  '#38BDF8',
-  '#FB923C',
-];
 
 function formatFolderName(name: string): string {
   const normalized = name.trim().replace(/\s+/g, ' ');
@@ -406,9 +395,8 @@ export function LibraryScreen() {
   const [pendingGenerations, setPendingGenerations] = useState<
     PendingGeneration[]
   >(() => generationStore.get());
-  const [folderNameVisible, setFolderNameVisible] = useState(false);
-  const [folderNameDraft, setFolderNameDraft] = useState('');
-  const [renamingFolder, setRenamingFolder] = useState<Folder | null>(null);
+  const [folderModalVisible, setFolderModalVisible] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<Folder | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
   const openSwipeable = useRef<Swipeable | null>(null);
   const listRef = useRef<FlatList<Episode>>(null);
@@ -540,29 +528,16 @@ export function LibraryScreen() {
     );
   };
 
-  const closeFolderNameModal = () => {
-    setFolderNameVisible(false);
-    setFolderNameDraft('');
-    setRenamingFolder(null);
-  };
-
-  const submitFolderName = () => {
-    const normalized = formatFolderName(folderNameDraft);
+  const handleFolderSave = ({ name, color, iconName }: Pick<Folder, 'name' | 'color' | 'iconName'>) => {
+    const normalized = formatFolderName(name);
     if (!normalized) return;
 
-    if (renamingFolder) {
-      updateFolder({ ...renamingFolder, name: normalized });
-      closeFolderNameModal();
-      return;
+    if (editingFolder) {
+      updateFolder({ ...editingFolder, name: normalized, color, iconName });
+    } else {
+      addFolder({ id: generateId(), name: normalized, color, iconName, createdAt: Date.now() });
     }
-
-    addFolder({
-      id: generateId(),
-      name: normalized,
-      color: FOLDER_COLORS[folders.length % FOLDER_COLORS.length],
-      createdAt: Date.now(),
-    });
-    closeFolderNameModal();
+    setEditingFolder(undefined);
   };
 
   const onFolderLongPress = (folder: Folder) => {
@@ -570,15 +545,14 @@ export function LibraryScreen() {
     const { ActionSheetIOS } = require('react-native');
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        options: ['Cancel', 'Rename', 'Delete'],
+        options: ['Cancel', 'Edit', 'Delete'],
         destructiveButtonIndex: 2,
         cancelButtonIndex: 0,
       },
       (index: number) => {
         if (index === 1) {
-          setRenamingFolder(folder);
-          setFolderNameDraft(folder.name);
-          setFolderNameVisible(true);
+          setEditingFolder(folder);
+          setFolderModalVisible(true);
         }
         if (index === 2) {
           Alert.alert(
@@ -603,9 +577,8 @@ export function LibraryScreen() {
   };
 
   const onNewFolder = () => {
-    setRenamingFolder(null);
-    setFolderNameDraft('');
-    setFolderNameVisible(true);
+    setEditingFolder(undefined);
+    setFolderModalVisible(true);
   };
 
   const onMoveConfirm = async (folderId: string | undefined) => {
@@ -814,52 +787,12 @@ export function LibraryScreen() {
         onDismiss={() => setMovingEpisode(null)}
       />
 
-      <Modal
-        visible={folderNameVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeFolderNameModal}
-      >
-        <Pressable
-          style={styles.folderModalBackdrop}
-          onPress={closeFolderNameModal}
-        />
-        <View style={styles.folderModalCard}>
-          <Text style={styles.folderModalTitle}>
-            {renamingFolder ? 'Rename Folder' : 'New Folder'}
-          </Text>
-          <TextInput
-            value={folderNameDraft}
-            onChangeText={setFolderNameDraft}
-            placeholder="Folder name"
-            placeholderTextColor={Colors.textDim}
-            autoFocus
-            autoCorrect={false}
-            autoCapitalize="sentences"
-            style={styles.folderNameInput}
-            returnKeyType={renamingFolder ? 'done' : 'go'}
-            onSubmitEditing={submitFolderName}
-          />
-          <View style={styles.folderModalActions}>
-            <TouchableOpacity
-              style={[styles.folderModalBtn, styles.folderModalBtnGhost]}
-              onPress={closeFolderNameModal}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.folderModalBtnGhostText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.folderModalBtn, styles.folderModalBtnPrimary]}
-              onPress={submitFolderName}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.folderModalBtnPrimaryText}>
-                {renamingFolder ? 'Save' : 'Create'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <FolderModal
+        visible={folderModalVisible}
+        folder={editingFolder}
+        onSave={handleFolderSave}
+        onClose={() => { setFolderModalVisible(false); setEditingFolder(undefined); }}
+      />
     </SafeAreaView>
   );
 }
