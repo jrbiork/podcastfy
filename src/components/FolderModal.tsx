@@ -57,76 +57,85 @@ export function FolderModal({ visible, folder, onSave, onClose }: Props) {
 
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
           <View style={styles.handle} />
-
-          <Text style={styles.title}>{folder ? 'Edit Folder' : 'New Folder'}</Text>
-
-          <View style={styles.preview}>
-            <View style={[styles.previewIcon, { backgroundColor: color + '22', borderColor: color + '55' }]}>
-              <Ionicons name={iconName as any} size={36} color={color} />
+          <ScrollView
+            style={styles.formScroll}
+            contentContainerStyle={styles.formContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.preview}>
+              <View style={[styles.previewIcon, { backgroundColor: color + '22', borderColor: color + '55' }]}>
+                <Ionicons name={iconName as any} size={36} color={color} />
+              </View>
+              <Text style={[styles.previewName, { color }]}>{name || 'Folder Name'}</Text>
             </View>
-            <Text style={[styles.previewName, { color }]}>{name || 'Folder Name'}</Text>
-          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Folder name"
-            placeholderTextColor={Colors.textDim}
-            value={name}
-            onChangeText={setName}
-            maxLength={30}
-            autoFocus={!folder}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Folder name"
+              placeholderTextColor={Colors.textDim}
+              value={name}
+              onChangeText={setName}
+              maxLength={30}
+              autoFocus={!folder}
+              returnKeyType="done"
+              onSubmitEditing={handleSave}
+            />
 
-          <Text style={styles.sectionLabel}>Color</Text>
-          <View style={styles.colorRow}>
-            {FOLDER_COLORS.map((c) => (
-              <TouchableOpacity
-                key={c}
-                style={[styles.colorDot, { backgroundColor: c }, color === c && styles.colorDotSelected]}
-                onPress={() => setColor(c)}
-                activeOpacity={0.8}
-              />
-            ))}
-          </View>
-
-          <Text style={styles.sectionLabel}>Icon</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconScroll}>
-            <View style={styles.iconGrid}>
-              {FOLDER_ICONS.map((icon) => (
+            <Text style={styles.sectionLabel}>Color</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.colorScroll}
+              contentContainerStyle={styles.colorRow}
+            >
+              {FOLDER_COLORS.map((c) => (
                 <TouchableOpacity
-                  key={icon}
-                  style={[
-                    styles.iconBtn,
-                    iconName === icon && { backgroundColor: color + '33', borderColor: color },
-                  ]}
-                  onPress={() => setIconName(icon)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={icon as any}
-                    size={22}
-                    color={iconName === icon ? color : Colors.textMuted}
-                  />
-                </TouchableOpacity>
+                  key={c}
+                  style={[styles.colorDot, { backgroundColor: c }, color === c && styles.colorDotSelected]}
+                  onPress={() => setColor(c)}
+                  activeOpacity={0.8}
+                />
               ))}
+            </ScrollView>
+
+            <Text style={styles.sectionLabel}>Icon</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.iconScroll}>
+              <View style={styles.iconGrid}>
+                {FOLDER_ICONS.map((icon) => (
+                  <TouchableOpacity
+                    key={icon}
+                    style={[
+                      styles.iconBtn,
+                      iconName === icon && { backgroundColor: color + '33', borderColor: color },
+                    ]}
+                    onPress={() => setIconName(icon)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={icon as any}
+                      size={22}
+                      color={iconName === icon ? color : Colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, !name.trim() && styles.saveBtnDisabled]}
+                onPress={handleSave}
+                disabled={!name.trim()}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.saveText}>{folder ? 'Save' : 'Create'}</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.saveBtn, !name.trim() && styles.saveBtnDisabled]}
-              onPress={handleSave}
-              disabled={!name.trim()}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.saveText}>{folder ? 'Save' : 'Create'}</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -149,6 +158,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: Colors.border,
     padding: Spacing.lg,
+    maxHeight: '82%',
+  },
+  formScroll: {
+    flexGrow: 0,
+  },
+  formContent: {
+    paddingBottom: 2,
   },
   handle: {
     width: 36,
@@ -157,13 +173,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.borderLight,
     alignSelf: 'center',
     marginBottom: Spacing.lg,
-  },
-  title: {
-    color: Colors.text,
-    fontSize: FontSize.xl,
-    fontWeight: '700',
-    marginBottom: Spacing.lg,
-    textAlign: 'center',
   },
   preview: {
     alignItems: 'center',
@@ -201,11 +210,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  colorScroll: {
+    marginBottom: Spacing.lg,
+  },
   colorRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginBottom: Spacing.lg,
-    flexWrap: 'wrap',
+    paddingLeft: Spacing.xs,
+    paddingRight: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   colorDot: {
     width: 36,

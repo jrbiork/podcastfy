@@ -7,8 +7,10 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +23,12 @@ GoogleSignin.configure({
 });
 
 type Nav = StackNavigationProp<RootStackParamList, 'Auth'>;
+
+function fullNameToDisplayName(fullName: AppleAuthentication.AppleAuthenticationFullName | null): string | undefined {
+  if (!fullName) return undefined;
+  const parts = [fullName.givenName, fullName.familyName].filter(Boolean);
+  return parts.length ? parts.join(' ') : undefined;
+}
 
 export function AuthScreen() {
   const navigation = useNavigation<Nav>();
@@ -63,6 +71,45 @@ export function AuthScreen() {
     }
   };
 
+  const onApple = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) throw new Error('Apple Sign-In is not available on this device.');
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error('Apple did not return an ID token.');
+      }
+
+      await saveSession({
+        provider: 'apple',
+        userId: credential.user,
+        email: credential.email ?? undefined,
+        displayName: fullNameToDisplayName(credential.fullName),
+        oidcIdToken: credential.identityToken,
+      });
+
+      navigation.replace('Main');
+    } catch (e: unknown) {
+      const code = (e as { code?: string }).code;
+      if (code === 'ERR_REQUEST_CANCELED') {
+        // user canceled — not an error
+      } else {
+        setError((e as { message?: string }).message ?? 'Apple Sign-In failed');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onGuest = async () => {
     setError(null);
     setLoading(true);
@@ -88,6 +135,24 @@ export function AuthScreen() {
         <Text style={styles.subtitle}>Turn articles into audio</Text>
 
         <View style={styles.buttons}>
+          {Platform.OS === 'ios' ? (
+            <TouchableOpacity
+              style={[styles.btn, loading && styles.btnDisabled]}
+              onPress={onApple}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color={Colors.text} />
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={22} color={Colors.text} />
+                  <Text style={styles.btnText}>Continue with Apple</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity
             style={[styles.btn, loading && styles.btnDisabled]}
             onPress={onGoogle}
