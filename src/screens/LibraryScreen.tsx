@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { FolderModal } from '../components/FolderModal';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
@@ -777,18 +777,43 @@ export function LibraryScreen() {
             <Ionicons name="headset-outline" size={48} color={Colors.textDim} />
             <Text style={styles.emptyTitle}>
               {selectedFolderId === 'all'
-                ? 'No episodes yet'
+                ? 'No audios yet'
                 : selectedFolderId === TRASH_FOLDER_ID
                   ? 'Trash is empty'
-                  : 'No episodes in this folder'}
+                  : 'No audios in this folder'}
             </Text>
             <Text style={styles.emptySub}>
               {selectedFolderId === 'all'
-                ? 'Head to Home to create your first episode'
+                ? 'Head to Home to create your first audio'
                 : selectedFolderId === TRASH_FOLDER_ID
                   ? 'Deleted audios stay here for 30 days'
-                  : 'Swipe an episode to move it here'}
+                  : 'Move an audio here or create a new one from Home'}
             </Text>
+            {selectedFolderId !== TRASH_FOLDER_ID ? (
+              <TouchableOpacity
+                style={styles.emptyCta}
+                onPress={() =>
+                  navigation.dispatch(
+                    CommonActions.reset({
+                      index: 0,
+                      routes: [
+                        {
+                          name: 'Main',
+                          state: {
+                            index: 0,
+                            routes: [{ name: 'HomeTab' }, { name: 'LibraryTab' }, { name: 'ProfileTab' }],
+                          },
+                        },
+                      ],
+                    }),
+                  )
+                }
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add-circle-outline" size={16} color={Colors.bg} />
+                <Text style={styles.emptyCtaText}>Create Audio</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         }
       />
@@ -1064,5 +1089,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 260,
     lineHeight: 20,
+  },
+  emptyCta: {
+    marginTop: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 11,
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyCtaText: {
+    color: Colors.bg,
+    fontSize: FontSize.sm,
+    fontWeight: '700',
   },
 });

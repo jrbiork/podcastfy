@@ -15,6 +15,7 @@
     "ios": {
       "icon": "./assets/ios-icon-sonera.png",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "bundleIdentifier": "com.rbiork.Podcastify",
       "infoPlist": {
         "CFBundleDisplayName": "Sonera",
@@ -37,6 +38,7 @@
     "web": {},
     "plugins": [
       "expo-av",
+      "expo-apple-authentication",
       "expo-secure-store",
       [
         "@react-native-google-signin/google-signin",
