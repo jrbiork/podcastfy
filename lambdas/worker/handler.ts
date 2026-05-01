@@ -153,7 +153,7 @@ async function processJob(msg: JobMessage): Promise<void> {
 
   // Step 3: generate audio
   const audioBuffer = await generateAudio(script, mode === 'tts' ? voice : undefined);
-  const durationSeconds = estimateDurationSeconds(script);
+  const durationSeconds = estimateDurationSeconds(script, audioBuffer);
   console.log('[worker] audio generated', { jobId, bytes: audioBuffer.byteLength, durationSeconds });
 
   // Step 4: upload to S3

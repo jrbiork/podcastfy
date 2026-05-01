@@ -7,8 +7,8 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
-  GestureResponderEvent,
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +35,6 @@ export function PlayerScreen() {
   const { update } = useEpisodes();
 
   const episode = params.episode;
-  const [trackWidth, setTrackWidth] = useState(1);
 
   const handleDurationResolved = useCallback(
     (durationSeconds: number) => {
@@ -66,7 +65,15 @@ export function PlayerScreen() {
   );
 
   const totalMs = durationMs || episode.durationSeconds * 1000 || 1;
-  const progress = Math.min(1, positionMs / totalMs);
+  const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
+
+  // Clear scrub override once the player has caught up to the seeked position
+  useEffect(() => {
+    if (scrubPositionMs === null) return;
+    if (Math.abs(positionMs - scrubPositionMs) < 1500) {
+      setScrubPositionMs(null);
+    }
+  }, [positionMs, scrubPositionMs]);
 
   // Mark as played and save position on pause / leave
   const persistPosition = useCallback(
@@ -101,14 +108,6 @@ export function PlayerScreen() {
     if (isPlaying) { pause(); return; }
     play();
   }, [hasEnded, isPlaying, restart, pause, play]);
-
-  const handleScrub = useCallback(
-    (e: GestureResponderEvent) => {
-      const fraction = Math.max(0, Math.min(1, e.nativeEvent.locationX / trackWidth));
-      seek(fraction * totalMs);
-    },
-    [trackWidth, totalMs, seek],
-  );
 
   const domain = sourceDomain(episode.sourceUrl);
 
@@ -166,19 +165,19 @@ export function PlayerScreen() {
 
         {/* Scrubber */}
         <View style={styles.scrubberSection}>
-          <View
-            style={styles.scrubberTrack}
-            onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
-            onStartShouldSetResponder={() => true}
-            onMoveShouldSetResponder={() => true}
-            onResponderGrant={handleScrub}
-            onResponderMove={handleScrub}
-          >
-            <View style={[styles.scrubberFill, { width: `${progress * 100}%` as `${number}%` }]} />
-            <View style={[styles.scrubberThumb, { left: progress * Math.max(0, trackWidth - 16) }]} />
-          </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={totalMs}
+            value={scrubPositionMs ?? positionMs}
+            minimumTrackTintColor={Colors.primary}
+            maximumTrackTintColor={Colors.border}
+            thumbTintColor={Colors.primary}
+            onValueChange={(v) => setScrubPositionMs(v)}
+            onSlidingComplete={(v) => { seek(v); setScrubPositionMs(v); }}
+          />
           <View style={styles.timeRow}>
-            <Text style={styles.timeText}>{formatDuration(Math.floor(positionMs / 1000))}</Text>
+            <Text style={styles.timeText}>{formatDuration(Math.floor((scrubPositionMs ?? positionMs) / 1000))}</Text>
             <Text style={styles.timeText}>{formatDuration(Math.floor(totalMs / 1000))}</Text>
           </View>
         </View>
@@ -299,26 +298,8 @@ const styles = StyleSheet.create({
   badgePodcast: { backgroundColor: Colors.primary + '22' },
   badgeTts: { backgroundColor: Colors.accent + '22' },
   modeText: { fontSize: FontSize.xs, color: Colors.textMuted },
-  scrubberSection: { width: '100%', gap: Spacing.xs },
-  scrubberTrack: {
-    height: 4,
-    backgroundColor: Colors.border,
-    borderRadius: 2,
-    overflow: 'visible',
-  },
-  scrubberFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
-  scrubberThumb: {
-    position: 'absolute',
-    top: -6,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.primary,
-  },
+  scrubberSection: { width: '100%' },
+  slider: { width: '100%', height: 40 },
   timeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -10,6 +10,7 @@ import {
   NativeScrollEvent,
   SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
@@ -18,17 +19,17 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SLIDES = [
   {
-    icon: 'headset' as const,
+    image: require('../../assets/onboard-earbuds.png'),
     title: 'Turn any article into audio',
     body: 'Share a URL or paste text — Sonera converts it into an audio episode you can listen to anywhere.',
   },
   {
-    icon: 'share-social' as const,
+    image: require('../../assets/onboard-share.png'),
     title: 'Share from any app',
     body: 'Use the iOS share sheet from Safari, Chrome, or any app to instantly send articles to Sonera.',
   },
   {
-    icon: 'cloud-offline' as const,
+    image: require('../../assets/onboard-offline.png'),
     title: 'Listen anywhere, offline',
     body: 'Episodes are saved on your device. Play them on your commute, at the gym, or with no WiFi.',
   },
@@ -71,9 +72,7 @@ export function OnboardingScreen({ onComplete }: Props) {
         getItemLayout={(_, i) => ({ length: SCREEN_WIDTH, offset: SCREEN_WIDTH * i, index: i })}
         renderItem={({ item }) => (
           <View style={[styles.page, { width: SCREEN_WIDTH }]}>
-            <View style={styles.iconWrap}>
-              <Ionicons name={item.icon} size={52} color={Colors.primary} />
-            </View>
+            <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.body}>{item.body}</Text>
           </View>
@@ -124,13 +123,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  iconWrap: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: Colors.primary + '22',
-    justifyContent: 'center',
-    alignItems: 'center',
+  slideImage: {
+    width: 180,
+    height: 180,
     marginBottom: Spacing.xl,
   },
   title: {
