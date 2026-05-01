@@ -131,10 +131,13 @@ async function processJob(msg: JobMessage): Promise<void> {
     afterChars: articleText.length,
   });
 
-  // Translate content if a non-English language was requested for TTS
-  if (mode === 'tts' && language && language !== 'en') {
+  // Translate content and title if a language was requested for TTS
+  if (mode === 'tts' && language) {
     try {
-      articleText = await translateText(articleText, language);
+      [articleText, articleTitle] = await Promise.all([
+        translateText(articleText, language),
+        translateText(articleTitle, language),
+      ]);
       console.log('[worker] text translated', { jobId, language, textLength: articleText.length });
     } catch (e) {
       console.warn('[worker] translation failed, using original', { jobId, error: (e as Error).message });
