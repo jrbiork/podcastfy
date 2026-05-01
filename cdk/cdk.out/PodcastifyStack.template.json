@@ -11,7 +11,8 @@
         "*"
        ],
        "AllowedMethods": [
-        "GET"
+        "GET",
+        "PUT"
        ],
        "AllowedOrigins": [
         "*"
@@ -188,7 +189,7 @@
    "Properties": {
     "MessageRetentionPeriod": 3600,
     "QueueName": "podcastify-jobs",
-    "VisibilityTimeout": 360
+    "VisibilityTimeout": 660
    },
    "UpdateReplacePolicy": "Delete",
    "DeletionPolicy": "Delete",
@@ -237,6 +238,9 @@
      "Statement": [
       {
        "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
         "s3:DeleteObject*",
         "s3:PutObject",
         "s3:PutObjectLegalHold",
@@ -305,7 +309,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "de842e9daee39fc82ca77dee8e4cf1571d0eeed98ce6c2346416b4f8789e6395.zip"
+     "S3Key": "e397abeec045e47f63767ea9e6199bbef1f1f6488af3808df6684fe447a96767.zip"
     },
     "Environment": {
      "Variables": {
@@ -338,7 +342,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Dispatcher/Resource",
-    "aws:asset:path": "asset.de842e9daee39fc82ca77dee8e4cf1571d0eeed98ce6c2346416b4f8789e6395",
+    "aws:asset:path": "asset.e397abeec045e47f63767ea9e6199bbef1f1f6488af3808df6684fe447a96767",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -434,7 +438,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "e1073014595ef735952210ffed4f8df8416210a1797007487a350f594179cb45.zip"
+     "S3Key": "72f2848694f64888d45023cfccf157a3ee1c0e2ff52275eb4db12bca565ccf6b.zip"
     },
     "Environment": {
      "Variables": {
@@ -464,7 +468,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Status/Resource",
-    "aws:asset:path": "asset.e1073014595ef735952210ffed4f8df8416210a1797007487a350f594179cb45",
+    "aws:asset:path": "asset.72f2848694f64888d45023cfccf157a3ee1c0e2ff52275eb4db12bca565ccf6b",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -583,7 +587,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "15a5c019b96376fad793b1f0deb1a61266364f2a612db881ed515a1233e6306b.zip"
+     "S3Key": "c26538d5e9caf30fcf09d2e0b105dfd0d70e831907531f6a17fd35b81336551e.zip"
     },
     "Environment": {
      "Variables": {
@@ -598,7 +602,7 @@
     },
     "FunctionName": "podcastify-worker",
     "Handler": "index.handler",
-    "MemorySize": 1024,
+    "MemorySize": 2048,
     "Role": {
      "Fn::GetAtt": [
       "WorkerServiceRole8543584E",
@@ -606,7 +610,7 @@
      ]
     },
     "Runtime": "nodejs20.x",
-    "Timeout": 300
+    "Timeout": 600
    },
    "DependsOn": [
     "WorkerServiceRoleDefaultPolicyAE71B5FA",
@@ -614,7 +618,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.15a5c019b96376fad793b1f0deb1a61266364f2a612db881ed515a1233e6306b",
+    "aws:asset:path": "asset.c26538d5e9caf30fcf09d2e0b105dfd0d70e831907531f6a17fd35b81336551e",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -750,6 +754,156 @@
    },
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Api/POST--jobs/Resource"
+   }
+  },
+  "ApiPOSTjobspdfpresignDispatcherPdfPresignIntegration3B01D291": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--presign/DispatcherPdfPresignIntegration/Resource"
+   }
+  },
+  "ApiPOSTjobspdfpresignDispatcherPdfPresignIntegrationPermissionB5F52A24": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/jobs/pdf/presign"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--presign/DispatcherPdfPresignIntegration-Permission"
+   }
+  },
+  "ApiPOSTjobspdfpresign9D20527C": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /jobs/pdf/presign",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTjobspdfpresignDispatcherPdfPresignIntegration3B01D291"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--presign/Resource"
+   }
+  },
+  "ApiPOSTjobspdffinalizeDispatcherPdfFinalizeIntegration824AF4AC": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--finalize/DispatcherPdfFinalizeIntegration/Resource"
+   }
+  },
+  "ApiPOSTjobspdffinalizeDispatcherPdfFinalizeIntegrationPermission6A5996E5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DispatcherD4A12972",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/jobs/pdf/finalize"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--finalize/DispatcherPdfFinalizeIntegration-Permission"
+   }
+  },
+  "ApiPOSTjobspdffinalizeF242C8C5": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /jobs/pdf/finalize",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTjobspdffinalizeDispatcherPdfFinalizeIntegration824AF4AC"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--jobs--pdf--finalize/Resource"
    }
   },
   "ApiGETjobsjobIdStatusIntegrationC26ED6C9": {

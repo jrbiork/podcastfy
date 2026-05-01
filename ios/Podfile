@@ -72,7 +72,7 @@ target 'Podcastify' do
 end
 
 target 'PodcastifyShareExtension' do     
-  exclude = ["expo-updates", "expo-dev-client", "expo-splash-screen", "expo-font", "react-native-purchases"]
+  exclude = ["expo-updates", "expo-dev-client", "expo-splash-screen", "expo-font", "react-native-purchases", "react-native-track-player"]
   use_expo_modules!(exclude: exclude)
   
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'

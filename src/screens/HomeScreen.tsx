@@ -20,6 +20,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { useIncomingShare } from '../hooks/useIncomingShare';
+import { MAX_PDF_UPLOAD_BYTES } from '../services/api';
 import { hasReachedFreeLimit } from '../services/subscription';
 import { navigateToPaywall } from '../navigation/rootNavigationRef';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -87,8 +88,11 @@ export function HomeScreen() {
       });
       if (result.canceled) return;
       const asset = result.assets[0];
-      if (asset.size && asset.size > 8 * 1024 * 1024) {
-        Alert.alert('PDF too large', 'Please choose a PDF under 8 MB.');
+      if (asset.size && asset.size > MAX_PDF_UPLOAD_BYTES) {
+        Alert.alert(
+          'PDF too large',
+          `Please choose a PDF under ${Math.floor(MAX_PDF_UPLOAD_BYTES / (1024 * 1024))} MB.`,
+        );
         return;
       }
       setPdfInput({ uri: asset.uri, name: asset.name });
@@ -183,7 +187,7 @@ export function HomeScreen() {
           <View style={styles.titleRow}>
             <Text style={styles.appTitle}>Sonera</Text>
           </View>
-          <Text style={styles.subtitle}>Turn any content into audio in seconds</Text>
+          <Text style={styles.subtitle}>Turn any content into audio</Text>
         </View>
 
         {/* Input card */}
@@ -290,7 +294,7 @@ export function HomeScreen() {
                   color={Colors.primary}
                 />
                 <Text style={[styles.segmentText, mode === 'podcast' && styles.segmentTextActive]}>
-                  Audio
+                  Podcast
                 </Text>
               </TouchableOpacity>
             </View>

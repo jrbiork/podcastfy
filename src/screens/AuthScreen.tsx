@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
-import { createGuestSession, saveSession } from '../services/auth';
+import { saveSession } from '../services/auth';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 GoogleSignin.configure({
@@ -110,20 +110,6 @@ export function AuthScreen() {
     }
   };
 
-  const onGuest = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const session = await createGuestSession();
-      await saveSession(session);
-      navigation.replace('Main');
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not continue');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
@@ -169,14 +155,6 @@ export function AuthScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.skipBtn, loading && styles.btnDisabled]}
-            onPress={onGuest}
-            disabled={loading}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.skipText}>Continue without signing in</Text>
-          </TouchableOpacity>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -236,6 +214,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.md,
   },
-  skipBtn: { paddingVertical: Spacing.md, alignItems: 'center' },
-  skipText: { color: Colors.textDim, fontSize: FontSize.sm, fontWeight: '500' },
 });

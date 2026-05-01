@@ -6,6 +6,8 @@
 	<string>group.com.rbiork.Podcastify</string>
 	<key>AppGroupIdentifier</key>
 	<string>group.com.rbiork.Podcastify</string>
+	<key>CFBundleAllowedMixedLocalizations</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

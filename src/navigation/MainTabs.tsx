@@ -10,6 +10,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { Colors, FontSize } from '../utils/theme';
+import { resumePersistedGenerations } from '../services/generationService';
 
 type TabParamList = {
   HomeTab: undefined;
@@ -119,6 +120,10 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export function MainTabs() {
+  useEffect(() => {
+    void resumePersistedGenerations();
+  }, []);
+
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}

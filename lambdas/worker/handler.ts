@@ -1,6 +1,11 @@
 import { SQSHandler, SQSRecord } from 'aws-lambda';
 import { extractArticle, ScraperError } from './scraper';
-import { generatePodcastScript, buildTtsScript, generateContextTitle } from './scriptWriter';
+import {
+  extractCoreContentForSpeech,
+  generatePodcastScript,
+  buildTtsScript,
+  generateContextTitle,
+} from './scriptWriter';
 import { generateAudio, estimateDurationSeconds } from './tts';
 import { translateText } from './translator';
 import { writeStatus, uploadAudio, downloadBuffer } from '../shared/s3';
@@ -117,6 +122,14 @@ async function processJob(msg: JobMessage): Promise<void> {
 
   await writeStatus(jobId, { status: 'scripting' });
   console.log('[worker] status -> scripting', { jobId });
+
+  const textBeforeExtract = articleText.length;
+  articleText = await extractCoreContentForSpeech(articleTitle, articleText);
+  console.log('[worker] core content extracted', {
+    jobId,
+    beforeChars: textBeforeExtract,
+    afterChars: articleText.length,
+  });
 
   // Translate content if a non-English language was requested for TTS
   if (mode === 'tts' && language && language !== 'en') {

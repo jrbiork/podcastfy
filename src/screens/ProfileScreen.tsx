@@ -38,12 +38,6 @@ function initials(name?: string): string {
     .toUpperCase();
 }
 
-function providerLabel(provider: AuthSession['provider']): string {
-  if (provider === 'google') return 'Google';
-  if (provider === 'apple') return 'Apple';
-  return 'Guest';
-}
-
 export function ProfileScreen() {
   const { episodes, load } = useEpisodes();
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -131,11 +125,6 @@ export function ProfileScreen() {
           {session?.email ? <Text style={styles.email}>{session.email}</Text> : null}
 
           <View style={styles.badgeRow}>
-            {session && (
-              <View style={styles.providerBadge}>
-                <Text style={styles.providerText}>{providerLabel(session.provider)}</Text>
-              </View>
-            )}
             {isSubscribed ? (
               <View style={styles.proBadgeHeader}>
                 <Ionicons name="sparkles" size={11} color="#A78BFA" />
@@ -150,28 +139,23 @@ export function ProfileScreen() {
         </View>
 
         {/* ── Subscription ───────────────────────────────────────────────── */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Usage</Text>
-            {isSubscribed ? (
-              <View style={styles.proBadge}>
-                <Ionicons name="sparkles" size={11} color="#A78BFA" />
-                <Text style={styles.proText}>Pro</Text>
-              </View>
-            ) : (
+        {!isSubscribed ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Usage</Text>
               <TouchableOpacity style={styles.upgradeBadge} onPress={navigateToPaywall} activeOpacity={0.8}>
                 <Text style={styles.upgradeText}>Upgrade</Text>
                 <Ionicons name="chevron-forward" size={12} color={Colors.primary} />
               </TouchableOpacity>
-            )}
+            </View>
+            <View style={styles.usageBar}>
+              <View style={[styles.usageFill, { width: `${usedPercent * 100}%` as `${number}%` }]} />
+            </View>
+            <Text style={styles.usageLabel}>
+              {usedMinutes} / {totalMinutes} free minutes used
+            </Text>
           </View>
-          <View style={styles.usageBar}>
-            <View style={[styles.usageFill, { width: `${usedPercent * 100}%` as `${number}%` }]} />
-          </View>
-          <Text style={styles.usageLabel}>
-            {isSubscribed ? 'Unlimited' : `${usedMinutes} / ${totalMinutes} free minutes used`}
-          </Text>
-        </View>
+        ) : null}
 
         {/* ── Stats ──────────────────────────────────────────────────────── */}
         <View style={styles.statsRow}>
@@ -298,19 +282,6 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
     marginTop: 2,
   },
-  providerBadge: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  providerText: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    fontWeight: '600',
-  },
   proBadgeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -361,20 +332,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  proBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#A78BFA22',
-    borderRadius: Radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  proText: {
-    color: '#A78BFA',
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-  },
   upgradeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -399,7 +356,6 @@ const styles = StyleSheet.create({
     color: Colors.textDim,
     fontSize: FontSize.xs,
   },
-
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.md,

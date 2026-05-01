@@ -6,7 +6,11 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+/** Max PDF object size after direct S3 upload (matches finalize validation). */
+export const MAX_PDF_BYTES = 40 * 1024 * 1024;
+
 export type JobStatus =
+  | { status: 'awaiting_pdf_upload' }
   | { status: 'queued' }
   | { status: 'processing' }
   | { status: 'scripting' }
@@ -21,6 +25,11 @@ export type JobStatus =
     }
   | { status: 'error'; error: string };
 
+/** Status JSON in S3 (`done` omits `audioUrl`; status Lambda adds presigned URL). */
+export type PersistedJobStatus =
+  | Exclude<JobStatus, { status: 'done' }>
+  | Omit<Extract<JobStatus, { status: 'done' }>, 'audioUrl'>;
+
 const s3 = new S3Client({ region: process.env.AWS_REGION ?? 'us-east-1' });
 const BUCKET = process.env.S3_BUCKET ?? 'podcastify-jobs';
 
@@ -32,10 +41,34 @@ function audioKey(jobId: string) {
   return `jobs/${jobId}/audio.mp3`;
 }
 
-export async function writeStatus(
-  jobId: string,
-  status: Omit<JobStatus, 'audioUrl'>
-): Promise<void> {
+export function pdfInputKey(jobId: string): string {
+  return `jobs/${jobId}/input.pdf`;
+}
+
+const PDF_PUT_EXPIRES_SEC = 900;
+
+export async function getPresignedPdfPutUrl(jobId: string): Promise<{ uploadUrl: string; pdfKey: string }> {
+  const pdfKey = pdfInputKey(jobId);
+  const cmd = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: pdfKey,
+    ContentType: 'application/pdf',
+  });
+  const uploadUrl = await getSignedUrl(s3, cmd, { expiresIn: PDF_PUT_EXPIRES_SEC });
+  return { uploadUrl, pdfKey };
+}
+
+export async function headPdfInput(jobId: string): Promise<{ contentLength: number; contentType?: string }> {
+  const res = await s3.send(
+    new HeadObjectCommand({ Bucket: BUCKET, Key: pdfInputKey(jobId) })
+  );
+  return {
+    contentLength: res.ContentLength ?? 0,
+    contentType: res.ContentType,
+  };
+}
+
+export async function writeStatus(jobId: string, status: PersistedJobStatus): Promise<void> {
   await s3.send(
     new PutObjectCommand({
       Bucket: BUCKET,

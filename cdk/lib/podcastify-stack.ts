@@ -36,7 +36,7 @@ export class PodcastifyStack extends cdk.Stack {
       cors: [
         {
           allowedOrigins: ['*'],
-          allowedMethods: [s3.HttpMethods.GET],
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT],
           allowedHeaders: ['*'],
           maxAge: 3600,
         },
@@ -47,7 +47,7 @@ export class PodcastifyStack extends cdk.Stack {
     const jobQueue = new sqs.Queue(this, 'JobQueue', {
       queueName: 'podcastify-jobs',
       // Visibility timeout must exceed worker Lambda timeout
-      visibilityTimeout: cdk.Duration.minutes(6),
+      visibilityTimeout: cdk.Duration.minutes(11),
       retentionPeriod: cdk.Duration.hours(1),
     });
 
@@ -88,7 +88,6 @@ export class PodcastifyStack extends cdk.Stack {
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      // Bumped: PDFs decoded from base64 + uploaded to S3 need more memory & time
       memorySize: 512,
       timeout: cdk.Duration.seconds(30),
       bundling,
@@ -98,7 +97,7 @@ export class PodcastifyStack extends cdk.Stack {
       },
     });
 
-    jobsBucket.grantWrite(dispatcher);
+    jobsBucket.grantReadWrite(dispatcher);
     jobQueue.grantSendMessages(dispatcher);
 
     // ── Lambda: Status ────────────────────────────────────────────────────────
@@ -128,8 +127,8 @@ export class PodcastifyStack extends cdk.Stack {
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
       architecture: lambda.Architecture.ARM_64,
-      memorySize: 1024,
-      timeout: cdk.Duration.minutes(5),
+      memorySize: 2048,
+      timeout: cdk.Duration.minutes(10),
       bundling: workerBundling,
       environment: {
         ...sharedEnv,
@@ -161,6 +160,18 @@ export class PodcastifyStack extends cdk.Stack {
       path: '/jobs',
       methods: [apigwv2.HttpMethod.POST],
       integration: new integrations.HttpLambdaIntegration('DispatcherIntegration', dispatcher),
+    });
+
+    api.addRoutes({
+      path: '/jobs/pdf/presign',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration('DispatcherPdfPresignIntegration', dispatcher),
+    });
+
+    api.addRoutes({
+      path: '/jobs/pdf/finalize',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration('DispatcherPdfFinalizeIntegration', dispatcher),
     });
 
     api.addRoutes({
