@@ -15,7 +15,7 @@ const sqs = new SQSClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
 const QUEUE_URL = process.env.SQS_QUEUE_URL ?? '';
 
 const VALID_VOICES = ['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer'];
-const VALID_LANGS = ['es', 'fr', 'de', 'pt-BR'];
+const VALID_LANGS = ['en-US', 'en-GB', 'es', 'fr', 'de', 'pt-BR'];
 
 function json(statusCode: number, body: unknown) {
   return {
