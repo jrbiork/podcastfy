@@ -44,7 +44,7 @@ Resources:
       CorsConfiguration:
         CorsRules:
           - AllowedOrigins: ['*']
-            AllowedMethods: [GET]
+            AllowedMethods: [GET, PUT]
             AllowedHeaders: ['*']
             MaxAge: 3600
 
@@ -53,7 +53,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: podcastify-jobs
-      VisibilityTimeout: 360   # 6 min — must exceed worker Lambda timeout
+      VisibilityTimeout: 660   # 11 min — must exceed worker Lambda timeout
       MessageRetentionPeriod: 3600
 
   # ── API Gateway ────────────────────────────────────────────────────────────
@@ -73,8 +73,8 @@ Resources:
       FunctionName: podcastify-dispatcher
       CodeUri: lambdas/
       Handler: dispatcher/handler.handler
-      MemorySize: 128
-      Timeout: 10
+      MemorySize: 512
+      Timeout: 30
       Environment:
         Variables:
           SQS_QUEUE_URL: !GetAtt JobQueue.QueueUrl
@@ -83,12 +83,26 @@ Resources:
             QueueName: !GetAtt JobQueue.QueueName
         - S3WritePolicy:
             BucketName: !Ref JobsBucket
+        - S3ReadPolicy:
+            BucketName: !Ref JobsBucket
       Events:
         PostJobs:
           Type: HttpApi
           Properties:
             ApiId: !Ref Api
             Path: /jobs
+            Method: POST
+        PostPdfPresign:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /jobs/pdf/presign
+            Method: POST
+        PostPdfFinalize:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /jobs/pdf/finalize
             Method: POST
 
   # ── Lambda: Status (GET /jobs/:id) ─────────────────────────────────────────
@@ -118,8 +132,8 @@ Resources:
       FunctionName: podcastify-worker
       CodeUri: lambdas/
       Handler: worker/handler.handler
-      MemorySize: 1024
-      Timeout: 300   # 5 minutes
+      MemorySize: 2048
+      Timeout: 600   # 10 minutes
       Environment:
         Variables:
           OPENAI_API_KEY: !Ref OpenAiApiKey

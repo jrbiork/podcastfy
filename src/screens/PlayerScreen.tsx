@@ -37,12 +37,21 @@ export function PlayerScreen() {
   const episode = params.episode;
   const [trackWidth, setTrackWidth] = useState(1);
 
+  const handleDurationResolved = useCallback(
+    (durationSeconds: number) => {
+      if (durationSeconds === episode.durationSeconds) return;
+      void update({ ...episode, durationSeconds });
+    },
+    [episode, update],
+  );
+
   const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate } =
     useAudioPlayer(episode.uri, {
       title: episode.title,
       artist: sourceDomain(episode.sourceUrl) || 'Sonera',
       artwork: episode.thumbnailUrl,
       durationSeconds: episode.durationSeconds,
+      onDurationResolved: handleDurationResolved,
     });
 
   const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);

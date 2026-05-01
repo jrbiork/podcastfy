@@ -738,8 +738,8 @@ export function LibraryScreen() {
               <ActivityIndicator size="small" color={Colors.primary} />
               <Text style={styles.generatingText}>
                 {pendingGenerations.length === 1
-                  ? 'Generating audio…'
-                  : `Generating ${pendingGenerations.length} audios…`}
+                  ? 'Generating audio — this may take a couple of minutes.'
+                  : `Generating ${pendingGenerations.length} audios — this may take a couple of minutes.`}
               </Text>
             </View>
           ) : null
@@ -965,9 +965,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary + '30',
   },
   generatingText: {
+    flex: 1,
     color: Colors.primary,
     fontSize: FontSize.sm,
     fontWeight: '600',
+    paddingRight: Spacing.md,
   },
 
   folderPip: {

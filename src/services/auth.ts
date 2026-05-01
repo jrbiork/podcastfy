@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
+import { clearPersistedGenerationJobs } from './generationPersistence';
 
 const SESSION_KEY = 'auth_session_v1';
 
@@ -40,4 +41,5 @@ export async function clearSession(): Promise<void> {
   } catch {
     /* already cleared */
   }
+  await clearPersistedGenerationJobs();
 }

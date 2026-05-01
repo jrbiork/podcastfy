@@ -20,7 +20,7 @@ export type GenerateState = {
 };
 
 const POLL_INTERVAL_MS = 3000;
-const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const POLL_TIMEOUT_MS = 15 * 60 * 1000; // align with long PDF / worker runs
 
 export function useGenerate() {
   const [state, setState] = useState<GenerateState>({ step: 'queued', error: null });
@@ -59,7 +59,9 @@ export function useGenerate() {
             throw Object.assign(new Error(status.error), { code: status.error });
           }
 
-          setState({ step: status.status as GenerateStep, error: null });
+          const step: GenerateStep =
+            status.status === 'awaiting_pdf_upload' ? 'queued' : (status.status as GenerateStep);
+          setState({ step, error: null });
 
           if (status.status === 'done') {
             finalStatus = status;

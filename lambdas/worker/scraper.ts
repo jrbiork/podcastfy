@@ -116,11 +116,30 @@ export async function extractArticle(url: string): Promise<ArticleData> {
       .querySelector('meta[property="og:image"]')
       ?.getAttribute('content') ?? null;
 
+  const text =
+    article.content && article.content.trim().length > 0
+      ? plainTextFromArticleHtml(article.content)
+      : cleanText(article.textContent);
+
   return {
     title: article.title || 'Untitled',
-    text: cleanText(article.textContent),
+    text,
     thumbnailUrl: ogImage,
   };
+}
+
+/** Drop figure/caption/image markup so TTS/script models are not fed photo blurbs and legends. */
+function plainTextFromArticleHtml(html: string): string {
+  const dom = new JSDOM(`<!DOCTYPE html><html><body>${html}</body></html>`);
+  const { document } = dom.window;
+  document
+    .querySelectorAll(
+      'figure, figcaption, picture, svg, canvas, video, noscript, [role="img"]'
+    )
+    .forEach((el) => el.remove());
+  document.querySelectorAll('img').forEach((el) => el.remove());
+  const raw = document.body?.textContent ?? '';
+  return cleanText(raw);
 }
 
 function cleanText(raw: string): string {

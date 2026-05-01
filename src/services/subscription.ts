@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 export const ENTITLEMENT_ID = 'premium';
-export const FREE_LIMIT_SECONDS = 60 * 60; // 1 hour
+export const FREE_LIMIT_SECONDS = 60; // 1 minute
 
 const TOTAL_SECONDS_KEY = 'podcastify_total_seconds';
 

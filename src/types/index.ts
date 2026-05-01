@@ -24,11 +24,19 @@ export interface Episode {
 }
 
 export type JobStatus =
+  | { status: 'awaiting_pdf_upload' }
   | { status: 'queued' }
   | { status: 'processing' }
   | { status: 'scripting' }
   | { status: 'generating_audio' }
-  | { status: 'done'; title: string; thumbnailUrl: string | null; durationSeconds: number; mode: 'podcast' | 'tts' }
+  | {
+      status: 'done';
+      title: string;
+      thumbnailUrl: string | null;
+      durationSeconds: number;
+      mode: 'podcast' | 'tts';
+      audioUrl: string;
+    }
   | { status: 'error'; error: string };
 
 export type GenerationInput =

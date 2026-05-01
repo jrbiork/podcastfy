@@ -72,7 +72,8 @@
             "expo-splash-screen",
             "expo-updates",
             "expo-font",
-            "react-native-purchases"
+            "react-native-purchases",
+            "react-native-track-player"
           ]
         }
       ]

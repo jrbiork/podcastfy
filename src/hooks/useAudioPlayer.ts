@@ -16,6 +16,8 @@ type AudioTrackMeta = {
   artist?: string;
   artwork?: string | null;
   durationSeconds?: number;
+  /** Called once decoded duration differs from stored metadata (e.g. script estimate vs real audio). */
+  onDurationResolved?: (durationSeconds: number) => void;
 };
 
 let playerSetupPromise: Promise<void> | null = null;
@@ -93,6 +95,18 @@ export function useAudioPlayer(uri: string | null, meta?: AudioTrackMeta) {
       isCancelled = true;
     };
   }, [uri, meta?.title, meta?.artist, meta?.artwork, meta?.durationSeconds]);
+
+  useEffect(() => {
+    const onResolve = meta?.onDurationResolved;
+    if (!onResolve) return;
+    const raw = progress.duration;
+    if (!raw || raw <= 0 || !Number.isFinite(raw)) return;
+    const seconds = Math.max(1, Math.floor(raw));
+    const stored = meta.durationSeconds ?? 0;
+    if (seconds !== stored) {
+      onResolve(seconds);
+    }
+  }, [progress.duration, meta?.durationSeconds, meta?.onDurationResolved]);
 
   useEffect(() => {
     const queueEndedSub = TrackPlayer.addEventListener(Event.PlaybackQueueEnded, () => {
