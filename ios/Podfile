@@ -68,7 +68,100 @@ target 'Podcastify' do
       end
     end
 # @generated end post-install-build-settings
+
+    # Fix: declare the real generated-file outputs on the [CP-User] Generate Specs
+    # build phase so Xcode's build system waits for them before compiling ReactCodegen.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'ReactCodegen'
+      target.build_phases.each do |phase|
+        next unless phase.respond_to?(:name) && phase.name == '[CP-User] Generate Specs'
+        generated_ios_dir = "${PODS_ROOT}/../build/generated/ios"
+        new_outputs = [
+          "#{generated_ios_dir}/rnscreens/rnscreens-generated.mm",
+          "#{generated_ios_dir}/rnscreensJSI-generated.cpp",
+          "#{generated_ios_dir}/safeareacontext/safeareacontext-generated.mm",
+          "#{generated_ios_dir}/safeareacontextJSI-generated.cpp",
+          "#{generated_ios_dir}/rnreanimated/rnreanimated-generated.mm",
+          "#{generated_ios_dir}/rnreanimatedJSI-generated.cpp",
+          "#{generated_ios_dir}/rnworklets/rnworklets-generated.mm",
+          "#{generated_ios_dir}/rnworkletsJSI-generated.cpp",
+          "#{generated_ios_dir}/rngesturehandler_codegen/rngesturehandler_codegen-generated.mm",
+          "#{generated_ios_dir}/rngesturehandler_codegenJSI-generated.cpp",
+          "#{generated_ios_dir}/rnasyncstorage/rnasyncstorage-generated.mm",
+          "#{generated_ios_dir}/rnasyncstorageJSI-generated.cpp",
+          "#{generated_ios_dir}/RCTThirdPartyComponentsProvider.h",
+          "#{generated_ios_dir}/RCTThirdPartyComponentsProvider.mm",
+          "#{generated_ios_dir}/RCTAppDependencyProvider.h",
+          "#{generated_ios_dir}/RCTAppDependencyProvider.mm",
+        ]
+        new_outputs.each do |output|
+          phase.output_paths << output unless phase.output_paths.include?(output)
+        end
+      end
+    end
   end
+end
+
+target 'PodcastifyShareExtension' do     
+  exclude = ["expo-updates", "expo-dev-client", "expo-splash-screen", "expo-font", "react-native-purchases", "react-native-track-player"]
+  use_expo_modules!(exclude: exclude)
+  
+  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+  else
+    config_command = [
+      'npx',
+      'expo-modules-autolinking',
+      'react-native-config',
+      '--json',
+      '--platform',
+      'ios'
+    ]
+  end
+
+  config = use_native_modules!(config_command)
+          
+  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
+          
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
+  )
+end
+
+target 'PodcastifyShareExtension' do     
+  exclude = ["expo-updates", "expo-dev-client", "expo-splash-screen", "expo-font", "react-native-purchases", "react-native-track-player"]
+  use_expo_modules!(exclude: exclude)
+  
+  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+  else
+    config_command = [
+      'npx',
+      'expo-modules-autolinking',
+      'react-native-config',
+      '--json',
+      '--platform',
+      'ios'
+    ]
+  end
+
+  config = use_native_modules!(config_command)
+          
+  use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+  use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
+          
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
+  )
 end
 
 target 'PodcastifyShareExtension' do     

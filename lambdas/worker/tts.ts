@@ -35,11 +35,12 @@ export async function generateAudio(script: ScriptTurn[], ttsVoice?: string): Pr
   return Buffer.concat(chunks);
 }
 
-// Rough estimate: 150 words per minute of speech
-export function estimateDurationSeconds(script: ScriptTurn[]): number {
-  const totalWords = script.reduce(
-    (acc, turn) => acc + turn.text.split(/\s+/).length,
-    0
-  );
-  return Math.ceil(totalWords / 150) * 60;
+// OpenAI TTS-1 outputs MP3 at ~128 kbps — derive duration from buffer size
+export function estimateDurationSeconds(_script: ScriptTurn[], audioBuffer?: Buffer): number {
+  if (audioBuffer && audioBuffer.byteLength > 0) {
+    return Math.round(audioBuffer.byteLength * 8 / 128_000);
+  }
+  // Fallback before audio is available: 150 wpm estimate
+  const totalWords = _script.reduce((acc, turn) => acc + turn.text.split(/\s+/).length, 0);
+  return Math.round(totalWords / 2.5);
 }
