@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { loadSession, saveSession } from './auth';
-import { GenerationInput, JobStatus } from '../types';
+import { GenerationInput, JobStatus, DigestJobStatus } from '../types';
 
 /** Match server [`MAX_PDF_BYTES`](lambdas/shared/s3.ts) for client-side picker hints. */
 export const MAX_PDF_UPLOAD_BYTES = 40 * 1024 * 1024;
@@ -241,4 +241,115 @@ export async function pollJob(jobId: string): Promise<JobStatus> {
 export async function downloadAudio(audioUrl: string, destUri: string): Promise<void> {
   const result = await FileSystem.downloadAsync(audioUrl, destUri);
   if (result.status !== 200) throw new Error('download_failed');
+}
+
+export async function dispatchDigest(
+  topicFeedUrls?: Record<string, string[]>,
+  force?: boolean,
+  voice?: string,
+  topN?: number,
+  /** When set (e.g. from user prefs in Dynamo), digest uses these URLs instead of topic buckets. */
+  feedUrls?: string[],
+): Promise<{ digestId: string; status: string }> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  const bodyObj: Record<string, unknown> = {};
+  if (feedUrls && feedUrls.length > 0) bodyObj.feedUrls = feedUrls.slice(0, 50);
+  if (topicFeedUrls && Object.keys(topicFeedUrls).length > 0) bodyObj.topicFeedUrls = topicFeedUrls;
+  if (force) bodyObj.force = true;
+  if (voice) bodyObj.voice = voice;
+  if (topN) bodyObj.topN = topN;
+  const body = JSON.stringify(bodyObj);
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_BASE}/digests`, { method: 'POST', headers, body }, 30_000);
+  } catch (e: unknown) {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? 'dispatch_failed');
+  }
+  return res.json() as Promise<{ digestId: string; status: string }>;
+}
+
+/**
+ * Deletes today's digest audio and status from S3.
+ * Used by "Clear All Data" in the Profile screen so a fresh digest can be
+ * generated immediately during testing without waiting until tomorrow.
+ */
+export async function deleteDigestToday(): Promise<void> {
+  if (!API_BASE) return;
+  const headers = await authHeaders();
+  try {
+    await fetchWithTimeout(`${API_BASE}/digests`, { method: 'DELETE', headers }, 15_000);
+  } catch {
+    // Best-effort — don't block the clear-data flow if this fails
+  }
+}
+
+export async function getLatestDigest(): Promise<DigestJobStatus> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_BASE}/digests/latest`, { headers }, 10_000);
+  } catch (e: unknown) {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) throw new Error('poll_failed');
+  return res.json() as Promise<DigestJobStatus>;
+}
+
+export interface UserPreferences {
+  timezone: string | null;
+  feedUrls: string[] | null;
+  deliveryHour: number | null;
+  voice: string | null;
+  durationMinutes: number | null;
+  selectedTopics: string[] | null;
+}
+
+export async function getUserPreferences(): Promise<UserPreferences> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_BASE}/users/preferences`, { headers }, 10_000);
+  } catch {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) throw new Error('prefs_fetch_failed');
+  return res.json() as Promise<UserPreferences>;
+}
+
+export async function saveUserPreferences(prefs: {
+  timezone: string;
+  feedUrls?: string[];
+  deliveryHour?: number;
+  voice?: string;
+  durationMinutes?: number;
+  selectedTopics?: string[];
+}): Promise<UserPreferences> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      `${API_BASE}/users/preferences`,
+      { method: 'POST', headers, body: JSON.stringify(prefs) },
+      15_000,
+    );
+  } catch {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? 'prefs_save_failed');
+  }
+  return res.json() as Promise<UserPreferences>;
 }

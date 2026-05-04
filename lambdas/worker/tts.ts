@@ -11,25 +11,66 @@ const VOICES: Record<string, OAIVoice> = {
   narrator: 'alloy',
 };
 
-const VALID_VOICES = new Set<string>(['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']);
+const VALID_VOICES = new Set<OAIVoice>(['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']);
+
+// Default digest voices: Fable = presenter (Host A), Nova = commentator (Host B)
+const DIGEST_VOICE_A: OAIVoice = 'fable';
+const DIGEST_VOICE_B: OAIVoice = 'nova';
+
+// Complementary contrast pairs — used when the user overrides the presenter voice
+const VOICE_PAIRS: Record<OAIVoice, OAIVoice> = {
+  alloy: 'nova',
+  echo: 'nova',
+  fable: 'nova',
+  nova: 'fable',
+  onyx: 'nova',
+  shimmer: 'fable',
+};
+
+export function getPairedVoice(voice: string): OAIVoice {
+  const v = voice as OAIVoice;
+  return VALID_VOICES.has(v) ? VOICE_PAIRS[v] : DIGEST_VOICE_B;
+}
+
+async function ttsChunk(text: string, voice: OAIVoice): Promise<Buffer> {
+  const response = await openai.audio.speech.create({
+    model: 'tts-1',
+    voice,
+    input: text,
+    response_format: 'mp3',
+  });
+  return Buffer.from(await response.arrayBuffer());
+}
 
 export async function generateAudio(script: ScriptTurn[], ttsVoice?: string): Promise<Buffer> {
   const chunks: Buffer[] = [];
 
   for (const turn of script) {
     const voice: OAIVoice =
-      turn.speaker === 'narrator' && ttsVoice && VALID_VOICES.has(ttsVoice)
+      turn.speaker === 'narrator' && ttsVoice && VALID_VOICES.has(ttsVoice as OAIVoice)
         ? (ttsVoice as OAIVoice)
         : (VOICES[turn.speaker] ?? VOICES.narrator);
-    const response = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice,
-      input: turn.text,
-      response_format: 'mp3',
-    });
-    const audio = Buffer.from(await response.arrayBuffer());
+    chunks.push(await ttsChunk(turn.text, voice));
+  }
 
-    chunks.push(audio);
+  return Buffer.concat(chunks);
+}
+
+/**
+ * Generates audio for a digest script. Each segment carries an explicit voice tag:
+ * 'primary' → voiceA (main narrator), 'secondary' → voiceB (occasional commentator).
+ */
+export async function generateAlternatingAudio(
+  segments: Array<{ text: string; voice: 'primary' | 'secondary' }>,
+  voiceA: string,
+  voiceB: string,
+): Promise<Buffer> {
+  const a: OAIVoice = VALID_VOICES.has(voiceA as OAIVoice) ? (voiceA as OAIVoice) : VOICES.narrator;
+  const b: OAIVoice = VALID_VOICES.has(voiceB as OAIVoice) ? (voiceB as OAIVoice) : VOICES.guest;
+  const chunks: Buffer[] = [];
+
+  for (const seg of segments) {
+    chunks.push(await ttsChunk(seg.text, seg.voice === 'secondary' ? b : a));
   }
 
   return Buffer.concat(chunks);

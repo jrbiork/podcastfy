@@ -1,14 +1,22 @@
 import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
 import type { Episode } from '../types';
+import type { OnboardingPrefs } from '../services/onboarding';
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  Auth: undefined;
+  /** Fresh onboarding prefs (AsyncStorage can lag right after replace); used on first sign-in sync. */
+  Auth: { pendingOnboardingPrefs?: OnboardingPrefs } | undefined;
+  DigestPreview: undefined;
   Main: undefined;
   Player: { episode: Episode };
   ModePicker: { input: import('../types').GenerationInput };
   Generating: { input: import('../types').GenerationInput; mode: 'podcast' | 'tts' };
   Paywall: undefined;
+  FeedDetail: { feed: import('../services/rssService').RssFeed };
+  ArticleDetail: {
+    item: import('../services/rssService').ExtendedRssItem;
+    feed: import('../services/rssService').RssFeed;
+  };
 };
 
 export const rootNavigationRef = createNavigationContainerRef<RootStackParamList>();

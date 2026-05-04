@@ -27,6 +27,11 @@
        "ExpirationInDays": 1,
        "Prefix": "jobs/",
        "Status": "Enabled"
+      },
+      {
+       "ExpirationInDays": 7,
+       "Prefix": "digests/",
+       "Status": "Enabled"
       }
      ]
     },
@@ -195,6 +200,19 @@
    "DeletionPolicy": "Delete",
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/JobQueue/Resource"
+   }
+  },
+  "DigestQueueD48DE8C7": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 7200,
+    "QueueName": "podcastify-digests",
+    "VisibilityTimeout": 660
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestQueue/Resource"
    }
   },
   "DispatcherServiceRole904BCD09": {
@@ -587,7 +605,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "23260d86d1777241d383e8936b9e5ed5ebcc1dc6a3286ce6096a8795d221ba75.zip"
+     "S3Key": "f51d4d2de86f652e40c4f531822781a5f540568a1fc5007dfffb4b6497b93981.zip"
     },
     "Environment": {
      "Variables": {
@@ -618,7 +636,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.23260d86d1777241d383e8936b9e5ed5ebcc1dc6a3286ce6096a8795d221ba75",
+    "aws:asset:path": "asset.f51d4d2de86f652e40c4f531822781a5f540568a1fc5007dfffb4b6497b93981",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -981,10 +999,1081 @@
     "aws:cdk:path": "PodcastifyStack/Api/GET--jobs--{jobId}/Resource"
    }
   },
+  "ApiPOSTdigestsDigestDispatcherIntegration36BDE05B": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "DigestDispatcher52ADD5BC",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--digests/DigestDispatcherIntegration/Resource"
+   }
+  },
+  "ApiPOSTdigestsDigestDispatcherIntegrationPermission7DF7F723": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DigestDispatcher52ADD5BC",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/digests"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--digests/DigestDispatcherIntegration-Permission"
+   }
+  },
+  "ApiPOSTdigests0149CB73": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /digests",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTdigestsDigestDispatcherIntegration36BDE05B"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--digests/Resource"
+   }
+  },
+  "ApiDELETEdigestsDigestDispatcherIntegrationPermission1EE81C50": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DigestDispatcher52ADD5BC",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/digests"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/DELETE--digests/DigestDispatcherIntegration-Permission"
+   }
+  },
+  "ApiDELETEdigestsD4BC3AD8": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "DELETE /digests",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTdigestsDigestDispatcherIntegration36BDE05B"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/DELETE--digests/Resource"
+   }
+  },
+  "ApiGETdigestslatestDigestDispatcherIntegrationPermissionB022AB6C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "DigestDispatcher52ADD5BC",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/digests/latest"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--digests--latest/DigestDispatcherIntegration-Permission"
+   }
+  },
+  "ApiGETdigestslatest7E225459": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "GET /digests/latest",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTdigestsDigestDispatcherIntegration36BDE05B"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--digests--latest/Resource"
+   }
+  },
+  "ApiGETuserspreferencesUserPreferencesIntegrationAB6A124A": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "UserPreferences7114F2F9",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--users--preferences/UserPreferencesIntegration/Resource"
+   }
+  },
+  "ApiGETuserspreferencesUserPreferencesIntegrationPermissionA59D00AD": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UserPreferences7114F2F9",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/users/preferences"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--users--preferences/UserPreferencesIntegration-Permission"
+   }
+  },
+  "ApiGETuserspreferencesB5963388": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "GET /users/preferences",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiGETuserspreferencesUserPreferencesIntegrationAB6A124A"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/GET--users--preferences/Resource"
+   }
+  },
+  "ApiPOSTuserspreferencesUserPreferencesIntegrationPermissionE28BA24D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UserPreferences7114F2F9",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/users/preferences"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--preferences/UserPreferencesIntegration-Permission"
+   }
+  },
+  "ApiPOSTuserspreferences73724CD8": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /users/preferences",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiGETuserspreferencesUserPreferencesIntegrationAB6A124A"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--preferences/Resource"
+   }
+  },
+  "DigestDispatcherServiceRole1388595A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestDispatcher/ServiceRole/Resource"
+   }
+  },
+  "DigestDispatcherServiceRoleDefaultPolicyF60C9FE3": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DigestQueueD48DE8C7",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DigestDispatcherServiceRoleDefaultPolicyF60C9FE3",
+    "Roles": [
+     {
+      "Ref": "DigestDispatcherServiceRole1388595A"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestDispatcher/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DigestDispatcher52ADD5BC": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "2a1f29b3242ebeaa07eefe804bab2e12ff46442aa294d345d45425fce593bfa3.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "DIGEST_QUEUE_URL": {
+       "Ref": "DigestQueueD48DE8C7"
+      }
+     }
+    },
+    "FunctionName": "podcastify-digest-dispatcher",
+    "Handler": "index.handler",
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "DigestDispatcherServiceRole1388595A",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "DigestDispatcherServiceRoleDefaultPolicyF60C9FE3",
+    "DigestDispatcherServiceRole1388595A"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestDispatcher/Resource",
+    "aws:asset:path": "asset.2a1f29b3242ebeaa07eefe804bab2e12ff46442aa294d345d45425fce593bfa3",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DigestWorkerServiceRoleBABFE81E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestWorker/ServiceRole/Resource"
+   }
+  },
+  "DigestWorkerServiceRoleDefaultPolicy9995F786": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*",
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DigestQueueD48DE8C7",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DigestWorkerServiceRoleDefaultPolicy9995F786",
+    "Roles": [
+     {
+      "Ref": "DigestWorkerServiceRoleBABFE81E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestWorker/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DigestWorker862E5F26": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "cb1e9ff516eb9077607d66aef8be3503c11e5746849de6fde22ecc73d9298824.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "OPENAI_API_KEY": "REMOVED"
+     }
+    },
+    "FunctionName": "podcastify-digest-worker",
+    "Handler": "index.handler",
+    "MemorySize": 2048,
+    "Role": {
+     "Fn::GetAtt": [
+      "DigestWorkerServiceRoleBABFE81E",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 600
+   },
+   "DependsOn": [
+    "DigestWorkerServiceRoleDefaultPolicy9995F786",
+    "DigestWorkerServiceRoleBABFE81E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestWorker/Resource",
+    "aws:asset:path": "asset.cb1e9ff516eb9077607d66aef8be3503c11e5746849de6fde22ecc73d9298824",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "DigestWorkerSqsEventSourcePodcastifyStackDigestQueue175B5DAEEFC059D7": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "DigestQueueD48DE8C7",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "DigestWorker862E5F26"
+    },
+    "FunctionResponseTypes": [
+     "ReportBatchItemFailures"
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestWorker/SqsEventSource:PodcastifyStackDigestQueue175B5DAE/Resource"
+   }
+  },
+  "UsersTable9725E9C8": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "podcastify-users"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/UsersTable/Resource"
+   }
+  },
+  "SchedulerExecutionRole0AF092B7": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "scheduler.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "RoleName": "podcastify-scheduler-execution"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/SchedulerExecutionRole/Resource"
+   }
+  },
+  "SchedulerExecutionRoleDefaultPolicy13495F5B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DigestSchedulerTrigger23AF3F30",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SchedulerExecutionRoleDefaultPolicy13495F5B",
+    "Roles": [
+     {
+      "Ref": "SchedulerExecutionRole0AF092B7"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/SchedulerExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "DigestScheduleGroup": {
+   "Type": "AWS::Scheduler::ScheduleGroup",
+   "Properties": {
+    "Name": "podcastify-digest-schedules"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestScheduleGroup"
+   }
+  },
+  "DigestSchedulerTriggerServiceRole9986714E": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestSchedulerTrigger/ServiceRole/Resource"
+   }
+  },
+  "DigestSchedulerTriggerServiceRoleDefaultPolicy9967976E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "DigestQueueD48DE8C7",
+         "Arn"
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:GetObject*",
+        "s3:GetBucket*",
+        "s3:List*"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "JobsBucket5EADC5CA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "JobsBucket5EADC5CA",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "DigestSchedulerTriggerServiceRoleDefaultPolicy9967976E",
+    "Roles": [
+     {
+      "Ref": "DigestSchedulerTriggerServiceRole9986714E"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestSchedulerTrigger/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "DigestSchedulerTrigger23AF3F30": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "2efc2cf92fffdefec41c01dcbb2de0e2f6700401464a4add1d3bb397e9e1b727.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "USERS_TABLE": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "DIGEST_QUEUE_URL": {
+       "Ref": "DigestQueueD48DE8C7"
+      }
+     }
+    },
+    "FunctionName": "podcastify-digest-scheduler-trigger",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "DigestSchedulerTriggerServiceRole9986714E",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "DigestSchedulerTriggerServiceRoleDefaultPolicy9967976E",
+    "DigestSchedulerTriggerServiceRole9986714E"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestSchedulerTrigger/Resource",
+    "aws:asset:path": "asset.2efc2cf92fffdefec41c01dcbb2de0e2f6700401464a4add1d3bb397e9e1b727",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "UserPreferencesServiceRoleECFDF8F1": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/UserPreferences/ServiceRole/Resource"
+   }
+  },
+  "UserPreferencesServiceRoleDefaultPolicyF75AE50F": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "scheduler:CreateSchedule",
+        "scheduler:UpdateSchedule",
+        "scheduler:GetSchedule"
+       ],
+       "Effect": "Allow",
+       "Resource": "arn:aws:scheduler:us-east-1:445241615553:schedule/podcastify-digest-schedules/*"
+      },
+      {
+       "Action": "iam:PassRole",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "SchedulerExecutionRole0AF092B7",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "UserPreferencesServiceRoleDefaultPolicyF75AE50F",
+    "Roles": [
+     {
+      "Ref": "UserPreferencesServiceRoleECFDF8F1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/UserPreferences/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "UserPreferences7114F2F9": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "5acbdaead136405bcf6f82126f70b047399501ad59ac88137737ae54e38272a9.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "S3_BUCKET": {
+       "Ref": "JobsBucket5EADC5CA"
+      },
+      "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
+      "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
+      "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
+      "USERS_TABLE": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "TRIGGER_LAMBDA_ARN": {
+       "Fn::GetAtt": [
+        "DigestSchedulerTrigger23AF3F30",
+        "Arn"
+       ]
+      },
+      "SCHEDULER_ROLE_ARN": {
+       "Fn::GetAtt": [
+        "SchedulerExecutionRole0AF092B7",
+        "Arn"
+       ]
+      },
+      "SCHEDULE_GROUP": "podcastify-digest-schedules"
+     }
+    },
+    "FunctionName": "podcastify-user-preferences",
+    "Handler": "index.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "UserPreferencesServiceRoleECFDF8F1",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "UserPreferencesServiceRoleDefaultPolicyF75AE50F",
+    "UserPreferencesServiceRoleECFDF8F1"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/UserPreferences/Resource",
+    "aws:asset:path": "asset.5acbdaead136405bcf6f82126f70b047399501ad59ac88137737ae54e38272a9",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VQwU7DMAz9lvWchdGJC7etgOAAG+0RoSlrvSpdm5Ta6Zii/DtKMo2BuHB6z37280tSnt5c89lEHHBaVvtpK7fcFiTKPRMH3Ficc7s05R6IZTsV2ZtNOvkpVXKbXK75eZzzICGPowtD+g5aIFhtGygJE/fOorTWrSyP366x/od3XChIEHSgLq2XAsEx/EBuXw0Y8EcCcawV3bYSG6UraJC/BHgwqiSpFZOi4zbXbVgI+B0yMsdwvhGIQMgXHk6G3GY7dfa5H0FRoc1QwrPoe6lq7/B3dw1DJxGlVo6JXtaC4CCOY8rtI1G/6KUf8uDLgkQdwkXiW7k2FNmTIqgHERJkO/WrDHPOscwg6S4HDEGCcuY/pPWgR1nB4D+Thbf6o6fUK0O9Icf8P/IGr8Y05emMzyYNSjkdjCLZAc8jfgFQb0cpZAIAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VQTU8CMRD9LXIuIy7x4g1RowcVwZsxZHZ3IIXddt2ZgqTpfzdtjaLx4um9+Xivr1NAcX4GoxPc87Cqt8NGl+AXgtVW4Z6XnsfgL121JVHTlcnsxQ9a/a7N4GJwLIv7PIY0YsirEyf2ihoSeiw3VAkPwqvKo5ltdHX4ds31P7yzYCEo1JI5tr5EpqD4jcE/OXIUH0kkqAbbssalsTVtGB4S3DhTibZGaWzBz22TBAm/Q2YWFI+XyEzCMInwaQh+ujJfPtc7MrKwrq/oHrtOm3V0+Ls7o77VzNqaoLDTaxTa42FXgL8V6SadjksRYrkQXKdwmcTW3DrJ7M4IrXtMCaYr86tMe0HVB4OtrUvwz1jmjyYSgpo6FtvOiVPEpPniP0az3u50TX08s0pXiHHif47Fj046J0HFU8OGT3dFAcUIRicb1nrYOyO6JZhn/ACkKHXOhwIAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/CDKMetadata/Default"
@@ -1009,6 +2098,11 @@
   "JobQueueUrl": {
    "Value": {
     "Ref": "JobQueueEE3AD499"
+   }
+  },
+  "DigestQueueUrl": {
+   "Value": {
+    "Ref": "DigestQueueD48DE8C7"
    }
   }
  },

@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { GenerationInput, JobStatus } from '../types';
 import { dispatchJob, pollJob, downloadAudio } from './api';
-import { saveEpisode } from './storage';
+import { saveEpisode, RSS_FOLDER_ID } from './storage';
 import { addGeneratedSeconds } from './subscription';
 import { generateId } from '../utils/format';
 import { episodeEvents } from '../utils/episodeEvents';
@@ -77,6 +77,7 @@ async function persistAndFinalizeEpisode(
   genId: string,
   input: GenerationInput | undefined,
   finalStatus: DoneJobStatus,
+  folderId?: string,
 ): Promise<void> {
   const episodeId = generateId();
   const resolvedTitle =
@@ -103,6 +104,7 @@ async function persistAndFinalizeEpisode(
     played: false,
     mode: finalStatus.mode,
     thumbnailUrl: finalStatus.thumbnailUrl ?? undefined,
+    folderId,
   });
 
   await removePersistedGenerationJob(genId);
@@ -192,5 +194,38 @@ export async function startGeneration(
     }
 
     Alert.alert('Generation failed', errorLabel(code));
+  }
+}
+
+/** Background generation for RSS feed items. Shows in the generating banner; saves to RSS folder.
+ *
+ * When `description` is provided and substantial (≥150 chars), the job is dispatched as
+ * `type: 'text'` so the Lambda worker uses it directly — bypassing the URL scraper and
+ * avoiding `scrape_protected` errors on sites like TechCrunch that block automated access.
+ */
+export async function startRssGeneration(url: string, title: string, description?: string): Promise<void> {
+  const genId = generateId();
+  const startedAt = Date.now();
+
+  // Add to the store so LibraryScreen's banner reflects this job
+  generationStore.add({ id: genId, mode: 'tts', startedAt });
+
+  // Use RSS description text directly when available — avoids scraper blocks
+  const input: GenerationInput =
+    description && description.length >= 150
+      ? { type: 'text', text: description, title }
+      : { type: 'url', url };
+
+  try {
+    const jobId = await dispatchJob(input, 'tts');
+    await appendPersistedGenerationJob({ genId, jobId, mode: 'tts', startedAt });
+
+    const finalStatus = await pollUntilDone(jobId, startedAt + POLL_TIMEOUT_MS);
+    // persistAndFinalizeEpisode calls generationStore.remove + episodeEvents.emit internally
+    await persistAndFinalizeEpisode(genId, input, finalStatus, RSS_FOLDER_ID);
+  } catch (e: unknown) {
+    generationStore.remove(genId);
+    await removePersistedGenerationJob(genId);
+    console.warn('[rss] background generation failed', { url, title, error: (e as Error).message });
   }
 }

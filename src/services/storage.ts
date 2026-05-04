@@ -4,12 +4,20 @@ import { Episode, Folder } from '../types';
 
 const EPISODES_KEY = 'podcastify_episodes';
 export const TRASH_FOLDER_ID = 'trash';
+export const RSS_FOLDER_ID = 'rss';
 const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const TRASH_FOLDER: Folder = {
   id: TRASH_FOLDER_ID,
   name: 'Trash',
   color: '#EF4444',
   iconName: 'trash-outline',
+  createdAt: 0,
+};
+const RSS_FOLDER: Folder = {
+  id: RSS_FOLDER_ID,
+  name: 'Daily Digest',
+  color: '#F97316',
+  iconName: 'albums-outline',
   createdAt: 0,
 };
 
@@ -142,36 +150,36 @@ export async function loadFolders(): Promise<Folder[]> {
   try {
     const raw = await AsyncStorage.getItem(FOLDERS_KEY);
     const parsed = raw ? (JSON.parse(raw) as Folder[]) : [];
-    const withoutTrash = parsed.filter((f) => f.id !== TRASH_FOLDER_ID);
-    const withTrash = [...withoutTrash, TRASH_FOLDER];
-    const hadTrash = parsed.some((f) => f.id === TRASH_FOLDER_ID);
+    const userFolders = parsed.filter((f) => f.id !== TRASH_FOLDER_ID && f.id !== RSS_FOLDER_ID);
+    const withSystem = [...userFolders, RSS_FOLDER, TRASH_FOLDER];
+    const hadBoth = parsed.some((f) => f.id === TRASH_FOLDER_ID) && parsed.some((f) => f.id === RSS_FOLDER_ID);
     const hasCorrectTrash = parsed.some((f) => f.id === TRASH_FOLDER_ID && f.name === TRASH_FOLDER.name);
-    if (!hadTrash || !hasCorrectTrash || withTrash.length !== parsed.length) {
-      await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify(withTrash));
+    if (!hadBoth || !hasCorrectTrash || withSystem.length !== parsed.length) {
+      await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify(withSystem));
     }
-    return withTrash;
+    return withSystem;
   } catch {
-    return [TRASH_FOLDER];
+    return [RSS_FOLDER, TRASH_FOLDER];
   }
 }
 
 export async function saveFolder(folder: Folder): Promise<void> {
-  if (folder.id === TRASH_FOLDER_ID) return;
+  if (folder.id === TRASH_FOLDER_ID || folder.id === RSS_FOLDER_ID) return;
   const list = await loadFolders();
-  const updated = [...list.filter((f) => f.id !== folder.id && f.id !== TRASH_FOLDER_ID), folder, TRASH_FOLDER];
+  const updated = [...list.filter((f) => f.id !== folder.id && f.id !== TRASH_FOLDER_ID && f.id !== RSS_FOLDER_ID), folder, RSS_FOLDER, TRASH_FOLDER];
   await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify(updated));
 }
 
 export async function updateFolder(folder: Folder): Promise<void> {
-  if (folder.id === TRASH_FOLDER_ID) return;
+  if (folder.id === TRASH_FOLDER_ID || folder.id === RSS_FOLDER_ID) return;
   await saveFolder(folder);
 }
 
 export async function deleteFolder(id: string): Promise<void> {
-  if (id === TRASH_FOLDER_ID) return;
+  if (id === TRASH_FOLDER_ID || id === RSS_FOLDER_ID) return;
   const list = await loadFolders();
-  const updatedFolders = list.filter((f) => f.id !== id && f.id !== TRASH_FOLDER_ID);
-  await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify([...updatedFolders, TRASH_FOLDER]));
+  const updatedFolders = list.filter((f) => f.id !== id && f.id !== TRASH_FOLDER_ID && f.id !== RSS_FOLDER_ID);
+  await AsyncStorage.setItem(FOLDERS_KEY, JSON.stringify([...updatedFolders, RSS_FOLDER, TRASH_FOLDER]));
   // Detach episodes that were in this folder
   const episodes = await loadEpisodes();
   const updated = episodes.map((e) => {
