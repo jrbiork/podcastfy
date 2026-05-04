@@ -76,7 +76,8 @@
             "react-native-track-player"
           ]
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {

@@ -7,31 +7,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		006B2B135D7B1B9414C9618F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 318B71B8C0F4B41229C61026 /* ExpoModulesProvider.swift */; };
-		0895202B14504400AAA9D8E1 /* PodcastifyShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A6499F82729447878B99A939 /* PodcastifyShareExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		320194C4777483C88CC567A3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 822BBEE71FD07E0838971315 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		680D0899D5D2416AA3011D15 /* ShareExtensionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AEFBF34B5F44FB5AD8C7535 /* ShareExtensionViewController.swift */; };
-		97D783802A2C0EE569A00B43 /* libPods-PodcastifyShareExtension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 41AD2F077533DE902C5F41BB /* libPods-PodcastifyShareExtension.a */; };
+		4E082C55BA3F7D6FF00CC54B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F30A76C3A4F9EBCEAD9016D4 /* PrivacyInfo.xcprivacy */; };
+		8886BDB6C23D403997C3CBBE /* PodcastifyShareExtension.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = CD688D52FBFD4104857DD839 /* PodcastifyShareExtension.appex */; };
+		922F527D359ACDDA505466FA /* libPods-Podcastify.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 01305730CA926E8D46AF51AE /* libPods-Podcastify.a */; };
+		94BCC813B58EB2B2557E800D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 160E84FB058F3B113E855E4C /* ExpoModulesProvider.swift */; };
+		B2821316A353B7E6A8585DAE /* libPods-PodcastifyShareExtension.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39F002DC03B82199AC5AB16E /* libPods-PodcastifyShareExtension.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		CA70DCCAC1F9C863B1D79F12 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C463E0FC3635E29941CAB2FD /* PrivacyInfo.xcprivacy */; };
-		CE8ACA56BD3560F803D8871B /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0E4171EDC13F05B330AC4FB /* ExpoModulesProvider.swift */; };
+		C487BF9953E04246AAC699B3 /* ShareExtensionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2485AD47EA6E4EC682C9B4A9 /* ShareExtensionViewController.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		FF9601017FB0A6C69D1D7BBB /* libPods-Podcastify.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F56153BC1F5E3FF1FB964BB2 /* libPods-Podcastify.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		AADD6D44C5B64088BE2EEF41 /* PBXContainerItemProxy */ = {
+		11D1B6621929466488EFACDF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = BEF941A898ED4F06B27BE02E;
+			remoteGlobalIDString = 276FCFB7A34E4B22AAD52704;
 			remoteInfo = PodcastifyShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		1FFC218C40644488B78FA48D /* Copy Files */ = {
+		48EED8D58255477DAACB05EF /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		552FAD7183284E7084D04A89 /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
@@ -41,23 +51,23 @@
 			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		82A0F0C4A2FD4F1AAE2A205C /* Embed Foundation Extensions */ = {
+		A944CC76E44B4533A45EB4E8 /* Copy Files */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				8886BDB6C23D403997C3CBBE /* PodcastifyShareExtension.appex in Copy Files */,
 			);
-			name = "Embed Foundation Extensions";
+			name = "Copy Files";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		8EFFC11D83844A6A9CD1229D /* Embed Foundation Extensions */ = {
+		C6C9978768914CDCA92A0D7D /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				0895202B14504400AAA9D8E1 /* PodcastifyShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -65,27 +75,27 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01305730CA926E8D46AF51AE /* libPods-Podcastify.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Podcastify.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* Podcastify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Podcastify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Podcastify/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Podcastify/Info.plist; sourceTree = "<group>"; };
-		318B71B8C0F4B41229C61026 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PodcastifyShareExtension/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		41AD2F077533DE902C5F41BB /* libPods-PodcastifyShareExtension.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PodcastifyShareExtension.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		7D1939465E3599C0EF8E8BEB /* Pods-PodcastifyShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PodcastifyShareExtension.debug.xcconfig"; path = "Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
-		7E552A7A25B3E062567C41B2 /* Pods-PodcastifyShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PodcastifyShareExtension.release.xcconfig"; path = "Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension.release.xcconfig"; sourceTree = "<group>"; };
-		8AEFBF34B5F44FB5AD8C7535 /* ShareExtensionViewController.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = ShareExtensionViewController.swift; sourceTree = "<group>"; };
-		A6499F82729447878B99A939 /* PodcastifyShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 9; includeInIndex = 0; path = PodcastifyShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		160E84FB058F3B113E855E4C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-PodcastifyShareExtension/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		2485AD47EA6E4EC682C9B4A9 /* ShareExtensionViewController.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; path = ShareExtensionViewController.swift; sourceTree = "<group>"; };
+		39F002DC03B82199AC5AB16E /* libPods-PodcastifyShareExtension.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PodcastifyShareExtension.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B53D13233EF5A5B697E660D /* Pods-Podcastify.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Podcastify.release.xcconfig"; path = "Target Support Files/Pods-Podcastify/Pods-Podcastify.release.xcconfig"; sourceTree = "<group>"; };
+		7353575F29E01C87145E687C /* Pods-PodcastifyShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PodcastifyShareExtension.debug.xcconfig"; path = "Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
+		822BBEE71FD07E0838971315 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Podcastify/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		86C30E0473E445B9A347A18C /* PodcastifyShareExtension.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; path = PodcastifyShareExtension.entitlements; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Podcastify/SplashScreen.storyboard; sourceTree = "<group>"; };
+		AE4AE2D8CCB390C23E6C7E1B /* Pods-PodcastifyShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PodcastifyShareExtension.release.xcconfig"; path = "Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C0E4171EDC13F05B330AC4FB /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Podcastify/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		C3F2BB29A8E846FD9533BC09 /* PodcastifyShareExtension.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; path = PodcastifyShareExtension.entitlements; sourceTree = "<group>"; };
-		C463E0FC3635E29941CAB2FD /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Podcastify/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		C6EF259428CA693F092AEE92 /* Pods-Podcastify.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Podcastify.release.xcconfig"; path = "Target Support Files/Pods-Podcastify/Pods-Podcastify.release.xcconfig"; sourceTree = "<group>"; };
+		CD688D52FBFD4104857DD839 /* PodcastifyShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 9; includeInIndex = 0; path = PodcastifyShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1577DCD924C4B1CB6734EDA /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Podcastify/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Podcastify-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Podcastify-Bridging-Header.h"; path = "Podcastify/Podcastify-Bridging-Header.h"; sourceTree = "<group>"; };
-		F367696B0DE17F8BA4B4FD1E /* Pods-Podcastify.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Podcastify.debug.xcconfig"; path = "Target Support Files/Pods-Podcastify/Pods-Podcastify.debug.xcconfig"; sourceTree = "<group>"; };
-		F56153BC1F5E3FF1FB964BB2 /* libPods-Podcastify.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Podcastify.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		FA7643E4B1CB4ACF9CE98C30 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F30A76C3A4F9EBCEAD9016D4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Podcastify/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		FD923098BC788AC148A69939 /* Pods-Podcastify.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Podcastify.debug.xcconfig"; path = "Target Support Files/Pods-Podcastify/Pods-Podcastify.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,21 +103,29 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FF9601017FB0A6C69D1D7BBB /* libPods-Podcastify.a in Frameworks */,
+				922F527D359ACDDA505466FA /* libPods-Podcastify.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F028AE50897641F0BB635CAC /* Frameworks */ = {
+		B1A166A2E6DB4AA581CB80EA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				97D783802A2C0EE569A00B43 /* libPods-PodcastifyShareExtension.a in Frameworks */,
+				B2821316A353B7E6A8585DAE /* libPods-PodcastifyShareExtension.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0200F8FA0B7931A74F9498DF /* Podcastify */ = {
+			isa = PBXGroup;
+			children = (
+				822BBEE71FD07E0838971315 /* ExpoModulesProvider.swift */,
+			);
+			name = Podcastify;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* Podcastify */ = {
 			isa = PBXGroup;
 			children = (
@@ -117,44 +135,34 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				C463E0FC3635E29941CAB2FD /* PrivacyInfo.xcprivacy */,
+				F30A76C3A4F9EBCEAD9016D4 /* PrivacyInfo.xcprivacy */,
 			);
 			name = Podcastify;
+			sourceTree = "<group>";
+		};
+		236256C3E6954E938E752D1A /* PodcastifyShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = PodcastifyShareExtension;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				F56153BC1F5E3FF1FB964BB2 /* libPods-Podcastify.a */,
-				41AD2F077533DE902C5F41BB /* libPods-PodcastifyShareExtension.a */,
+				01305730CA926E8D46AF51AE /* libPods-Podcastify.a */,
+				39F002DC03B82199AC5AB16E /* libPods-PodcastifyShareExtension.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		4F031C14BA96C16FEC2069C4 /* PodcastifyShareExtension */ = {
+		7A55D439A3B647FB9C52A269 /* PodcastifyShareExtension */ = {
 			isa = PBXGroup;
 			children = (
-				318B71B8C0F4B41229C61026 /* ExpoModulesProvider.swift */,
-			);
-			name = PodcastifyShareExtension;
-			sourceTree = "<group>";
-		};
-		69D46151CAE92D9A7381D0EB /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				CBB8A879409FB2B4E02AD300 /* Podcastify */,
-				4F031C14BA96C16FEC2069C4 /* PodcastifyShareExtension */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		73286CA5B439488BB8EBB154 /* PodcastifyShareExtension */ = {
-			isa = PBXGroup;
-			children = (
-				8AEFBF34B5F44FB5AD8C7535 /* ShareExtensionViewController.swift */,
-				FA7643E4B1CB4ACF9CE98C30 /* Info.plist */,
-				C3F2BB29A8E846FD9533BC09 /* PodcastifyShareExtension.entitlements */,
+				2485AD47EA6E4EC682C9B4A9 /* ShareExtensionViewController.swift */,
+				D1577DCD924C4B1CB6734EDA /* Info.plist */,
+				86C30E0473E445B9A347A18C /* PodcastifyShareExtension.entitlements */,
 			);
 			path = PodcastifyShareExtension;
 			sourceTree = "<group>";
@@ -173,10 +181,10 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				FEE18B20E63F486697A20276 /* PodcastifyShareExtension */,
-				B0AB15758DB5856A619024A9 /* Pods */,
-				69D46151CAE92D9A7381D0EB /* ExpoModulesProviders */,
-				73286CA5B439488BB8EBB154 /* PodcastifyShareExtension */,
+				236256C3E6954E938E752D1A /* PodcastifyShareExtension */,
+				C1215DF1CDF4256139A35939 /* Pods */,
+				C3AD16083022FBECFF2A5310 /* ExpoModulesProviders */,
+				7A55D439A3B647FB9C52A269 /* PodcastifyShareExtension */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -187,20 +195,9 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* Podcastify.app */,
-				A6499F82729447878B99A939 /* PodcastifyShareExtension.appex */,
+				CD688D52FBFD4104857DD839 /* PodcastifyShareExtension.appex */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		B0AB15758DB5856A619024A9 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				F367696B0DE17F8BA4B4FD1E /* Pods-Podcastify.debug.xcconfig */,
-				C6EF259428CA693F092AEE92 /* Pods-Podcastify.release.xcconfig */,
-				7D1939465E3599C0EF8E8BEB /* Pods-PodcastifyShareExtension.debug.xcconfig */,
-				7E552A7A25B3E062567C41B2 /* Pods-PodcastifyShareExtension.release.xcconfig */,
-			);
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -212,19 +209,32 @@
 			path = Podcastify/Supporting;
 			sourceTree = "<group>";
 		};
-		CBB8A879409FB2B4E02AD300 /* Podcastify */ = {
+		C1215DF1CDF4256139A35939 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				C0E4171EDC13F05B330AC4FB /* ExpoModulesProvider.swift */,
+				FD923098BC788AC148A69939 /* Pods-Podcastify.debug.xcconfig */,
+				4B53D13233EF5A5B697E660D /* Pods-Podcastify.release.xcconfig */,
+				7353575F29E01C87145E687C /* Pods-PodcastifyShareExtension.debug.xcconfig */,
+				AE4AE2D8CCB390C23E6C7E1B /* Pods-PodcastifyShareExtension.release.xcconfig */,
 			);
-			name = Podcastify;
+			path = Pods;
 			sourceTree = "<group>";
 		};
-		FEE18B20E63F486697A20276 /* PodcastifyShareExtension */ = {
+		C3AD16083022FBECFF2A5310 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
+				0200F8FA0B7931A74F9498DF /* Podcastify */,
+				C7ED243A7554B3F188774941 /* PodcastifyShareExtension */,
 			);
-			path = PodcastifyShareExtension;
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		C7ED243A7554B3F188774941 /* PodcastifyShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				160E84FB058F3B113E855E4C /* ExpoModulesProvider.swift */,
+			);
+			name = PodcastifyShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -235,39 +245,40 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Podcastify" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				FF58D5EFD6239103B6D90FAA /* [Expo] Configure project */,
+				747E0EB6EFDE9E6343AC2DFD /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				8EFFC11D83844A6A9CD1229D /* Embed Foundation Extensions */,
-				95C0C9B5D99D74CA980AFA7A /* [CP] Embed Pods Frameworks */,
-				82A0F0C4A2FD4F1AAE2A205C /* Embed Foundation Extensions */,
-				1FFC218C40644488B78FA48D /* Copy Files */,
+				48EED8D58255477DAACB05EF /* Embed Foundation Extensions */,
+				A944CC76E44B4533A45EB4E8 /* Copy Files */,
+				F616DA5CE3D217336398772E /* [CP] Embed Pods Frameworks */,
+				C6C9978768914CDCA92A0D7D /* Embed Foundation Extensions */,
+				552FAD7183284E7084D04A89 /* Copy Files */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				39F415F2343646CEBBEE72AC /* PBXTargetDependency */,
+				7CCD4373997E40D2B38A6BC7 /* PBXTargetDependency */,
 			);
 			name = Podcastify;
 			productName = Podcastify;
 			productReference = 13B07F961A680F5B00A75B9A /* Podcastify.app */;
 			productType = "com.apple.product-type.application";
 		};
-		BEF941A898ED4F06B27BE02E /* PodcastifyShareExtension */ = {
+		276FCFB7A34E4B22AAD52704 /* PodcastifyShareExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = DF12A3EFB6C04BBCA47AF0C7 /* Build configuration list for PBXNativeTarget "PodcastifyShareExtension" */;
+			buildConfigurationList = F68FF51D72644330A764F467 /* Build configuration list for PBXNativeTarget "PodcastifyShareExtension" */;
 			buildPhases = (
-				BB08AC117A9BEBD6579AA40C /* [CP] Check Pods Manifest.lock */,
-				B7B41083834C4BA9A4CB7495 /* Start Packager */,
-				D6F1DDFB39317D98E83DC624 /* [Expo] Configure project */,
-				7ACDCBA8CA3E45169AC3892E /* Sources */,
-				F028AE50897641F0BB635CAC /* Frameworks */,
-				1A5C9C9F8FF54BD9BCFE35F1 /* Resources */,
-				97285418095E4A5393DC8029 /* Bundle React Native code and images */,
-				627BBB9A413CCD71D62D509A /* [CP] Copy Pods Resources */,
+				2816D58BD84FC6A8C83BFFEB /* [CP] Check Pods Manifest.lock */,
+				DD00FA7C3BD64F91939D7EF6 /* Start Packager */,
+				03FCFD59777422BEFD4526FB /* [Expo] Configure project */,
+				E457DC4E37D640E6B8E0AC8D /* Sources */,
+				B1A166A2E6DB4AA581CB80EA /* Frameworks */,
+				C4E00C8F801A4DAF8B7BBB61 /* Resources */,
+				C8721830AE464CC5A04235EC /* Bundle React Native code and images */,
+				BE8941068A685CDAE6AC9D19 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -275,7 +286,7 @@
 			);
 			name = PodcastifyShareExtension;
 			productName = PodcastifyShareExtension;
-			productReference = A6499F82729447878B99A939 /* PodcastifyShareExtension.appex */;
+			productReference = CD688D52FBFD4104857DD839 /* PodcastifyShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -291,7 +302,7 @@
 						LastSwiftMigration = 1250;
 						ProvisioningStyle = Automatic;
 					};
-					BEF941A898ED4F06B27BE02E = {
+					276FCFB7A34E4B22AAD52704 = {
 						DevelopmentTeam = X2Q32F3AY3;
 						LastSwiftMigration = 1250;
 						ProvisioningStyle = Automatic;
@@ -312,7 +323,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* Podcastify */,
-				BEF941A898ED4F06B27BE02E /* PodcastifyShareExtension */,
+				276FCFB7A34E4B22AAD52704 /* PodcastifyShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -325,11 +336,11 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				CA70DCCAC1F9C863B1D79F12 /* PrivacyInfo.xcprivacy in Resources */,
+				4E082C55BA3F7D6FF00CC54B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1A5C9C9F8FF54BD9BCFE35F1 /* Resources */ = {
+		C4E00C8F801A4DAF8B7BBB61 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -356,6 +367,30 @@
 			shellPath = /bin/sh;
 			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
+		03FCFD59777422BEFD4526FB /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/PodcastifyShareExtension/PodcastifyShareExtension.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-PodcastifyShareExtension/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-PodcastifyShareExtension/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-PodcastifyShareExtension/expo-configure-project.sh\"\n";
+		};
 		08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -378,51 +413,51 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		627BBB9A413CCD71D62D509A /* [CP] Copy Pods Resources */ = {
+		2816D58BD84FC6A8C83BFFEB /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/AppAuth/AppAuthCore_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/GTMAppAuth/GTMAppAuth_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleSignIn/GoogleSignIn.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/PurchasesHybridCommon/PurchasesHybridCommon.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RevenueCat/RevenueCat.bundle",
+			inputFileListPaths = (
 			);
-			name = "[CP] Copy Pods Resources";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppAuthCore_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMAppAuth_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PurchasesHybridCommon.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RevenueCat.bundle",
+				"$(DERIVED_FILE_DIR)/Pods-PodcastifyShareExtension-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension-resources.sh\"\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		747E0EB6EFDE9E6343AC2DFD /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/Podcastify/Podcastify.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Podcastify/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-Podcastify/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Podcastify/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -470,7 +505,81 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Podcastify/Pods-Podcastify-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		95C0C9B5D99D74CA980AFA7A /* [CP] Embed Pods Frameworks */ = {
+		BE8941068A685CDAE6AC9D19 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/AppAuth/AppAuthCore_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMAppAuth/GTMAppAuth_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GTMSessionFetcher/GTMSessionFetcher_Core_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleSignIn/GoogleSignIn.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities/GoogleUtilities_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PromisesObjC/FBLPromises_Privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/PurchasesHybridCommon/PurchasesHybridCommon.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RevenueCat/RevenueCat.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/AppAuthCore_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMAppAuth_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GTMSessionFetcher_Core_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleSignIn.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleUtilities_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/FBLPromises_Privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PurchasesHybridCommon.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RevenueCat.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-PodcastifyShareExtension/Pods-PodcastifyShareExtension-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C8721830AE464CC5A04235EC /* Bundle React Native code and images */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle React Native code and images";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n  NODE_BINARY=${NODE_BINARY:-node}\n  \n  # Source environment files\n  if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n    source \"$PODS_ROOT/../.xcode.env\"\n  fi\n  if [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n    source \"$PODS_ROOT/../.xcode.env.local\"\n  fi\n  \n  # Set project root\n  export PROJECT_ROOT=\"$PROJECT_DIR\"/..\n  \n  # Set entry file\n  export ENTRY_FILE=\"$PROJECT_ROOT/index.share.js\"\n  \n  # Set up Expo CLI\n  if [[ -z \"$CLI_PATH\" ]]; then\n    export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\n  fi\n  \n  if [[ -z \"$BUNDLE_COMMAND\" ]]; then\n    export BUNDLE_COMMAND=\"export:embed\"\n  fi\n  \n  REACT_NATIVE_SCRIPTS_PATH=$(\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts'\")\n  WITH_ENVIRONMENT=\"$REACT_NATIVE_SCRIPTS_PATH/xcode/with-environment.sh\"\n  REACT_NATIVE_XCODE=\"$REACT_NATIVE_SCRIPTS_PATH/react-native-xcode.sh\"\n  \n  /bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"";
+		};
+		DD00FA7C3BD64F91939D7EF6 /* Start Packager */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Start Packager";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
+		};
+		F616DA5CE3D217336398772E /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -492,104 +601,6 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Podcastify/Pods-Podcastify-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		97285418095E4A5393DC8029 /* Bundle React Native code and images */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Bundle React Native code and images";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\n  NODE_BINARY=${NODE_BINARY:-node}\n  \n  # Source environment files\n  if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n    source \"$PODS_ROOT/../.xcode.env\"\n  fi\n  if [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n    source \"$PODS_ROOT/../.xcode.env.local\"\n  fi\n  \n  # Set project root\n  export PROJECT_ROOT=\"$PROJECT_DIR\"/..\n  \n  # Set entry file\n  export ENTRY_FILE=\"$PROJECT_ROOT/index.share.js\"\n  \n  # Set up Expo CLI\n  if [[ -z \"$CLI_PATH\" ]]; then\n    export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\n  fi\n  \n  if [[ -z \"$BUNDLE_COMMAND\" ]]; then\n    export BUNDLE_COMMAND=\"export:embed\"\n  fi\n  \n  REACT_NATIVE_SCRIPTS_PATH=$(\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts'\")\n  WITH_ENVIRONMENT=\"$REACT_NATIVE_SCRIPTS_PATH/xcode/with-environment.sh\"\n  REACT_NATIVE_XCODE=\"$REACT_NATIVE_SCRIPTS_PATH/react-native-xcode.sh\"\n  \n  /bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"";
-		};
-		B7B41083834C4BA9A4CB7495 /* Start Packager */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Start Packager";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "export RCT_METRO_PORT=\"${RCT_METRO_PORT:=8081}\"\necho \"export RCT_METRO_PORT=${RCT_METRO_PORT}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\nif [ -z \"${RCT_NO_LAUNCH_PACKAGER+xxx}\" ] ; then\n  if nc -w 5 -z localhost ${RCT_METRO_PORT} ; then\n    if ! curl -s \"http://localhost:${RCT_METRO_PORT}/status\" | grep -q \"packager-status:running\" ; then\n      echo \"Port ${RCT_METRO_PORT} already in use, packager is either not running or not running correctly\"\n      exit 2\n    fi\n  else\n    open \"$SRCROOT/../node_modules/react-native/scripts/launchPackager.command\" || echo \"Can't start packager automatically\"\n  fi\nfi\n";
-		};
-		BB08AC117A9BEBD6579AA40C /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-PodcastifyShareExtension-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		D6F1DDFB39317D98E83DC624 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/PodcastifyShareExtension/PodcastifyShareExtension.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-PodcastifyShareExtension/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-PodcastifyShareExtension/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-PodcastifyShareExtension/expo-configure-project.sh\"\n";
-		};
-		FF58D5EFD6239103B6D90FAA /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/.xcode.env",
-				"$(SRCROOT)/.xcode.env.local",
-				"$(SRCROOT)/Podcastify/Podcastify.entitlements",
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Podcastify/expo-configure-project.sh",
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Pods/Target Support Files/Pods-Podcastify/ExpoModulesProvider.swift",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Podcastify/expo-configure-project.sh\"\n";
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -598,33 +609,33 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				CE8ACA56BD3560F803D8871B /* ExpoModulesProvider.swift in Sources */,
+				320194C4777483C88CC567A3 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7ACDCBA8CA3E45169AC3892E /* Sources */ = {
+		E457DC4E37D640E6B8E0AC8D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				680D0899D5D2416AA3011D15 /* ShareExtensionViewController.swift in Sources */,
-				006B2B135D7B1B9414C9618F /* ExpoModulesProvider.swift in Sources */,
+				C487BF9953E04246AAC699B3 /* ShareExtensionViewController.swift in Sources */,
+				94BCC813B58EB2B2557E800D /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		39F415F2343646CEBBEE72AC /* PBXTargetDependency */ = {
+		7CCD4373997E40D2B38A6BC7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BEF941A898ED4F06B27BE02E /* PodcastifyShareExtension */;
-			targetProxy = AADD6D44C5B64088BE2EEF41 /* PBXContainerItemProxy */;
+			target = 276FCFB7A34E4B22AAD52704 /* PodcastifyShareExtension */;
+			targetProxy = 11D1B6621929466488EFACDF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F367696B0DE17F8BA4B4FD1E /* Pods-Podcastify.debug.xcconfig */;
+			baseConfigurationReference = FD923098BC788AC148A69939 /* Pods-Podcastify.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -663,7 +674,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C6EF259428CA693F092AEE92 /* Pods-Podcastify.release.xcconfig */;
+			baseConfigurationReference = 4B53D13233EF5A5B697E660D /* Pods-Podcastify.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -693,6 +704,36 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		268719D116E144B0A8A93A68 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7353575F29E01C87145E687C /* Pods-PodcastifyShareExtension.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = PodcastifyShareExtension/PodcastifyShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2Q32F3AY3;
+				ENABLE_ON_DEMAND_RESOURCES = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PodcastifyShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.rbiork.Podcastify.ShareExtension;
+				PRODUCT_NAME = PodcastifyShareExtension;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -812,9 +853,9 @@
 			};
 			name = Release;
 		};
-		DA9D7FB742864EB2AD842C2B /* Release */ = {
+		F8D74300B04245FC8F742A58 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7E552A7A25B3E062567C41B2 /* Pods-PodcastifyShareExtension.release.xcconfig */;
+			baseConfigurationReference = AE4AE2D8CCB390C23E6C7E1B /* Pods-PodcastifyShareExtension.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = PodcastifyShareExtension/PodcastifyShareExtension.entitlements;
@@ -841,36 +882,6 @@
 			};
 			name = Release;
 		};
-		F150B4CF721A46FC8C12B70D /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7D1939465E3599C0EF8E8BEB /* Pods-PodcastifyShareExtension.debug.xcconfig */;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = PodcastifyShareExtension/PodcastifyShareExtension.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = X2Q32F3AY3;
-				ENABLE_ON_DEMAND_RESOURCES = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = PodcastifyShareExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.rbiork.Podcastify.ShareExtension;
-				PRODUCT_NAME = PodcastifyShareExtension;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				VERSIONING_SYSTEM = "apple-generic";
-			};
-			name = Debug;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -892,11 +903,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		DF12A3EFB6C04BBCA47AF0C7 /* Build configuration list for PBXNativeTarget "PodcastifyShareExtension" */ = {
+		F68FF51D72644330A764F467 /* Build configuration list for PBXNativeTarget "PodcastifyShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F150B4CF721A46FC8C12B70D /* Debug */,
-				DA9D7FB742864EB2AD842C2B /* Release */,
+				268719D116E144B0A8A93A68 /* Debug */,
+				F8D74300B04245FC8F742A58 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -27,7 +27,7 @@ import { formatDuration, formatDateCompact, generateId } from '../utils/format';
 import { episodeEvents } from '../utils/episodeEvents';
 import { generationStore, PendingGeneration } from '../utils/generationStore';
 import { Episode, Folder } from '../types';
-import { TRASH_FOLDER_ID } from '../services/storage';
+import { TRASH_FOLDER_ID, RSS_FOLDER_ID } from '../services/storage';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 type Nav = StackNavigationProp<RootStackParamList>;
@@ -562,7 +562,7 @@ export function LibraryScreen() {
   };
 
   const onFolderLongPress = (folder: Folder) => {
-    if (folder.id === TRASH_FOLDER_ID) return;
+    if (folder.id === TRASH_FOLDER_ID || folder.id === RSS_FOLDER_ID) return;
     const { ActionSheetIOS } = require('react-native');
     ActionSheetIOS.showActionSheetWithOptions(
       {

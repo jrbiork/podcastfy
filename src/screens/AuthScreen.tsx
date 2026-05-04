@@ -11,18 +11,55 @@ import {
 } from 'react-native';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { saveSession } from '../services/auth';
+import { saveUserPreferences } from '../services/api';
+import {
+  loadOnboardingPrefs,
+  setOnboardingComplete,
+  clearOnboardingPrefs,
+} from '../services/onboarding';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import type { OnboardingPrefs } from '../services/onboarding';
+import { getTopFeedUrlsForTopics } from '../services/rssService';
+
+/**
+ * Push timezone + onboarding prefs to the server **after** sign-in.
+ * Prefer `pendingFromNav` (passed from Onboarding replace) so we never miss
+ * selectedTopics if AsyncStorage read lags the navigation transition.
+ */
+async function syncPreferencesAfterSignIn(
+  pendingFromNav?: OnboardingPrefs | null,
+): Promise<void> {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const prefs = pendingFromNav ?? (await loadOnboardingPrefs());
+  try {
+    if (!prefs) {
+      await saveUserPreferences({ timezone });
+      return;
+    }
+    const topics = prefs.selectedTopics ?? [];
+    await saveUserPreferences({
+      timezone,
+      selectedTopics: topics,
+      deliveryHour: prefs.deliveryHour,
+      ...(topics.length > 0 ? { feedUrls: getTopFeedUrlsForTopics(topics) } : {}),
+      ...(prefs.voice ? { voice: prefs.voice } : {}),
+    });
+  } catch {
+    // non-blocking — user can still use the app; Feed tab may sync feeds later
+  }
+}
 
 GoogleSignin.configure({
   iosClientId: '979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com',
 });
 
 type Nav = StackNavigationProp<RootStackParamList, 'Auth'>;
+type AuthRoute = RouteProp<RootStackParamList, 'Auth'>;
 
 function fullNameToDisplayName(fullName: AppleAuthentication.AppleAuthenticationFullName | null): string | undefined {
   if (!fullName) return undefined;
@@ -32,6 +69,7 @@ function fullNameToDisplayName(fullName: AppleAuthentication.AppleAuthentication
 
 export function AuthScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<AuthRoute>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +95,11 @@ export function AuthScreen() {
         oidcIdToken: idToken,
       });
 
+      await syncPreferencesAfterSignIn(route.params?.pendingOnboardingPrefs);
+      if (route.params?.pendingOnboardingPrefs) {
+        await setOnboardingComplete();
+        await clearOnboardingPrefs();
+      }
       navigation.replace('Main');
     } catch (e: any) {
       if (e.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -97,6 +140,11 @@ export function AuthScreen() {
         oidcIdToken: credential.identityToken,
       });
 
+      await syncPreferencesAfterSignIn(route.params?.pendingOnboardingPrefs);
+      if (route.params?.pendingOnboardingPrefs) {
+        await setOnboardingComplete();
+        await clearOnboardingPrefs();
+      }
       navigation.replace('Main');
     } catch (e: unknown) {
       const code = (e as { code?: string }).code;

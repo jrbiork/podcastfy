@@ -170,6 +170,7 @@ export function PlayerScreen() {
             minimumValue={0}
             maximumValue={totalMs}
             value={scrubPositionMs ?? positionMs}
+            tapToSeek
             minimumTrackTintColor={Colors.primary}
             maximumTrackTintColor={Colors.border}
             thumbTintColor={Colors.primary}

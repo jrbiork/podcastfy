@@ -1,7 +1,7 @@
 import React, { useEffect, type ReactNode } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { StyleSheet, View, Text, TouchableOpacity, Platform, ViewStyle } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Platform, ViewStyle, StyleProp } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,11 +9,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { FeedScreen } from '../screens/FeedScreen';
+import { DigestScreen } from '../screens/DigestScreen';
 import { Colors, FontSize } from '../utils/theme';
 import { resumePersistedGenerations } from '../services/generationService';
+import { pollSubscribedFeeds } from '../services/rssService';
 
 type TabParamList = {
+  TodayTab: undefined;
   HomeTab: undefined;
+  FeedTab: undefined;
   LibraryTab: undefined;
   ProfileTab: undefined;
 };
@@ -30,7 +35,7 @@ function TabBarButton({
 }: {
   active: boolean;
   onPress: () => void;
-  style?: ViewStyle | ViewStyle[];
+  style?: StyleProp<ViewStyle>;
   children: ReactNode;
 }) {
   const scale = useSharedValue(active ? 1 : 0.94);
@@ -55,9 +60,11 @@ function TabBarButton({
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const isHomeActive = state.index === 0;
-  const isLibraryActive = state.index === 1;
-  const isProfileActive = state.index === 2;
+  const isTodayActive   = state.index === 0;
+  const isFeedActive    = state.index === 1;
+  const isLibraryActive = state.index === 2;
+  const isHomeActive    = state.index === 3;
+  const isProfileActive = state.index === 4;
 
   const blurProps = Platform.select({
     web: { experimentalBlurMethod: 'none' as const },
@@ -71,16 +78,30 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           <BlurView intensity={52} tint="dark" style={StyleSheet.absoluteFill} {...blurProps} />
           <View style={tabStyles.glassPillInner}>
             <TabBarButton
-              active={isHomeActive}
-              onPress={() => navigation.navigate('HomeTab')}
-              style={[tabStyles.tab, isHomeActive && tabStyles.tabActive]}
+              active={isTodayActive}
+              onPress={() => navigation.navigate('TodayTab')}
+              style={[tabStyles.tab, isTodayActive && tabStyles.tabActive]}
             >
               <Ionicons
-                name={isHomeActive ? 'home' : 'home-outline'}
+                name={isTodayActive ? 'newspaper' : 'newspaper-outline'}
                 size={22}
-                color={isHomeActive ? Colors.primary : Colors.textDim}
+                color={isTodayActive ? Colors.primary : Colors.textDim}
               />
-              <Text style={[tabStyles.label, isHomeActive && tabStyles.labelActive]}>Home</Text>
+              <Text style={[tabStyles.label, isTodayActive && tabStyles.labelActive]}>Today</Text>
+            </TabBarButton>
+
+            <View style={tabStyles.tabDivider} />
+
+            <TabBarButton
+              active={isFeedActive}
+              onPress={() => navigation.navigate('FeedTab')}
+              style={[tabStyles.tab, isFeedActive && tabStyles.tabActive]}
+            >
+              <Ionicons
+                name={isFeedActive ? 'radio' : 'radio-outline'}
+                size={22}
+                color={isFeedActive ? Colors.primary : Colors.textDim}
+              />
             </TabBarButton>
 
             <View style={tabStyles.tabDivider} />
@@ -95,7 +116,20 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 size={22}
                 color={isLibraryActive ? Colors.primary : Colors.textDim}
               />
-              <Text style={[tabStyles.label, isLibraryActive && tabStyles.labelActive]}>Library</Text>
+            </TabBarButton>
+
+            <View style={tabStyles.tabDivider} />
+
+            <TabBarButton
+              active={isHomeActive}
+              onPress={() => navigation.navigate('HomeTab')}
+              style={[tabStyles.tab, isHomeActive && tabStyles.tabActive]}
+            >
+              <Ionicons
+                name={isHomeActive ? 'color-wand' : 'color-wand-outline'}
+                size={22}
+                color={isHomeActive ? Colors.primary : Colors.textDim}
+              />
             </TabBarButton>
           </View>
         </View>
@@ -122,6 +156,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 export function MainTabs() {
   useEffect(() => {
     void resumePersistedGenerations();
+    void pollSubscribedFeeds();
   }, []);
 
   return (
@@ -135,10 +170,12 @@ export function MainTabs() {
           elevation: 0,
         },
       }}
-      initialRouteName="HomeTab"
+      initialRouteName="TodayTab"
     >
-      <Tab.Screen name="HomeTab" component={HomeScreen} />
+      <Tab.Screen name="TodayTab"   component={DigestScreen} />
+      <Tab.Screen name="FeedTab"    component={FeedScreen} />
       <Tab.Screen name="LibraryTab" component={LibraryScreen} />
+      <Tab.Screen name="HomeTab"    component={HomeScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -209,9 +246,11 @@ const tabStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     paddingVertical: 11,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     borderRadius: 22,
     minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
   },
   tabActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.12)',

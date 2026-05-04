@@ -17,21 +17,27 @@ import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const SLIDES = [
+const SLIDES: Array<{
+  image: ReturnType<typeof require>;
+  title: string;
+  body: string;
+  pills?: string[];
+}> = [
   {
     image: require('../../assets/onboard-earbuds.png'),
-    title: 'Turn any article into audio',
-    body: 'Share a URL or paste text — Sonera converts it into an audio episode you can listen to anywhere.',
+    title: 'Your 7-minute daily briefing',
+    body: "Every morning, Podcastify reads the web so you don't have to — top stories from tech, news, and business.",
   },
   {
     image: require('../../assets/onboard-share.png'),
-    title: 'Share from any app',
-    body: 'Use the iOS share sheet from Safari, Chrome, or any app to instantly send articles to Sonera.',
+    title: 'Curated from sources you trust',
+    body: 'We start you with The Verge, BBC, TechCrunch, and more. Add your own feeds anytime.',
+    pills: ['Tech', 'News', 'Business'],
   },
   {
     image: require('../../assets/onboard-offline.png'),
     title: 'Listen anywhere, offline',
-    body: 'Episodes are saved on your device. Play them on your commute, at the gym, or with no WiFi.',
+    body: 'Your briefing is saved to your device. Play it on your commute, at the gym, or with no WiFi.',
   },
 ];
 
@@ -75,6 +81,15 @@ export function OnboardingScreen({ onComplete }: Props) {
             <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.body}>{item.body}</Text>
+            {item.pills && (
+              <View style={styles.pillsRow}>
+                {item.pills.map((pill: string) => (
+                  <View key={pill} style={styles.pill}>
+                    <Text style={styles.pillText}>{pill}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
       />
@@ -88,7 +103,7 @@ export function OnboardingScreen({ onComplete }: Props) {
 
         {isLast ? (
           <TouchableOpacity style={styles.cta} onPress={() => onComplete()} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Get Started</Text>
+            <Text style={styles.ctaText}>Get my first briefing</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -165,4 +180,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   nextText: { color: Colors.primary, fontSize: FontSize.md, fontWeight: '600' },
+  pillsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    justifyContent: 'center',
+  },
+  pill: {
+    backgroundColor: Colors.surfaceElevated,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.full,
+  },
+  pillText: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '500' },
 });

@@ -6,6 +6,8 @@ import * as lambdaNode from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as eventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -32,6 +34,10 @@ export class PodcastifyStack extends cdk.Stack {
           prefix: 'jobs/',
           expiration: cdk.Duration.days(1),
         },
+        {
+          prefix: 'digests/',
+          expiration: cdk.Duration.days(7),
+        },
       ],
       cors: [
         {
@@ -49,6 +55,13 @@ export class PodcastifyStack extends cdk.Stack {
       // Visibility timeout must exceed worker Lambda timeout
       visibilityTimeout: cdk.Duration.minutes(11),
       retentionPeriod: cdk.Duration.hours(1),
+    });
+
+    // ── SQS: digest queue ────────────────────────────────────────────────────
+    const digestQueue = new sqs.Queue(this, 'DigestQueue', {
+      queueName: 'podcastify-digests',
+      visibilityTimeout: cdk.Duration.minutes(11),
+      retentionPeriod: cdk.Duration.hours(2),
     });
 
     // Shared Lambda environment for all functions
@@ -180,6 +193,168 @@ export class PodcastifyStack extends cdk.Stack {
       integration: new integrations.HttpLambdaIntegration('StatusIntegration', statusFn),
     });
 
+    // ── Lambda: Digest Dispatcher ─────────────────────────────────────────────
+    const digestDispatcher = new lambdaNode.NodejsFunction(this, 'DigestDispatcher', {
+      functionName: 'podcastify-digest-dispatcher',
+      entry: path.join(lambdaRoot, 'digest-dispatcher/handler.ts'),
+      projectRoot,
+      depsLockFilePath,
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(30),
+      bundling,
+      environment: {
+        ...sharedEnv,
+        DIGEST_QUEUE_URL: digestQueue.queueUrl,
+      },
+    });
+
+    jobsBucket.grantReadWrite(digestDispatcher);
+    digestQueue.grantSendMessages(digestDispatcher);
+
+    // ── Lambda: Digest Worker ─────────────────────────────────────────────────
+    const digestWorker = new lambdaNode.NodejsFunction(this, 'DigestWorker', {
+      functionName: 'podcastify-digest-worker',
+      entry: path.join(lambdaRoot, 'digest-worker/handler.ts'),
+      projectRoot,
+      depsLockFilePath,
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 2048,
+      timeout: cdk.Duration.minutes(10),
+      bundling: workerBundling,
+      environment: {
+        ...sharedEnv,
+        OPENAI_API_KEY: openAiApiKey,
+      },
+    });
+
+    jobsBucket.grantReadWrite(digestWorker);
+
+    digestWorker.addEventSource(
+      new eventSources.SqsEventSource(digestQueue, {
+        batchSize: 1,
+        reportBatchItemFailures: true,
+      }),
+    );
+
+    // ── API Gateway: digest routes ────────────────────────────────────────────
+    const digestIntegration = new integrations.HttpLambdaIntegration(
+      'DigestDispatcherIntegration',
+      digestDispatcher,
+    );
+
+    api.addRoutes({
+      path: '/digests',
+      methods: [apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
+      integration: digestIntegration,
+    });
+
+    api.addRoutes({
+      path: '/digests/latest',
+      methods: [apigwv2.HttpMethod.GET],
+      integration: digestIntegration,
+    });
+
+    // ── DynamoDB: user preferences ────────────────────────────────────────────
+    const usersTable = new dynamodb.Table(this, 'UsersTable', {
+      tableName: 'podcastify-users',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // ── IAM: role EventBridge Scheduler uses to invoke the trigger Lambda ─────
+    const schedulerExecutionRole = new iam.Role(this, 'SchedulerExecutionRole', {
+      roleName: 'podcastify-scheduler-execution',
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+    });
+
+    // ── EventBridge Scheduler group ───────────────────────────────────────────
+    const scheduleGroupName = 'podcastify-digest-schedules';
+    new cdk.CfnResource(this, 'DigestScheduleGroup', {
+      type: 'AWS::Scheduler::ScheduleGroup',
+      properties: { Name: scheduleGroupName },
+    });
+
+    // ── Lambda: Digest Scheduler Trigger ──────────────────────────────────────
+    const digestSchedulerTrigger = new lambdaNode.NodejsFunction(this, 'DigestSchedulerTrigger', {
+      functionName: 'podcastify-digest-scheduler-trigger',
+      entry: path.join(lambdaRoot, 'digest-scheduler-trigger/handler.ts'),
+      projectRoot,
+      depsLockFilePath,
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(30),
+      bundling,
+      environment: {
+        ...sharedEnv,
+        USERS_TABLE: usersTable.tableName,
+        DIGEST_QUEUE_URL: digestQueue.queueUrl,
+      },
+    });
+
+    usersTable.grantReadData(digestSchedulerTrigger);
+    digestQueue.grantSendMessages(digestSchedulerTrigger);
+    jobsBucket.grantRead(digestSchedulerTrigger); // for readDigestStatus idempotency check
+
+    // Grant the scheduler execution role permission to invoke this Lambda
+    schedulerExecutionRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['lambda:InvokeFunction'],
+      resources: [digestSchedulerTrigger.functionArn],
+    }));
+
+    // ── Lambda: User Preferences ──────────────────────────────────────────────
+    const userPreferences = new lambdaNode.NodejsFunction(this, 'UserPreferences', {
+      functionName: 'podcastify-user-preferences',
+      entry: path.join(lambdaRoot, 'user-preferences/handler.ts'),
+      projectRoot,
+      depsLockFilePath,
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(30),
+      bundling,
+      environment: {
+        ...sharedEnv,
+        USERS_TABLE: usersTable.tableName,
+        TRIGGER_LAMBDA_ARN: digestSchedulerTrigger.functionArn,
+        SCHEDULER_ROLE_ARN: schedulerExecutionRole.roleArn,
+        SCHEDULE_GROUP: scheduleGroupName,
+      },
+    });
+
+    usersTable.grantReadWriteData(userPreferences);
+    userPreferences.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'scheduler:CreateSchedule',
+        'scheduler:UpdateSchedule',
+        'scheduler:GetSchedule',
+      ],
+      resources: [`arn:aws:scheduler:${this.region}:${this.account}:schedule/${scheduleGroupName}/*`],
+    }));
+    userPreferences.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['iam:PassRole'],
+      resources: [schedulerExecutionRole.roleArn],
+    }));
+
+    // ── API Gateway: user preferences routes ──────────────────────────────────
+    const prefsIntegration = new integrations.HttpLambdaIntegration(
+      'UserPreferencesIntegration',
+      userPreferences,
+    );
+    api.addRoutes({
+      path: '/users/preferences',
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
+      integration: prefsIntegration,
+    });
+
     // ── Outputs ───────────────────────────────────────────────────────────────
     new cdk.CfnOutput(this, 'ApiBaseUrl', {
       description: 'Set as EXPO_PUBLIC_API_BASE in .env',
@@ -192,6 +367,10 @@ export class PodcastifyStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'JobQueueUrl', {
       value: jobQueue.queueUrl,
+    });
+
+    new cdk.CfnOutput(this, 'DigestQueueUrl', {
+      value: digestQueue.queueUrl,
     });
   }
 }

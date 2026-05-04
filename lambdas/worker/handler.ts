@@ -1,5 +1,5 @@
 import { SQSHandler, SQSRecord } from 'aws-lambda';
-import { extractArticle, ScraperError } from './scraper';
+import { extractArticle, ScraperError } from '../shared/scraper';
 import {
   extractCoreContentForSpeech,
   generatePodcastScript,

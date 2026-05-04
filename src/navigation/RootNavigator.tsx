@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { OnboardingConfigScreen } from '../screens/OnboardingConfigScreen';
+// import { DigestPreviewScreen } from '../screens/DigestPreviewScreen';
 import { AuthScreen } from '../screens/AuthScreen';
 import { MainTabs } from './MainTabs';
 import { ModePickerScreen } from '../screens/ModePickerScreen';
 import { GeneratingScreen } from '../screens/GeneratingScreen';
 import { PlayerScreen } from '../screens/PlayerScreen';
 import { PaywallScreen } from '../screens/PaywallScreen';
-import { hasCompletedOnboarding, setOnboardingComplete } from '../services/onboarding';
+import { FeedDetailScreen } from '../screens/FeedDetailScreen';
+import { ArticleDetailScreen } from '../screens/ArticleDetailScreen';
+import { hasCompletedOnboarding } from '../services/onboarding';
 import { loadSession } from '../services/auth';
 import { initPurchases } from '../services/subscription';
 import { Colors } from '../utils/theme';
@@ -47,11 +50,10 @@ export function RootNavigator() {
     <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Onboarding">
         {(props) => (
-          <OnboardingScreen
-            onComplete={async () => {
-              await setOnboardingComplete();
-              props.navigation.replace('Auth');
-            }}
+          <OnboardingConfigScreen
+            onComplete={(prefs) =>
+              props.navigation.replace('Auth', { pendingOnboardingPrefs: prefs })
+            }
           />
         )}
       </Stack.Screen>
@@ -68,6 +70,8 @@ export function RootNavigator() {
         options={{ presentation: 'modal', animation: 'slide_from_bottom', gestureEnabled: false }}
       />
       <Stack.Screen name="Player" component={PlayerScreen} />
+      <Stack.Screen name="FeedDetail" component={FeedDetailScreen} />
+      <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <Stack.Screen
         name="Paywall"
         component={PaywallScreen}
