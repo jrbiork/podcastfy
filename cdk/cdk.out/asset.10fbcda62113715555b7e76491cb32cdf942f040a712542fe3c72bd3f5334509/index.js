@@ -6439,6 +6439,8 @@ __export(handler_exports, {
   handler: () => handler
 });
 module.exports = __toCommonJS(handler_exports);
+var import_client_dynamodb2 = require("@aws-sdk/client-dynamodb");
+var import_client_sns = require("@aws-sdk/client-sns");
 
 // shared/scraper.ts
 var import_readability = require("@mozilla/readability");
@@ -13877,187 +13879,362 @@ async function generateDigestScript(summaries, date, topN = 9) {
   return { segments, stories };
 }
 
+// digest-worker/servedHistory.ts
+var import_crypto = require("crypto");
+var import_client_dynamodb = require("@aws-sdk/client-dynamodb");
+var dynamo = new import_client_dynamodb.DynamoDBClient({});
+var DIGEST_SERVED_TABLE = process.env.DIGEST_SERVED_TABLE;
+var TRACKING_PARAM_PREFIXES = ["utm_"];
+var TRACKING_PARAM_KEYS = /* @__PURE__ */ new Set([
+  "fbclid",
+  "gclid",
+  "mc_cid",
+  "mc_eid",
+  "ref",
+  "ref_src"
+]);
+var TITLE_STOP_WORDS = /* @__PURE__ */ new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "by",
+  "for",
+  "from",
+  "in",
+  "is",
+  "it",
+  "of",
+  "on",
+  "or",
+  "that",
+  "the",
+  "to",
+  "was",
+  "were",
+  "with",
+  "breaking",
+  "live",
+  "update"
+]);
+function hash(value) {
+  return (0, import_crypto.createHash)("sha256").update(value).digest("hex");
+}
+function normalizeWhitespace(value) {
+  return value.trim().replace(/\s+/g, " ");
+}
+function normalizeTitle(title) {
+  return normalizeWhitespace(
+    title.normalize("NFKD").toLowerCase().replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s]/g, " ")
+  );
+}
+function titleTokensFromNormalized(normalizedTitle) {
+  return normalizedTitle.split(" ").map((token) => token.trim()).filter((token) => token.length > 1 && !TITLE_STOP_WORDS.has(token));
+}
+function canonicalizeUrl(rawUrl) {
+  try {
+    const u2 = new URL(rawUrl);
+    u2.hash = "";
+    u2.hostname = u2.hostname.toLowerCase().replace(/^www\./, "");
+    u2.protocol = "https:";
+    const filteredEntries = [...u2.searchParams.entries()].filter(([key]) => {
+      if (TRACKING_PARAM_KEYS.has(key)) return false;
+      return !TRACKING_PARAM_PREFIXES.some((prefix) => key.startsWith(prefix));
+    });
+    u2.search = "";
+    for (const [key, value] of filteredEntries.sort(
+      ([a2], [b2]) => a2.localeCompare(b2)
+    )) {
+      u2.searchParams.append(key, value);
+    }
+    u2.pathname = u2.pathname.replace(/\/+$/, "") || "/";
+    return u2.toString();
+  } catch {
+    return normalizeWhitespace(rawUrl.toLowerCase());
+  }
+}
+function createServedStoryRecord(article) {
+  const normalizedTitle = normalizeTitle(article.title);
+  const tokens = titleTokensFromNormalized(normalizedTitle);
+  const sortedTokens = [...tokens].sort();
+  const canonicalUrl = canonicalizeUrl(article.link);
+  const titleFingerprint = hash(normalizedTitle);
+  const linkFingerprint = hash(canonicalUrl);
+  const fingerprint = hash(`${titleFingerprint}:${linkFingerprint}`);
+  return {
+    fingerprint,
+    titleFingerprint,
+    linkFingerprint,
+    normalizedTitle,
+    titleTokens: sortedTokens
+  };
+}
+function getDayString(baseDate, daysDelta) {
+  const shifted = new Date(baseDate);
+  shifted.setUTCDate(shifted.getUTCDate() + daysDelta);
+  return shifted.toISOString().slice(0, 10);
+}
+function jaccardSimilarity(tokensA, tokensB) {
+  if (tokensA.length === 0 && tokensB.length === 0) return 1;
+  if (tokensA.length === 0 || tokensB.length === 0) return 0;
+  const a2 = new Set(tokensA);
+  const b2 = new Set(tokensB);
+  let intersection = 0;
+  for (const token of a2) {
+    if (b2.has(token)) intersection++;
+  }
+  const union = a2.size + b2.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+async function loadRecentServedStories(userId, date, lookbackDays = 3) {
+  if (!DIGEST_SERVED_TABLE) return [];
+  const dateObj = /* @__PURE__ */ new Date(`${date}T00:00:00Z`);
+  const startDate = getDayString(dateObj, -lookbackDays);
+  const endDate = getDayString(dateObj, 0);
+  const rangeStart = `${startDate}#`;
+  const rangeEnd = `${endDate}#~`;
+  const records = [];
+  let lastEvaluatedKey;
+  do {
+    const res = await dynamo.send(
+      new import_client_dynamodb.QueryCommand({
+        TableName: DIGEST_SERVED_TABLE,
+        KeyConditionExpression: "userId = :userId and servedKey BETWEEN :start AND :end",
+        ExpressionAttributeValues: {
+          ":userId": { S: userId },
+          ":start": { S: rangeStart },
+          ":end": { S: rangeEnd }
+        },
+        ProjectionExpression: "fingerprint, titleFingerprint, linkFingerprint, normalizedTitle, titleTokens",
+        ExclusiveStartKey: lastEvaluatedKey
+      })
+    );
+    for (const item of res.Items ?? []) {
+      const titleTokens = item.titleTokens?.SS ?? [];
+      records.push({
+        fingerprint: item.fingerprint?.S ?? "",
+        titleFingerprint: item.titleFingerprint?.S ?? "",
+        linkFingerprint: item.linkFingerprint?.S ?? "",
+        normalizedTitle: item.normalizedTitle?.S ?? "",
+        titleTokens
+      });
+    }
+    lastEvaluatedKey = res.LastEvaluatedKey;
+  } while (lastEvaluatedKey);
+  return records.filter(
+    (r2) => Boolean(r2.fingerprint && r2.titleFingerprint && r2.linkFingerprint)
+  );
+}
+function filterRecentlyServedArticles(articles, seenRecords, fuzzyThreshold = 0.75) {
+  const seenFingerprint = new Set(seenRecords.map((r2) => r2.fingerprint));
+  const seenTitleFingerprint = new Set(seenRecords.map((r2) => r2.titleFingerprint));
+  const seenLinkFingerprint = new Set(seenRecords.map((r2) => r2.linkFingerprint));
+  const withoutExact = [];
+  const withoutExactOrFuzzy = [];
+  let exactFilteredCount = 0;
+  let fuzzyFilteredCount = 0;
+  for (const article of articles) {
+    const candidate = createServedStoryRecord(article);
+    const exactMatch = seenFingerprint.has(candidate.fingerprint) || seenTitleFingerprint.has(candidate.titleFingerprint) || seenLinkFingerprint.has(candidate.linkFingerprint);
+    if (exactMatch) {
+      exactFilteredCount++;
+      continue;
+    }
+    withoutExact.push(article);
+    const fuzzyMatch = seenRecords.some(
+      (seen) => jaccardSimilarity(candidate.titleTokens, seen.titleTokens) >= fuzzyThreshold
+    );
+    if (fuzzyMatch) {
+      fuzzyFilteredCount++;
+      continue;
+    }
+    withoutExactOrFuzzy.push(article);
+  }
+  return {
+    withoutExact,
+    withoutExactOrFuzzy,
+    exactFilteredCount,
+    fuzzyFilteredCount
+  };
+}
+async function persistServedStories(userId, date, selectedArticles, ttlDays = 4) {
+  if (!DIGEST_SERVED_TABLE || selectedArticles.length === 0) return;
+  const nowEpochSec = Math.floor(Date.now() / 1e3);
+  const expiresAt = nowEpochSec + ttlDays * 24 * 60 * 60;
+  const writeRequests = selectedArticles.map((article) => {
+    const record = createServedStoryRecord(article);
+    return {
+      PutRequest: {
+        Item: {
+          userId: { S: userId },
+          servedKey: { S: `${date}#${record.fingerprint}` },
+          servedDate: { S: date },
+          fingerprint: { S: record.fingerprint },
+          titleFingerprint: { S: record.titleFingerprint },
+          linkFingerprint: { S: record.linkFingerprint },
+          normalizedTitle: { S: record.normalizedTitle },
+          ...record.titleTokens.length > 0 ? { titleTokens: { SS: record.titleTokens } } : {},
+          expiresAt: { N: String(expiresAt) }
+        }
+      }
+    };
+  });
+  for (let i2 = 0; i2 < writeRequests.length; i2 += 25) {
+    const chunk = writeRequests.slice(i2, i2 + 25);
+    await dynamo.send(
+      new import_client_dynamodb.BatchWriteItemCommand({
+        RequestItems: {
+          [DIGEST_SERVED_TABLE]: chunk
+        }
+      })
+    );
+  }
+}
+
 // data/topicFeedMap.ts
 var TOPIC_FEED_URLS_BY_ID = {
   news: [
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://feeds.npr.org/1001/rss.xml",
-    "https://www.theguardian.com/world/rss",
-    "https://api.axios.com/feed/",
-    "https://feeds.reuters.com/reuters/worldNews"
+    "https://www.reuters.com/rssFeed/topNews",
+    "https://apnews.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   ],
   technology: [
+    "https://techcrunch.com/feed",
     "https://www.theverge.com/rss/index.xml",
-    "https://techcrunch.com/feed/",
-    "https://www.wired.com/feed/rss",
-    "https://feeds.arstechnica.com/arstechnica/index",
-    "https://www.technologyreview.com/feed/"
+    "https://www.wired.com/feed/rss"
   ],
   "business-finance": [
-    "https://feeds.a.dj.com/rss/RSSWSJD.xml",
-    "https://feeds.bloomberg.com/markets/news.rss",
-    "https://feeds.feedburner.com/HarvardBusiness",
-    "https://feeds.reuters.com/reuters/businessNews",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml"
+    "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
   ],
   politics: [
-    "https://www.politico.com/rss/politicopicks.xml",
-    "https://www.theguardian.com/politics/rss",
-    "https://feeds.npr.org/1014/rss.xml",
-    "https://api.axios.com/feed/",
-    "https://www.theatlantic.com/feed/all/"
+    "https://www.politico.com/rss/politics08.xml",
+    "https://thehill.com/rss/syndicator/19110",
+    "https://feeds.npr.org/1014/rss.xml"
   ],
   "health-wellness": [
-    "https://feeds.bbci.co.uk/news/health/rss.xml",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.healthline.com/rss/health-news",
-    "https://www.statnews.com/feed/",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml"
+    "https://www.health.harvard.edu/rss/blog.xml",
+    "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
+    "https://tools.cdc.gov/api/v2/resources/media/403372.rss"
   ],
   science: [
-    "https://www.quantamagazine.org/feed/",
-    "https://www.theguardian.com/science/rss",
-    "https://www.sciencedaily.com/rss/all.rss",
-    "https://www.newscientist.com/feed/home/",
-    "https://www.technologyreview.com/feed/"
+    "https://www.scientificamerican.com/feed/rss/",
+    "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+    "https://www.sciencenews.org/feed"
   ],
   productivity: [
-    "https://lifehacker.com/rss",
+    "https://jamesclear.com/feed",
     "https://zenhabits.net/feed/",
-    "https://tim.blog/feed/",
-    "https://www.productivityist.com/feed/",
-    "https://www.fastcompany.com/latest/rss"
+    "https://lifehacker.com/rss"
   ],
   fitness: [
     "https://www.menshealth.com/rss/all.xml/",
-    "https://www.runnersworld.com/rss/all/index.xml",
-    "https://www.shape.com/feeds/all.xml",
-    "https://www.self.com/feed/self-atom.xml",
-    "https://www.nerdfitness.com/blog/feed/"
+    "https://breakingmuscle.com/feed/",
+    "https://www.acefitness.org/resources/everyone/blog/rss/"
   ],
   "mental-health": [
-    "https://www.theguardian.com/society/mental-health/rss",
-    "https://www.sciencedaily.com/rss/mind_brain/mental_health.xml",
-    "https://medlineplus.gov/feeds/topics/depression.xml",
-    "https://www.statnews.com/category/health/feed/",
-    "https://www.healthline.com/rss/health-news"
+    "https://www.psychologytoday.com/us/rss",
+    "https://www.verywellmind.com/rss",
+    "https://www.mindful.org/feed/"
   ],
   food: [
-    "https://www.smittenkitchen.com/feed/",
-    "https://www.bonappetit.com/feed/rss",
-    "https://www.eater.com/rss/index.xml",
-    "https://www.epicurious.com/services/rss/recipes/new",
-    "https://food52.com/blog.rss"
+    "https://www.seriouseats.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml",
+    "https://www.bonappetit.com/feed/rss"
   ],
   travel: [
+    "https://www.lonelyplanet.com/news/rss.xml",
     "https://www.cntraveler.com/feed/rss",
-    "https://skift.com/feed/",
-    "https://www.bbc.com/travel/feed.rss",
-    "https://www.travelandleisure.com/feeds/syndication/rss_latest.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml"
+    "https://thepointsguy.com/feed/"
   ],
   parenting: [
-    "https://www.parents.com/feeds/all",
-    "https://www.babycenter.com/rss/baby/",
-    "https://www.todaysparent.com/feed/",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.fatherly.com/feed"
+    "https://www.parents.com/thmb/rss",
+    "https://www.whattoexpect.com/rss",
+    "https://www.scarymommy.com/feed"
   ],
   "entertainment-news": [
     "https://variety.com/feed/",
-    "https://www.hollywoodreporter.com/feed/",
-    "https://deadline.com/feed/",
-    "https://ew.com/feed/",
-    "https://feeds.npr.org/1008/rss.xml"
+    "https://www.hollywoodreporter.com/feed",
+    "https://ew.com/feed"
   ],
   "movies-tv": [
-    "https://www.slashfilm.com/feed/",
-    "https://www.indiewire.com/feed/rss.xml",
-    "https://www.avclub.com/rss.xml",
-    "https://www.vulture.com/rss/index.xml",
-    "https://collider.com/feed/"
+    "https://www.indiewire.com/feed/",
+    "https://collider.com/feed/",
+    "https://editorial.rottentomatoes.com/feed/"
   ],
   music: [
-    "https://pitchfork.com/rss/news/feed.xml",
-    "https://www.rollingstone.com/feed/",
-    "https://www.nme.com/feed",
-    "https://www.billboard.com/feed/",
-    "https://www.stereogum.com/feed/"
+    "https://pitchfork.com/rss/news/",
+    "https://www.rollingstone.com/music/music-news/feed/",
+    "https://www.billboard.com/feed/"
   ],
   gaming: [
-    "https://www.polygon.com/rss/index.xml",
-    "https://www.ign.com/rss.xml",
-    "https://www.gamespot.com/feeds/mashup/?type=rss",
-    "https://kotaku.com/rss",
-    "https://www.pcgamer.com/rss/"
+    "https://feeds.ign.com/ign/all",
+    "https://www.gamespot.com/feeds/mashup/",
+    "https://www.polygon.com/rss/index.xml"
   ],
   books: [
     "https://lithub.com/feed/",
-    "https://www.theguardian.com/books/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/Books.xml",
-    "https://www.theatlantic.com/feed/all/",
-    "https://www.bookpage.com/feed/?post_type=preview"
+    "https://www.theparisreview.org/blog/feed/"
   ],
   startups: [
-    "https://techcrunch.com/feed/",
-    "https://hnrss.org/best",
+    "https://techcrunch.com/startups/feed",
     "https://venturebeat.com/feed/",
-    "https://www.inc.com/rss",
-    "https://www.fastcompany.com/latest/rss"
+    "https://www.entrepreneur.com/latest.rss"
   ],
   "crypto-web3": [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
-    "https://bitcoinmagazine.com/.rss/full/",
-    "https://decrypt.co/feed",
-    "https://www.theblock.co/rss.xml"
+    "https://decrypt.co/feed"
   ],
   environment: [
-    "https://www.theguardian.com/environment/rss",
-    "https://www.climatecentral.org/feeds/news.rss",
-    "https://www.carbonbrief.org/feed",
+    "https://insideclimatenews.org/feed/",
     "https://grist.org/feed/",
-    "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+    "https://e360.yale.edu/feed/rss.xml"
   ],
   "ai-tech": [
+    "https://techcrunch.com/feed",
     "https://www.theverge.com/rss/index.xml",
-    "https://techcrunch.com/feed/",
     "https://www.wired.com/feed/rss"
   ],
   world: [
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://www.theguardian.com/world/rss",
-    "https://feeds.npr.org/1001/rss.xml"
+    "https://www.reuters.com/rssFeed/topNews",
+    "https://apnews.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   ],
   finance: [
-    "https://feeds.a.dj.com/rss/RSSWSJD.xml",
-    "https://feeds.bloomberg.com/markets/news.rss",
-    "https://feeds.feedburner.com/HarvardBusiness"
+    "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
   ],
   climate: [
-    "https://www.theguardian.com/environment/rss",
-    "https://www.climatecentral.org/feeds/news.rss",
-    "https://www.carbonbrief.org/feed"
+    "https://insideclimatenews.org/feed/",
+    "https://grist.org/feed/",
+    "https://e360.yale.edu/feed/rss.xml"
   ],
   culture: [
-    "https://www.theatlantic.com/feed/all/",
-    "https://feeds.npr.org/1008/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml"
+    "https://variety.com/feed/",
+    "https://www.hollywoodreporter.com/feed",
+    "https://ew.com/feed"
   ],
   health: [
-    "https://feeds.bbci.co.uk/news/health/rss.xml",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.healthline.com/rss/health-news"
+    "https://www.health.harvard.edu/rss/blog.xml",
+    "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
+    "https://tools.cdc.gov/api/v2/resources/media/403372.rss"
   ],
   sports: [
-    "https://feeds.bbci.co.uk/sport/rss.xml",
-    "https://www.espn.com/espn/rss/news",
-    "https://www.skysports.com/rss/12040"
+    "https://www.menshealth.com/rss/all.xml/",
+    "https://breakingmuscle.com/feed/",
+    "https://www.acefitness.org/resources/everyone/blog/rss/"
   ],
   crypto: [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
-    "https://bitcoinmagazine.com/.rss/full/"
+    "https://decrypt.co/feed"
   ]
 };
 
@@ -14108,6 +14285,11 @@ var URL_TO_TOPIC = /* @__PURE__ */ new Map();
 for (const [topicId, urls] of Object.entries(TOPIC_FEED_URLS_BY_ID)) {
   for (const url of urls) URL_TO_TOPIC.set(url, topicId);
 }
+var dynamo2 = new import_client_dynamodb2.DynamoDBClient({});
+var sns = new import_client_sns.SNSClient({});
+var USERS_TABLE = process.env.USERS_TABLE;
+var LOOKBACK_DAYS = 3;
+var FUZZY_TITLE_SIMILARITY_THRESHOLD = 0.75;
 function inferTopicFromUrl(url) {
   const exact = URL_TO_TOPIC.get(url);
   if (exact) return exact;
@@ -14149,6 +14331,41 @@ function inferTopicFromUrl(url) {
   if (/entertain|celebrity|popculture|variety\.com/.test(u2))
     return "entertainment-news";
   return void 0;
+}
+async function publishDigestReadyPush(userId, date, title) {
+  if (!USERS_TABLE) return;
+  const user = await dynamo2.send(
+    new import_client_dynamodb2.GetItemCommand({
+      TableName: USERS_TABLE,
+      Key: { userId: { S: userId } },
+      ProjectionExpression: "iosPushEndpointArn, iosPushEnabled"
+    })
+  );
+  const endpointArn = user.Item?.iosPushEndpointArn?.S;
+  const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
+  if (!endpointArn || !pushEnabled) return;
+  const payload = {
+    aps: {
+      alert: {
+        title: "Your daily digest is ready",
+        body: title
+      },
+      sound: "default"
+    },
+    target: "today",
+    digestDate: date
+  };
+  await sns.send(
+    new import_client_sns.PublishCommand({
+      TargetArn: endpointArn,
+      MessageStructure: "json",
+      Message: JSON.stringify({
+        default: "Your daily digest is ready",
+        APNS: JSON.stringify(payload),
+        APNS_SANDBOX: JSON.stringify(payload)
+      })
+    })
+  );
 }
 async function processDigest(msg) {
   const { userId, date } = msg;
@@ -14202,8 +14419,46 @@ async function processDigest(msg) {
     count: enrichedArticles.length
   });
   await writeDigestStatus(userId, date, { status: "ranking" });
-  const ranked = deduplicateAndRank(enrichedArticles, msg.topN ?? 8, msg.priorityTopicId);
-  const candidateTopics = new Set(enrichedArticles.map((a2) => a2.topicId).filter(Boolean));
+  const topN = msg.topN ?? 8;
+  let rankingInput = enrichedArticles;
+  try {
+    const seen = await loadRecentServedStories(userId, date, LOOKBACK_DAYS);
+    const { withoutExact, withoutExactOrFuzzy, exactFilteredCount, fuzzyFilteredCount } = filterRecentlyServedArticles(
+      enrichedArticles,
+      seen,
+      FUZZY_TITLE_SIMILARITY_THRESHOLD
+    );
+    const minRequiredCandidates = Math.min(topN, 3);
+    let fallbackMode = "strict";
+    rankingInput = withoutExactOrFuzzy;
+    if (rankingInput.length < minRequiredCandidates) {
+      rankingInput = withoutExact;
+      fallbackMode = "exact_only";
+    }
+    if (rankingInput.length < minRequiredCandidates) {
+      rankingInput = enrichedArticles;
+      fallbackMode = "none";
+    }
+    console.log("[digest-worker] cross-day dedup result", {
+      userId,
+      date,
+      candidatesBefore: enrichedArticles.length,
+      candidatesAfter: rankingInput.length,
+      seenCount: seen.length,
+      exactFilteredCount,
+      fuzzyFilteredCount,
+      fallbackMode
+    });
+  } catch (err) {
+    rankingInput = enrichedArticles;
+    console.warn("[digest-worker] cross-day dedup failed; continuing without filter", {
+      userId,
+      date,
+      err: String(err)
+    });
+  }
+  const ranked = deduplicateAndRank(rankingInput, topN, msg.priorityTopicId);
+  const candidateTopics = new Set(rankingInput.map((a2) => a2.topicId).filter(Boolean));
   const rankedTopics = new Set(ranked.map((a2) => a2.topicId).filter(Boolean));
   const skippedTopicId = [...candidateTopics].find((t2) => !rankedTopics.has(t2));
   console.log("[digest-worker] ranked articles", {
@@ -14269,12 +14524,36 @@ async function processDigest(msg) {
     stories,
     ...skippedTopicId ? { skippedTopicId } : {}
   });
+  try {
+    await persistServedStories(userId, date, ranked);
+    console.log("[digest-worker] persisted served-story history", {
+      userId,
+      date,
+      count: ranked.length
+    });
+  } catch (err) {
+    console.warn("[digest-worker] failed to persist served-story history", {
+      userId,
+      date,
+      err: String(err)
+    });
+  }
   console.log("[digest-worker] digest complete", {
     userId,
     date,
     title,
     durationSeconds
   });
+  try {
+    await publishDigestReadyPush(userId, date, title);
+    console.log("[digest-worker] push published", { userId, date });
+  } catch (err) {
+    console.warn("[digest-worker] push publish failed", {
+      userId,
+      date,
+      err: String(err)
+    });
+  }
 }
 var handler = async (event) => {
   for (const record of event.Records) {

@@ -30,6 +30,15 @@ function buildTopicFeedUrls(selectedTopics: string[]): Record<string, string[]> 
   return result;
 }
 
+function readStringArrayAttr(attr?: { SS?: string[]; L?: Array<{ S?: string }> }): string[] {
+  if (!attr) return [];
+  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
+  if (Array.isArray(attr.L) && attr.L.length > 0) {
+    return attr.L.map((v) => v.S).filter((v): v is string => typeof v === 'string' && v.length > 0);
+  }
+  return [];
+}
+
 export const handler = async (event: { userId: string }): Promise<void> => {
   const { userId } = event;
 
@@ -68,11 +77,11 @@ export const handler = async (event: { userId: string }): Promise<void> => {
 
     const item = result.Item;
     if (item) {
-      const fromSubs = item.feedUrls?.SS ?? [];
+      const fromSubs = readStringArrayAttr(item.feedUrls as any);
       if (fromSubs.length > 0) {
         feedUrls = fromSubs.slice(0, 50);
       } else {
-        const selectedTopics = item.selectedTopics?.SS ?? [];
+        const selectedTopics = readStringArrayAttr(item.selectedTopics as any);
         if (selectedTopics.length > 0) {
           const built = buildTopicFeedUrls(selectedTopics);
           if (Object.keys(built).length > 0) topicFeedUrls = built;
@@ -80,6 +89,18 @@ export const handler = async (event: { userId: string }): Promise<void> => {
       }
 
       if (item.voice?.S) voice = item.voice.S;
+
+      const firstDigestDate = item.firstDigestDate?.S ?? null;
+      const subscribed = item.subscribed?.BOOL ?? false;
+
+      if (firstDigestDate && !subscribed) {
+        const HARD_PAYWALL_DAYS = 4;
+        const daysSince = (Date.now() - new Date(firstDigestDate).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSince >= HARD_PAYWALL_DAYS) {
+          console.log('[scheduler-trigger] skipping free user past trial', { userId, daysSince: daysSince.toFixed(1) });
+          return;
+        }
+      }
     }
   } catch (err) {
     console.warn('[scheduler-trigger] failed to read user prefs, using defaults', { userId, err: String(err) });

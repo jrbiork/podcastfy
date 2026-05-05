@@ -16,6 +16,7 @@ import {
   Animated,
   Easing,
   Image,
+  Modal,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
@@ -24,6 +25,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, Radius } from '../utils/theme';
 import { Episode, DigestStory } from '../types';
 import { getOrCreateTodayDigest, DigestProgress } from '../services/digestService';
+import { recordFirstDigestUse, getDigestTrialState } from '../services/subscription';
+import { navigateToPaywall } from '../navigation/rootNavigationRef';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
@@ -142,9 +145,6 @@ function StoryRow({
         <Text style={styles.storyTitle} numberOfLines={2}>
           {story.title}
         </Text>
-        <Text style={styles.storyDuration}>
-          {formatDuration(story.estimatedDurationSeconds)}
-        </Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={Colors.textDim} />
     </TouchableOpacity>
@@ -187,6 +187,7 @@ export function DigestScreen() {
   const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);
   const SPEEDS: (0.5 | 0.75 | 1 | 1.5 | 2)[] = [0.5, 0.75, 1, 1.5, 2];
   const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
+  const [showSoftPaywall, setShowSoftPaywall] = useState(false);
 
   // Always call hooks at top level
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -217,6 +218,11 @@ export function DigestScreen() {
       setScrubPositionMs(null);
     }
   }, [positionMs, scrubPositionMs]);
+
+  // Record first digest use when ready (idempotent)
+  useEffect(() => {
+    if (phase === 'ready') void recordFirstDigestUse();
+  }, [phase]);
 
   // Spinner: one continuous loop while digest is in progress. Do not key on `phase`
   // alone — it goes `loading` → `generating` on first progress tick, which would
@@ -320,17 +326,25 @@ export function DigestScreen() {
     await setRate(next);
   }, [speed, setRate]);
 
-  const handlePlayPress = useCallback(() => {
-    if (hasEnded) {
-      void restart();
-      return;
-    }
-    if (isPlaying) {
-      void pause();
-      return;
-    }
+  const handlePlayPress = useCallback(async () => {
+    const state = await getDigestTrialState();
+    if (state === 'hard') { navigateToPaywall(); return; }
+    if (state === 'soft') { setShowSoftPaywall(true); return; }
+    if (hasEnded) { void restart(); return; }
+    if (isPlaying) { void pause(); return; }
     void play();
   }, [hasEnded, isPlaying, restart, pause, play]);
+
+  const handleSoftPaywallSubscribe = useCallback(() => {
+    setShowSoftPaywall(false);
+    navigateToPaywall();
+  }, []);
+
+  const handleSoftPaywallContinue = useCallback(() => {
+    setShowSoftPaywall(false);
+    if (hasEnded) void restart();
+    else void play();
+  }, [hasEnded, restart, play]);
 
   const handleStoryPress = useCallback(
     (story: DigestStory) => {
@@ -613,6 +627,37 @@ export function DigestScreen() {
           />
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showSoftPaywall}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSoftPaywall(false)}
+      >
+        <View style={styles.paywallBackdrop}>
+          <View style={styles.paywallCard}>
+            <Ionicons name="sparkles" size={32} color={Colors.primary} />
+            <Text style={styles.paywallHeadline}>Enjoying your daily digest?</Text>
+            <Text style={styles.paywallBody}>
+              Subscribe to keep your daily audio briefing going — unlimited digests, every day.
+            </Text>
+            <TouchableOpacity
+              style={styles.paywallSubscribeBtn}
+              activeOpacity={0.85}
+              onPress={handleSoftPaywallSubscribe}
+            >
+              <Text style={styles.paywallSubscribeBtnText}>Subscribe</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.paywallContinueBtn}
+              activeOpacity={0.75}
+              onPress={handleSoftPaywallContinue}
+            >
+              <Text style={styles.paywallContinueBtnText}>Continue listening</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -919,5 +964,58 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
     fontWeight: '500',
     textAlign: 'center',
+  },
+
+  // Soft paywall overlay
+  paywallBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  paywallCard: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  paywallHeadline: {
+    color: Colors.text,
+    fontSize: FontSize.xl,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  paywallBody: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  paywallSubscribeBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  paywallSubscribeBtnText: {
+    color: Colors.bg,
+    fontSize: FontSize.md,
+    fontWeight: '700',
+  },
+  paywallContinueBtn: {
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    width: '100%',
+  },
+  paywallContinueBtnText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: '600',
   },
 });

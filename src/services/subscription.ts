@@ -4,8 +4,11 @@ import Purchases from 'react-native-purchases';
 
 export const ENTITLEMENT_ID = 'premium';
 export const FREE_LIMIT_SECONDS = 60; // 1 minute
+export const DIGEST_SOFT_PAYWALL_DAYS = 3;
+export const DIGEST_HARD_PAYWALL_DAYS = 4;
 
 const TOTAL_SECONDS_KEY = 'podcastify_total_seconds';
+const FIRST_DIGEST_DATE_KEY = 'podcastify_first_digest_date';
 
 let configured = false;
 
@@ -68,6 +71,44 @@ export async function addGeneratedSeconds(seconds: number): Promise<void> {
   await AsyncStorage.setItem(TOTAL_SECONDS_KEY, String(current + seconds));
 }
 
+export type DigestTrialState = 'active' | 'soft' | 'hard';
+
+export async function getDigestTrialState(): Promise<DigestTrialState> {
+  try {
+    const isSubscribed = await getIsSubscribed();
+    if (isSubscribed) return 'active';
+    const raw = await AsyncStorage.getItem(FIRST_DIGEST_DATE_KEY);
+    if (!raw) return 'active';
+    const daysSince = (Date.now() - parseInt(raw, 10)) / (1000 * 60 * 60 * 24);
+    if (daysSince >= DIGEST_HARD_PAYWALL_DAYS) return 'hard';
+    if (daysSince >= DIGEST_SOFT_PAYWALL_DAYS) return 'soft';
+    return 'active';
+  } catch {
+    return 'active';
+  }
+}
+
+export async function recordFirstDigestUse(): Promise<void> {
+  try {
+    const existing = await AsyncStorage.getItem(FIRST_DIGEST_DATE_KEY);
+    if (existing) return;
+    const isoDate = new Date().toISOString().slice(0, 10);
+    await AsyncStorage.setItem(FIRST_DIGEST_DATE_KEY, String(Date.now()));
+    const { saveUserPreferences } = await import('./api');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await saveUserPreferences({ timezone: tz, firstDigestDate: isoDate }).catch(() => {});
+  } catch { /* non-fatal */ }
+}
+
+export async function syncSubscriptionToServer(): Promise<void> {
+  try {
+    const isSubscribed = await getIsSubscribed();
+    const { saveUserPreferences } = await import('./api');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    await saveUserPreferences({ timezone: tz, subscribed: isSubscribed }).catch(() => {});
+  } catch { /* non-fatal */ }
+}
+
 export async function hasReachedFreeLimit(): Promise<boolean> {
   const isSubscribed = await getIsSubscribed();
   if (isSubscribed) return false;
@@ -96,6 +137,7 @@ export async function restorePurchases(): Promise<boolean> {
 export async function clearLocalData(): Promise<void> {
   try {
     await AsyncStorage.removeItem(TOTAL_SECONDS_KEY);
+    await AsyncStorage.removeItem(FIRST_DIGEST_DATE_KEY);
   } catch {
     /* ignore */
   }

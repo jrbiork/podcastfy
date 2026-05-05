@@ -29,184 +29,144 @@ var import_client_sqs = require("@aws-sdk/client-sqs");
 // data/topicFeedMap.ts
 var TOPIC_FEED_URLS_BY_ID = {
   news: [
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://feeds.npr.org/1001/rss.xml",
-    "https://www.theguardian.com/world/rss",
-    "https://api.axios.com/feed/",
-    "https://feeds.reuters.com/reuters/worldNews"
+    "https://www.reuters.com/rssFeed/topNews",
+    "https://apnews.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   ],
   technology: [
+    "https://techcrunch.com/feed",
     "https://www.theverge.com/rss/index.xml",
-    "https://techcrunch.com/feed/",
-    "https://www.wired.com/feed/rss",
-    "https://feeds.arstechnica.com/arstechnica/index",
-    "https://www.technologyreview.com/feed/"
+    "https://www.wired.com/feed/rss"
   ],
   "business-finance": [
-    "https://feeds.a.dj.com/rss/RSSWSJD.xml",
-    "https://feeds.bloomberg.com/markets/news.rss",
-    "https://feeds.feedburner.com/HarvardBusiness",
-    "https://feeds.reuters.com/reuters/businessNews",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml"
+    "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
   ],
   politics: [
-    "https://www.politico.com/rss/politicopicks.xml",
-    "https://www.theguardian.com/politics/rss",
-    "https://feeds.npr.org/1014/rss.xml",
-    "https://api.axios.com/feed/",
-    "https://www.theatlantic.com/feed/all/"
+    "https://www.politico.com/rss/politics08.xml",
+    "https://thehill.com/rss/syndicator/19110",
+    "https://feeds.npr.org/1014/rss.xml"
   ],
   "health-wellness": [
-    "https://feeds.bbci.co.uk/news/health/rss.xml",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.healthline.com/rss/health-news",
-    "https://www.statnews.com/feed/",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Health.xml"
+    "https://www.health.harvard.edu/rss/blog.xml",
+    "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
+    "https://tools.cdc.gov/api/v2/resources/media/403372.rss"
   ],
   science: [
-    "https://www.quantamagazine.org/feed/",
-    "https://www.theguardian.com/science/rss",
-    "https://www.sciencedaily.com/rss/all.rss",
-    "https://www.newscientist.com/feed/home/",
-    "https://www.technologyreview.com/feed/"
+    "https://www.scientificamerican.com/feed/rss/",
+    "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+    "https://www.sciencenews.org/feed"
   ],
   productivity: [
-    "https://lifehacker.com/rss",
+    "https://jamesclear.com/feed",
     "https://zenhabits.net/feed/",
-    "https://tim.blog/feed/",
-    "https://www.productivityist.com/feed/",
-    "https://www.fastcompany.com/latest/rss"
+    "https://lifehacker.com/rss"
   ],
   fitness: [
     "https://www.menshealth.com/rss/all.xml/",
-    "https://www.runnersworld.com/rss/all/index.xml",
-    "https://www.shape.com/feeds/all.xml",
-    "https://www.self.com/feed/self-atom.xml",
-    "https://www.nerdfitness.com/blog/feed/"
+    "https://breakingmuscle.com/feed/",
+    "https://www.acefitness.org/resources/everyone/blog/rss/"
   ],
   "mental-health": [
-    "https://www.theguardian.com/society/mental-health/rss",
-    "https://www.sciencedaily.com/rss/mind_brain/mental_health.xml",
-    "https://medlineplus.gov/feeds/topics/depression.xml",
-    "https://www.statnews.com/category/health/feed/",
-    "https://www.healthline.com/rss/health-news"
+    "https://www.psychologytoday.com/us/rss",
+    "https://www.verywellmind.com/rss",
+    "https://www.mindful.org/feed/"
   ],
   food: [
-    "https://www.smittenkitchen.com/feed/",
-    "https://www.bonappetit.com/feed/rss",
-    "https://www.eater.com/rss/index.xml",
-    "https://www.epicurious.com/services/rss/recipes/new",
-    "https://food52.com/blog.rss"
+    "https://www.seriouseats.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml",
+    "https://www.bonappetit.com/feed/rss"
   ],
   travel: [
+    "https://www.lonelyplanet.com/news/rss.xml",
     "https://www.cntraveler.com/feed/rss",
-    "https://skift.com/feed/",
-    "https://www.bbc.com/travel/feed.rss",
-    "https://www.travelandleisure.com/feeds/syndication/rss_latest.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml"
+    "https://thepointsguy.com/feed/"
   ],
   parenting: [
-    "https://www.parents.com/feeds/all",
-    "https://www.babycenter.com/rss/baby/",
-    "https://www.todaysparent.com/feed/",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.fatherly.com/feed"
+    "https://www.parents.com/thmb/rss",
+    "https://www.whattoexpect.com/rss",
+    "https://www.scarymommy.com/feed"
   ],
   "entertainment-news": [
     "https://variety.com/feed/",
-    "https://www.hollywoodreporter.com/feed/",
-    "https://deadline.com/feed/",
-    "https://ew.com/feed/",
-    "https://feeds.npr.org/1008/rss.xml"
+    "https://www.hollywoodreporter.com/feed",
+    "https://ew.com/feed"
   ],
   "movies-tv": [
-    "https://www.slashfilm.com/feed/",
-    "https://www.indiewire.com/feed/rss.xml",
-    "https://www.avclub.com/rss.xml",
-    "https://www.vulture.com/rss/index.xml",
-    "https://collider.com/feed/"
+    "https://www.indiewire.com/feed/",
+    "https://collider.com/feed/",
+    "https://editorial.rottentomatoes.com/feed/"
   ],
   music: [
-    "https://pitchfork.com/rss/news/feed.xml",
-    "https://www.rollingstone.com/feed/",
-    "https://www.nme.com/feed",
-    "https://www.billboard.com/feed/",
-    "https://www.stereogum.com/feed/"
+    "https://pitchfork.com/rss/news/",
+    "https://www.rollingstone.com/music/music-news/feed/",
+    "https://www.billboard.com/feed/"
   ],
   gaming: [
-    "https://www.polygon.com/rss/index.xml",
-    "https://www.ign.com/rss.xml",
-    "https://www.gamespot.com/feeds/mashup/?type=rss",
-    "https://kotaku.com/rss",
-    "https://www.pcgamer.com/rss/"
+    "https://feeds.ign.com/ign/all",
+    "https://www.gamespot.com/feeds/mashup/",
+    "https://www.polygon.com/rss/index.xml"
   ],
   books: [
     "https://lithub.com/feed/",
-    "https://www.theguardian.com/books/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/Books.xml",
-    "https://www.theatlantic.com/feed/all/",
-    "https://www.bookpage.com/feed/?post_type=preview"
+    "https://www.theparisreview.org/blog/feed/"
   ],
   startups: [
-    "https://techcrunch.com/feed/",
-    "https://hnrss.org/best",
+    "https://techcrunch.com/startups/feed",
     "https://venturebeat.com/feed/",
-    "https://www.inc.com/rss",
-    "https://www.fastcompany.com/latest/rss"
+    "https://www.entrepreneur.com/latest.rss"
   ],
   "crypto-web3": [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
-    "https://bitcoinmagazine.com/.rss/full/",
-    "https://decrypt.co/feed",
-    "https://www.theblock.co/rss.xml"
+    "https://decrypt.co/feed"
   ],
   environment: [
-    "https://www.theguardian.com/environment/rss",
-    "https://www.climatecentral.org/feeds/news.rss",
-    "https://www.carbonbrief.org/feed",
+    "https://insideclimatenews.org/feed/",
     "https://grist.org/feed/",
-    "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"
+    "https://e360.yale.edu/feed/rss.xml"
   ],
   "ai-tech": [
+    "https://techcrunch.com/feed",
     "https://www.theverge.com/rss/index.xml",
-    "https://techcrunch.com/feed/",
     "https://www.wired.com/feed/rss"
   ],
   world: [
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://www.theguardian.com/world/rss",
-    "https://feeds.npr.org/1001/rss.xml"
+    "https://www.reuters.com/rssFeed/topNews",
+    "https://apnews.com/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
   ],
   finance: [
-    "https://feeds.a.dj.com/rss/RSSWSJD.xml",
-    "https://feeds.bloomberg.com/markets/news.rss",
-    "https://feeds.feedburner.com/HarvardBusiness"
+    "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml"
   ],
   climate: [
-    "https://www.theguardian.com/environment/rss",
-    "https://www.climatecentral.org/feeds/news.rss",
-    "https://www.carbonbrief.org/feed"
+    "https://insideclimatenews.org/feed/",
+    "https://grist.org/feed/",
+    "https://e360.yale.edu/feed/rss.xml"
   ],
   culture: [
-    "https://www.theatlantic.com/feed/all/",
-    "https://feeds.npr.org/1008/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml"
+    "https://variety.com/feed/",
+    "https://www.hollywoodreporter.com/feed",
+    "https://ew.com/feed"
   ],
   health: [
-    "https://feeds.bbci.co.uk/news/health/rss.xml",
-    "https://feeds.npr.org/1128/rss.xml",
-    "https://www.healthline.com/rss/health-news"
+    "https://www.health.harvard.edu/rss/blog.xml",
+    "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
+    "https://tools.cdc.gov/api/v2/resources/media/403372.rss"
   ],
   sports: [
-    "https://feeds.bbci.co.uk/sport/rss.xml",
-    "https://www.espn.com/espn/rss/news",
-    "https://www.skysports.com/rss/12040"
+    "https://www.menshealth.com/rss/all.xml/",
+    "https://breakingmuscle.com/feed/",
+    "https://www.acefitness.org/resources/everyone/blog/rss/"
   ],
   crypto: [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
-    "https://bitcoinmagazine.com/.rss/full/"
+    "https://decrypt.co/feed"
   ]
 };
 
@@ -253,6 +213,14 @@ function buildTopicFeedUrls(selectedTopics) {
   }
   return result;
 }
+function readStringArrayAttr(attr) {
+  if (!attr) return [];
+  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
+  if (Array.isArray(attr.L) && attr.L.length > 0) {
+    return attr.L.map((v) => v.S).filter((v) => typeof v === "string" && v.length > 0);
+  }
+  return [];
+}
 var handler = async (event) => {
   const { userId } = event;
   if (!userId) {
@@ -279,17 +247,27 @@ var handler = async (event) => {
     }));
     const item = result.Item;
     if (item) {
-      const fromSubs = item.feedUrls?.SS ?? [];
+      const fromSubs = readStringArrayAttr(item.feedUrls);
       if (fromSubs.length > 0) {
         feedUrls = fromSubs.slice(0, 50);
       } else {
-        const selectedTopics = item.selectedTopics?.SS ?? [];
+        const selectedTopics = readStringArrayAttr(item.selectedTopics);
         if (selectedTopics.length > 0) {
           const built = buildTopicFeedUrls(selectedTopics);
           if (Object.keys(built).length > 0) topicFeedUrls = built;
         }
       }
       if (item.voice?.S) voice = item.voice.S;
+      const firstDigestDate = item.firstDigestDate?.S ?? null;
+      const subscribed = item.subscribed?.BOOL ?? false;
+      if (firstDigestDate && !subscribed) {
+        const HARD_PAYWALL_DAYS = 4;
+        const daysSince = (Date.now() - new Date(firstDigestDate).getTime()) / (1e3 * 60 * 60 * 24);
+        if (daysSince >= HARD_PAYWALL_DAYS) {
+          console.log("[scheduler-trigger] skipping free user past trial", { userId, daysSince: daysSince.toFixed(1) });
+          return;
+        }
+      }
     }
   } catch (err) {
     console.warn("[scheduler-trigger] failed to read user prefs, using defaults", { userId, err: String(err) });

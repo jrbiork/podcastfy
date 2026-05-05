@@ -34,6 +34,7 @@ __export(handler_exports, {
 });
 module.exports = __toCommonJS(handler_exports);
 var import_client_sqs = require("@aws-sdk/client-sqs");
+var import_client_dynamodb = require("@aws-sdk/client-dynamodb");
 
 // node_modules/jose/dist/node/esm/runtime/base64url.js
 var import_node_buffer = require("node:buffer");
@@ -1514,7 +1515,9 @@ async function deleteDigestFiles(userId, date) {
 
 // digest-dispatcher/handler.ts
 var sqs = new import_client_sqs.SQSClient({ region: process.env.AWS_REGION ?? "us-east-1" });
+var dynamo = new import_client_dynamodb.DynamoDBClient({ region: process.env.AWS_REGION ?? "us-east-1" });
 var DIGEST_QUEUE_URL = process.env.DIGEST_QUEUE_URL ?? "";
+var USERS_TABLE = process.env.USERS_TABLE ?? "";
 var IN_PROGRESS_STATUSES = /* @__PURE__ */ new Set([
   "queued",
   "fetching_feeds",
@@ -1523,6 +1526,14 @@ var IN_PROGRESS_STATUSES = /* @__PURE__ */ new Set([
   "scripting",
   "generating_audio"
 ]);
+function readStringArrayAttr(attr) {
+  if (!attr) return [];
+  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
+  if (Array.isArray(attr.L) && attr.L.length > 0) {
+    return attr.L.map((v) => v.S).filter((v) => typeof v === "string" && v.length > 0);
+  }
+  return [];
+}
 function json(statusCode, body) {
   return {
     statusCode,
@@ -1623,6 +1634,26 @@ async function handleDispatchDigest(requestId, userId, date, body) {
     }
     topicFeedUrls = body.topicFeedUrls;
   }
+  if (!feedUrls && !topicFeedUrls && USERS_TABLE) {
+    try {
+      const user = await dynamo.send(new import_client_dynamodb.GetItemCommand({
+        TableName: USERS_TABLE,
+        Key: { userId: { S: userId } },
+        ProjectionExpression: "feedUrls"
+      }));
+      const item = user.Item;
+      const fromSet = readStringArrayAttr(item?.feedUrls);
+      if (fromSet.length > 0) {
+        feedUrls = fromSet.slice(0, 50);
+      }
+    } catch (err) {
+      console.warn("[digest-dispatcher] failed to hydrate feedUrls from prefs", {
+        requestId,
+        userId,
+        err: String(err)
+      });
+    }
+  }
   const existing = await readDigestStatus(userId, date);
   if (existing) {
     if (IN_PROGRESS_STATUSES.has(existing.status)) {
@@ -1635,14 +1666,13 @@ async function handleDispatchDigest(requestId, userId, date, body) {
       return json(200, { digestId, status: existing.status });
     }
     if (existing.status === "done") {
-      const existingStories = existing.stories;
-      const hasStories = Array.isArray(existingStories) && existingStories.length > 0;
-      if (!force || hasStories) {
+      if (!force) {
         const audioUrl = await getPresignedDigestAudioUrl(userId, date);
         console.log("[digest-dispatcher] digest already done", { requestId, userId, date });
         return json(200, { ...existing, digestId, audioUrl });
       }
-      console.log("[digest-dispatcher] force re-enqueue (no stories)", { requestId, userId, date });
+      await deleteDigestFiles(userId, date);
+      console.log("[digest-dispatcher] force re-enqueue and replace today digest", { requestId, userId, date });
     }
   }
   await writeDigestStatus(userId, date, { status: "queued" });

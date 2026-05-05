@@ -13,7 +13,7 @@ import { FeedDetailScreen } from '../screens/FeedDetailScreen';
 import { ArticleDetailScreen } from '../screens/ArticleDetailScreen';
 import { hasCompletedOnboarding } from '../services/onboarding';
 import { loadSession } from '../services/auth';
-import { initPurchases } from '../services/subscription';
+import { initPurchases, syncSubscriptionToServer } from '../services/subscription';
 import { Colors } from '../utils/theme';
 import type { RootStackParamList } from './rootNavigationRef';
 
@@ -27,6 +27,7 @@ export function RootNavigator() {
     let cancelled = false;
     (async () => {
       await initPurchases().catch(() => {});
+      await syncSubscriptionToServer().catch(() => {});
       const onboard = await hasCompletedOnboarding();
       const session = await loadSession();
       if (cancelled) return;

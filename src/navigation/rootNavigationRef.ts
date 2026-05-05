@@ -7,7 +7,11 @@ export type RootStackParamList = {
   /** Fresh onboarding prefs (AsyncStorage can lag right after replace); used on first sign-in sync. */
   Auth: { pendingOnboardingPrefs?: OnboardingPrefs } | undefined;
   DigestPreview: undefined;
-  Main: undefined;
+  Main:
+    | {
+        screen?: 'TodayTab' | 'FeedTab' | 'LibraryTab' | 'HomeTab' | 'ProfileTab';
+      }
+    | undefined;
   Player: { episode: Episode };
   ModePicker: { input: import('../types').GenerationInput };
   Generating: { input: import('../types').GenerationInput; mode: 'podcast' | 'tts' };
@@ -42,4 +46,14 @@ export function navigateToPlayer(episode: Episode): void {
 
 export function navigateToPaywall(): void {
   if (rootNavigationRef.isReady()) rootNavigationRef.navigate('Paywall');
+}
+
+export function navigateToTodayTab(): void {
+  if (!rootNavigationRef.isReady()) return;
+  rootNavigationRef.dispatch(
+    CommonActions.navigate({
+      name: 'Main',
+      params: { screen: 'TodayTab' },
+    }),
+  );
 }

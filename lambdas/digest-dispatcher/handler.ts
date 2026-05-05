@@ -1,5 +1,6 @@
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { verifyToken, AuthError } from '../shared/auth';
 import {
   readDigestStatus,
@@ -9,7 +10,9 @@ import {
 } from '../shared/s3';
 
 const sqs = new SQSClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
+const dynamo = new DynamoDBClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
 const DIGEST_QUEUE_URL = process.env.DIGEST_QUEUE_URL ?? '';
+const USERS_TABLE = process.env.USERS_TABLE ?? '';
 
 const IN_PROGRESS_STATUSES = new Set([
   'queued',
@@ -19,6 +22,15 @@ const IN_PROGRESS_STATUSES = new Set([
   'scripting',
   'generating_audio',
 ]);
+
+function readStringArrayAttr(attr?: { SS?: string[]; L?: Array<{ S?: string }> }): string[] {
+  if (!attr) return [];
+  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
+  if (Array.isArray(attr.L) && attr.L.length > 0) {
+    return attr.L.map((v) => v.S).filter((v): v is string => typeof v === 'string' && v.length > 0);
+  }
+  return [];
+}
 
 function json(statusCode: number, body: unknown) {
   return {
@@ -155,6 +167,29 @@ async function handleDispatchDigest(
     topicFeedUrls = body.topicFeedUrls as Record<string, string[]>;
   }
 
+  // If caller didn't provide feeds/topic buckets (e.g. test regenerate button),
+  // hydrate from saved user prefs so generation uses current preferences.
+  if (!feedUrls && !topicFeedUrls && USERS_TABLE) {
+    try {
+      const user = await dynamo.send(new GetItemCommand({
+        TableName: USERS_TABLE,
+        Key: { userId: { S: userId } },
+        ProjectionExpression: 'feedUrls',
+      }));
+      const item = user.Item;
+      const fromSet = readStringArrayAttr(item?.feedUrls as any);
+      if (fromSet.length > 0) {
+        feedUrls = fromSet.slice(0, 50);
+      }
+    } catch (err) {
+      console.warn('[digest-dispatcher] failed to hydrate feedUrls from prefs', {
+        requestId,
+        userId,
+        err: String(err),
+      });
+    }
+  }
+
   // Check existing status (idempotency)
   const existing = await readDigestStatus(userId, date);
 
@@ -170,17 +205,16 @@ async function handleDispatchDigest(
     }
 
     if (existing.status === 'done') {
-      // Re-enqueue if force=true and stories are missing (old digest without story metadata)
-      const existingStories = (existing as Record<string, unknown>).stories;
-      const hasStories = Array.isArray(existingStories) && existingStories.length > 0;
-      if (!force || hasStories) {
+      if (!force) {
         const audioUrl = await getPresignedDigestAudioUrl(userId, date);
         console.log('[digest-dispatcher] digest already done', { requestId, userId, date });
         return json(200, { ...existing, digestId, audioUrl });
       }
-      console.log('[digest-dispatcher] force re-enqueue (no stories)', { requestId, userId, date });
+      // Explicit test/manual force should replace today's digest artifacts and regenerate.
+      await deleteDigestFiles(userId, date);
+      console.log('[digest-dispatcher] force re-enqueue and replace today digest', { requestId, userId, date });
     }
-    // status === 'error', or force=true with no stories → fall through and re-enqueue
+    // status === 'error', or done+force=true → fall through and re-enqueue
   }
 
   await writeDigestStatus(userId, date, { status: 'queued' });
