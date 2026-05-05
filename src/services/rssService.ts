@@ -160,6 +160,44 @@ export const RSS_FEEDS: RssFeed[] = [
   { id: 'skysports', name: 'Sky Sports', url: 'https://www.skysports.com/rss/12040', category: 'sports' },
   { id: 'sports_ill', name: 'Sports Illustrated', url: 'https://www.si.com/rss/si_topstories.rss', category: 'sports' },
   { id: 'cbssports', name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/', category: 'sports' },
+  { id: 'reuters_top_news', name: 'Reuters Top News', url: 'https://www.reuters.com/rssFeed/topNews', category: 'news' },
+  { id: 'apnews', name: 'Associated Press', url: 'https://apnews.com/rss', category: 'news' },
+  { id: 'nytimes_homepage', name: 'NY Times Home Page', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', category: 'news' },
+  { id: 'bloomberg_etf_report', name: 'Bloomberg ETF Report', url: 'https://www.bloomberg.com/feed/podcast/etf-report.xml', category: 'business-finance' },
+  { id: 'cnbc_top_news', name: 'CNBC Top News', url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html', category: 'business-finance' },
+  { id: 'wsj_markets_main', name: 'WSJ Markets Main', url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml', category: 'business-finance' },
+  { id: 'politico_politics', name: 'POLITICO Politics', url: 'https://www.politico.com/rss/politics08.xml', category: 'politics' },
+  { id: 'the_hill_politics', name: 'The Hill Politics', url: 'https://thehill.com/rss/syndicator/19110', category: 'politics' },
+  { id: 'harvard_health_blog', name: 'Harvard Health', url: 'https://www.health.harvard.edu/rss/blog.xml', category: 'health-wellness' },
+  { id: 'webmd_public', name: 'WebMD', url: 'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC', category: 'health-wellness' },
+  { id: 'cdc_health_news', name: 'CDC News', url: 'https://tools.cdc.gov/api/v2/resources/media/403372.rss', category: 'health-wellness' },
+  { id: 'scientific_american', name: 'Scientific American', url: 'https://www.scientificamerican.com/feed/rss/', category: 'science' },
+  { id: 'science_magazine', name: 'Science Magazine', url: 'https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science', category: 'science' },
+  { id: 'science_news', name: 'Science News', url: 'https://www.sciencenews.org/feed', category: 'science' },
+  { id: 'james_clear', name: 'James Clear', url: 'https://jamesclear.com/feed', category: 'productivity' },
+  { id: 'breaking_muscle', name: 'Breaking Muscle', url: 'https://breakingmuscle.com/feed/', category: 'fitness' },
+  { id: 'ace_fitness', name: 'ACE Fitness', url: 'https://www.acefitness.org/resources/everyone/blog/rss/', category: 'fitness' },
+  { id: 'psychology_today', name: 'Psychology Today', url: 'https://www.psychologytoday.com/us/rss', category: 'mental-health' },
+  { id: 'verywell_mind', name: 'Verywell Mind', url: 'https://www.verywellmind.com/rss', category: 'mental-health' },
+  { id: 'mindful', name: 'Mindful', url: 'https://www.mindful.org/feed/', category: 'mental-health' },
+  { id: 'serious_eats', name: 'Serious Eats', url: 'https://www.seriouseats.com/rss', category: 'food' },
+  { id: 'nytimes_dining_wine', name: 'NY Times Dining & Wine', url: 'https://rss.nytimes.com/services/xml/rss/nyt/DiningandWine.xml', category: 'food' },
+  { id: 'lonely_planet', name: 'Lonely Planet', url: 'https://www.lonelyplanet.com/news/rss.xml', category: 'travel' },
+  { id: 'the_points_guy', name: 'The Points Guy', url: 'https://thepointsguy.com/feed/', category: 'travel' },
+  { id: 'parents_thmb', name: 'Parents', url: 'https://www.parents.com/thmb/rss', category: 'parenting' },
+  { id: 'what_to_expect', name: 'What to Expect', url: 'https://www.whattoexpect.com/rss', category: 'parenting' },
+  { id: 'scary_mommy', name: 'Scary Mommy', url: 'https://www.scarymommy.com/feed', category: 'parenting' },
+  { id: 'indiewire_feed', name: 'IndieWire', url: 'https://www.indiewire.com/feed/', category: 'movies-tv' },
+  { id: 'rotten_tomatoes_editorial', name: 'Rotten Tomatoes Editorial', url: 'https://editorial.rottentomatoes.com/feed/', category: 'movies-tv' },
+  { id: 'pitchfork_news', name: 'Pitchfork News', url: 'https://pitchfork.com/rss/news/', category: 'music' },
+  { id: 'rolling_stone_music_news', name: 'Rolling Stone Music News', url: 'https://www.rollingstone.com/music/music-news/feed/', category: 'music' },
+  { id: 'ign_all', name: 'IGN All', url: 'https://feeds.ign.com/ign/all', category: 'gaming' },
+  { id: 'gamespot_mashup', name: 'GameSpot Mashup', url: 'https://www.gamespot.com/feeds/mashup/', category: 'gaming' },
+  { id: 'paris_review', name: 'The Paris Review', url: 'https://www.theparisreview.org/blog/feed/', category: 'books' },
+  { id: 'techcrunch_startups', name: 'TechCrunch Startups', url: 'https://techcrunch.com/startups/feed', category: 'startups' },
+  { id: 'entrepreneur_latest', name: 'Entrepreneur', url: 'https://www.entrepreneur.com/latest.rss', category: 'startups' },
+  { id: 'inside_climate_news', name: 'Inside Climate News', url: 'https://insideclimatenews.org/feed/', category: 'environment' },
+  { id: 'yale_e360', name: 'Yale Environment 360', url: 'https://e360.yale.edu/feed/rss.xml', category: 'environment' },
 ];
 
 // ── AsyncStorage keys ────────────────────────────────────────────────────────
@@ -373,10 +411,10 @@ export const TOPIC_TO_RSS_FEED_IDS: Record<string, string[]> = (() => {
   return built;
 })();
 
-const FEEDS_PER_TOPIC_BOOTSTRAP = 5;
+const FEEDS_PER_TOPIC_BOOTSTRAP = 3;
 
 /**
- * Sets built-in RSS subscriptions from onboarding topics (top 3–5 feeds per topic).
+ * Sets built-in RSS subscriptions from onboarding topics (top 3 feeds per topic).
  * Removes previous built-in subscriptions so stale feeds do not stay checked;
  * custom / online feed IDs are preserved.
  */
@@ -447,6 +485,23 @@ export async function getSubscribedFeedUrls(): Promise<string[]> {
   const [subs, custom] = await Promise.all([loadSubscriptions(), loadCustomFeeds()]);
   const allFeeds = [...RSS_FEEDS, ...custom];
   return allFeeds.filter((f) => subs.includes(f.id)).map((f) => f.url);
+}
+
+/**
+ * Clears all local RSS-related state, including manual feeds, subscriptions,
+ * poll metadata, and per-feed seen GUID caches.
+ */
+export async function clearRssLocalData(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const seenKeys = keys.filter((k) => k.startsWith(SEEN_GUIDS_PREFIX));
+    const keysToRemove = [SUBSCRIPTIONS_KEY, CUSTOM_FEEDS_KEY, LAST_POLL_KEY, ...seenKeys];
+    if (keysToRemove.length > 0) {
+      await AsyncStorage.multiRemove(keysToRemove);
+    }
+  } catch {
+    // best-effort
+  }
 }
 
 // ── Seen-GUID helpers ─────────────────────────────────────────────────────────

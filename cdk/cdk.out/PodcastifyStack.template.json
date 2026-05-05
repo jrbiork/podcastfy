@@ -605,7 +605,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "f51d4d2de86f652e40c4f531822781a5f540568a1fc5007dfffb4b6497b93981.zip"
+     "S3Key": "a12793ed63f199f1a70c3155eb3924104b13d2bf3e6a09d6fd98957739dffb3e.zip"
     },
     "Environment": {
      "Variables": {
@@ -636,7 +636,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.f51d4d2de86f652e40c4f531822781a5f540568a1fc5007dfffb4b6497b93981",
+    "aws:asset:path": "asset.a12793ed63f199f1a70c3155eb3924104b13d2bf3e6a09d6fd98957739dffb3e",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1317,6 +1317,178 @@
     "aws:cdk:path": "PodcastifyStack/Api/POST--users--preferences/Resource"
    }
   },
+  "ApiPOSTuserspushtokenUserPreferencesIntegrationPermission72BDD608": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UserPreferences7114F2F9",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/users/push-token"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--push-token/UserPreferencesIntegration-Permission"
+   }
+  },
+  "ApiPOSTuserspushtokenF54E9124": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /users/push-token",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiGETuserspreferencesUserPreferencesIntegrationAB6A124A"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--push-token/Resource"
+   }
+  },
+  "ApiPOSTuserspushtestUserPreferencesIntegrationPermissionEF94A917": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UserPreferences7114F2F9",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/users/push-test"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--push-test/UserPreferencesIntegration-Permission"
+   }
+  },
+  "ApiPOSTuserspushtest40241CEA": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /users/push-test",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiGETuserspreferencesUserPreferencesIntegrationAB6A124A"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--users--push-test/Resource"
+   }
+  },
+  "UsersTable9725E9C8": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     }
+    ],
+    "TableName": "podcastify-users"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/UsersTable/Resource"
+   }
+  },
+  "DigestServedTable2ED3D9D4": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "servedKey",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "servedKey",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "podcastify-digest-served",
+    "TimeToLiveSpecification": {
+     "AttributeName": "expiresAt",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/DigestServedTable/Resource"
+   }
+  },
   "DigestDispatcherServiceRole1388595A": {
    "Type": "AWS::IAM::Role",
    "Properties": {
@@ -1406,6 +1578,40 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -1429,7 +1635,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "2a1f29b3242ebeaa07eefe804bab2e12ff46442aa294d345d45425fce593bfa3.zip"
+     "S3Key": "ac681ed495ea47f9a006500a7273925ba758cbb7e4ae1d4360f7f96618036d1c.zip"
     },
     "Environment": {
      "Variables": {
@@ -1441,6 +1647,9 @@
       "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
       "DIGEST_QUEUE_URL": {
        "Ref": "DigestQueueD48DE8C7"
+      },
+      "USERS_TABLE": {
+       "Ref": "UsersTable9725E9C8"
       }
      }
     },
@@ -1462,7 +1671,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestDispatcher/Resource",
-    "aws:asset:path": "asset.2a1f29b3242ebeaa07eefe804bab2e12ff46442aa294d345d45425fce593bfa3",
+    "aws:asset:path": "asset.ac681ed495ea47f9a006500a7273925ba758cbb7e4ae1d4360f7f96618036d1c",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1545,6 +1754,78 @@
       },
       {
        "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DigestServedTable2ED3D9D4",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "DigestServedTable2ED3D9D4",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
         "sqs:ReceiveMessage",
         "sqs:ChangeMessageVisibility",
         "sqs:GetQueueUrl",
@@ -1558,6 +1839,16 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": "sns:Publish",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Ref": "ApnsPlatformApplicationArn"
+        },
+        "arn:aws:sns:*:*:endpoint/*"
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -1581,7 +1872,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "cb1e9ff516eb9077607d66aef8be3503c11e5746849de6fde22ecc73d9298824.zip"
+     "S3Key": "10fbcda62113715555b7e76491cb32cdf942f040a712542fe3c72bd3f5334509.zip"
     },
     "Environment": {
      "Variables": {
@@ -1591,7 +1882,16 @@
       "GOOGLE_CLIENT_ID": "979236713408-sjbaqppejbjq40akfg8dpk1la8sfcpni.apps.googleusercontent.com",
       "APPLE_CLIENT_ID": "com.rbiork.Podcastify",
       "GOOGLE_IOS_CLIENT_ID": "979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com",
-      "OPENAI_API_KEY": "REMOVED"
+      "OPENAI_API_KEY": "REMOVED",
+      "USERS_TABLE": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "DIGEST_SERVED_TABLE": {
+       "Ref": "DigestServedTable2ED3D9D4"
+      },
+      "SNS_PLATFORM_APPLICATION_ARN": {
+       "Ref": "ApnsPlatformApplicationArn"
+      }
      }
     },
     "FunctionName": "podcastify-digest-worker",
@@ -1612,7 +1912,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestWorker/Resource",
-    "aws:asset:path": "asset.cb1e9ff516eb9077607d66aef8be3503c11e5746849de6fde22ecc73d9298824",
+    "aws:asset:path": "asset.10fbcda62113715555b7e76491cb32cdf942f040a712542fe3c72bd3f5334509",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1636,30 +1936,6 @@
    },
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestWorker/SqsEventSource:PodcastifyStackDigestQueue175B5DAE/Resource"
-   }
-  },
-  "UsersTable9725E9C8": {
-   "Type": "AWS::DynamoDB::Table",
-   "Properties": {
-    "AttributeDefinitions": [
-     {
-      "AttributeName": "userId",
-      "AttributeType": "S"
-     }
-    ],
-    "BillingMode": "PAY_PER_REQUEST",
-    "KeySchema": [
-     {
-      "AttributeName": "userId",
-      "KeyType": "HASH"
-     }
-    ],
-    "TableName": "podcastify-users"
-   },
-   "UpdateReplacePolicy": "Retain",
-   "DeletionPolicy": "Retain",
-   "Metadata": {
-    "aws:cdk:path": "PodcastifyStack/UsersTable/Resource"
    }
   },
   "SchedulerExecutionRole0AF092B7": {
@@ -1860,7 +2136,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "2efc2cf92fffdefec41c01dcbb2de0e2f6700401464a4add1d3bb397e9e1b727.zip"
+     "S3Key": "34634bf5cf161128fbae55d3237d56b56001d3e69b466360d55849c988f0e0d9.zip"
     },
     "Environment": {
      "Variables": {
@@ -1896,7 +2172,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestSchedulerTrigger/Resource",
-    "aws:asset:path": "asset.2efc2cf92fffdefec41c01dcbb2de0e2f6700401464a4add1d3bb397e9e1b727",
+    "aws:asset:path": "asset.34634bf5cf161128fbae55d3237d56b56001d3e69b466360d55849c988f0e0d9",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1996,6 +2272,32 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": [
+        "sns:CreatePlatformEndpoint",
+        "sns:SetEndpointAttributes",
+        "sns:GetEndpointAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "ApnsPlatformApplicationArn"
+       }
+      },
+      {
+       "Action": "sns:SetEndpointAttributes",
+       "Effect": "Allow",
+       "Resource": "arn:aws:sns:*:*:endpoint/*"
+      },
+      {
+       "Action": "sns:Publish",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Ref": "ApnsPlatformApplicationArn"
+        },
+        "arn:aws:sns:*:*:endpoint/*"
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -2019,7 +2321,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "5acbdaead136405bcf6f82126f70b047399501ad59ac88137737ae54e38272a9.zip"
+     "S3Key": "f74ce76e3806cfbd4add182be501b9349d8bbbfbfdecd221e6a5aca1dc699a5f.zip"
     },
     "Environment": {
      "Variables": {
@@ -2044,7 +2346,10 @@
         "Arn"
        ]
       },
-      "SCHEDULE_GROUP": "podcastify-digest-schedules"
+      "SCHEDULE_GROUP": "podcastify-digest-schedules",
+      "SNS_PLATFORM_APPLICATION_ARN": {
+       "Ref": "ApnsPlatformApplicationArn"
+      }
      }
     },
     "FunctionName": "podcastify-user-preferences",
@@ -2065,7 +2370,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/UserPreferences/Resource",
-    "aws:asset:path": "asset.5acbdaead136405bcf6f82126f70b047399501ad59ac88137737ae54e38272a9",
+    "aws:asset:path": "asset.f74ce76e3806cfbd4add182be501b9349d8bbbfbfdecd221e6a5aca1dc699a5f",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2073,11 +2378,22 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VQTU8CMRD9LXIuIy7x4g1RowcVwZsxZHZ3IIXddt2ZgqTpfzdtjaLx4um9+Xivr1NAcX4GoxPc87Cqt8NGl+AXgtVW4Z6XnsfgL121JVHTlcnsxQ9a/a7N4GJwLIv7PIY0YsirEyf2ihoSeiw3VAkPwqvKo5ltdHX4ds31P7yzYCEo1JI5tr5EpqD4jcE/OXIUH0kkqAbbssalsTVtGB4S3DhTibZGaWzBz22TBAm/Q2YWFI+XyEzCMInwaQh+ujJfPtc7MrKwrq/oHrtOm3V0+Ls7o77VzNqaoLDTaxTa42FXgL8V6SadjksRYrkQXKdwmcTW3DrJ7M4IrXtMCaYr86tMe0HVB4OtrUvwz1jmjyYSgpo6FtvOiVPEpPniP0az3u50TX08s0pXiHHif47Fj046J0HFU8OGT3dFAcUIRicb1nrYOyO6JZhn/ACkKHXOhwIAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VQwW4aMRD9lnA2E7Kol9wISdUemlDILYrQ7O6ADGt7szOGIMv/XtluA6l66em9mXnz/DwVVF9uYHKFRx437X7c6RrCSrDZKzzyOvAUwp1v9iRqvrGFvYSR0e/ajm5Hl2tJz1PII4YinXlx99SR0FO9o0Z4FF9VGS1cp5vT2bXU/+FdFlaCQobspfUdMkXFbwzhpydP6ZFMourQ1C2urWtpx/CY4au3jWhnlUYDYem6vJDxHLKwqHi6RmYShlmC34YQ5hv74fNwICsr54eGfmDfa7tNDv/uLmgwmlk7GxX2eotCRzwdKgjfRPpZr5MoQSpXgtscrpDUWjovhX23QtsBc4L5xv5VZl1U7cmicW0N4Rnr8tFMYlRzz+LMkjhHzDsf/NNoMbiDbmlIZ1b5CinOn//ggIaEBnXp9OSl9xJVujvs+PpQVVBNYHK1Y63Hg7eiDcGy4C/JFz3mlAIAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/CDKMetadata/Default"
    }
+  }
+ },
+ "Parameters": {
+  "ApnsPlatformApplicationArn": {
+   "Type": "String",
+   "Description": "Existing SNS PlatformApplication ARN for APNS/APNS_SANDBOX"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
   }
  },
  "Outputs": {
@@ -2104,13 +2420,6 @@
    "Value": {
     "Ref": "DigestQueueD48DE8C7"
    }
-  }
- },
- "Parameters": {
-  "BootstrapVersion": {
-   "Type": "AWS::SSM::Parameter::Value<String>",
-   "Default": "/cdk-bootstrap/hnb659fds/version",
-   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
   }
  },
  "Rules": {

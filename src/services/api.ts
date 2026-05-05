@@ -310,6 +310,48 @@ export interface UserPreferences {
   voice: string | null;
   durationMinutes: number | null;
   selectedTopics: string[] | null;
+  firstDigestDate: string | null;
+  subscribed: boolean | null;
+}
+
+export async function registerPushToken(token: string): Promise<void> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      `${API_BASE}/users/push-token`,
+      { method: 'POST', headers, body: JSON.stringify({ token, enabled: true }) },
+      15_000,
+    );
+  } catch {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? 'push_register_failed');
+  }
+}
+
+export async function sendTestTodayPush(): Promise<void> {
+  if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
+  const headers = await authHeaders();
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      `${API_BASE}/users/push-test`,
+      { method: 'POST', headers, body: '{}' },
+      15_000,
+    );
+  } catch {
+    throw Object.assign(new Error('network_error'), { code: 'network_error' });
+  }
+  if (res.status === 401) throw Object.assign(new Error('auth_expired'), { code: 'auth_expired' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as { error?: string }).error ?? 'push_test_failed');
+  }
 }
 
 export async function getUserPreferences(): Promise<UserPreferences> {
@@ -333,6 +375,8 @@ export async function saveUserPreferences(prefs: {
   voice?: string;
   durationMinutes?: number;
   selectedTopics?: string[];
+  firstDigestDate?: string | null;
+  subscribed?: boolean | null;
 }): Promise<UserPreferences> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
   const headers = await authHeaders();

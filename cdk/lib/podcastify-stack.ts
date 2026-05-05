@@ -64,6 +64,12 @@ export class PodcastifyStack extends cdk.Stack {
       retentionPeriod: cdk.Duration.hours(2),
     });
 
+    // ── SNS: existing iOS push Platform Application ARN ──────────────────────
+    const apnsPlatformApplicationArn = new cdk.CfnParameter(this, 'ApnsPlatformApplicationArn', {
+      type: 'String',
+      description: 'Existing SNS PlatformApplication ARN for APNS/APNS_SANDBOX',
+    });
+
     // Shared Lambda environment for all functions
     const sharedEnv: Record<string, string> = {
       S3_BUCKET: jobsBucket.bucketName,
@@ -193,6 +199,23 @@ export class PodcastifyStack extends cdk.Stack {
       integration: new integrations.HttpLambdaIntegration('StatusIntegration', statusFn),
     });
 
+    // ── DynamoDB: user preferences ────────────────────────────────────────────
+    const usersTable = new dynamodb.Table(this, 'UsersTable', {
+      tableName: 'podcastify-users',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const digestServedTable = new dynamodb.Table(this, 'DigestServedTable', {
+      tableName: 'podcastify-digest-served',
+      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'servedKey', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: 'expiresAt',
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
     // ── Lambda: Digest Dispatcher ─────────────────────────────────────────────
     const digestDispatcher = new lambdaNode.NodejsFunction(this, 'DigestDispatcher', {
       functionName: 'podcastify-digest-dispatcher',
@@ -208,11 +231,13 @@ export class PodcastifyStack extends cdk.Stack {
       environment: {
         ...sharedEnv,
         DIGEST_QUEUE_URL: digestQueue.queueUrl,
+        USERS_TABLE: usersTable.tableName,
       },
     });
 
     jobsBucket.grantReadWrite(digestDispatcher);
     digestQueue.grantSendMessages(digestDispatcher);
+    usersTable.grantReadData(digestDispatcher);
 
     // ── Lambda: Digest Worker ─────────────────────────────────────────────────
     const digestWorker = new lambdaNode.NodejsFunction(this, 'DigestWorker', {
@@ -229,10 +254,15 @@ export class PodcastifyStack extends cdk.Stack {
       environment: {
         ...sharedEnv,
         OPENAI_API_KEY: openAiApiKey,
+        USERS_TABLE: usersTable.tableName,
+        DIGEST_SERVED_TABLE: digestServedTable.tableName,
+        SNS_PLATFORM_APPLICATION_ARN: apnsPlatformApplicationArn.valueAsString,
       },
     });
 
     jobsBucket.grantReadWrite(digestWorker);
+    usersTable.grantReadData(digestWorker);
+    digestServedTable.grantReadWriteData(digestWorker);
 
     digestWorker.addEventSource(
       new eventSources.SqsEventSource(digestQueue, {
@@ -257,14 +287,6 @@ export class PodcastifyStack extends cdk.Stack {
       path: '/digests/latest',
       methods: [apigwv2.HttpMethod.GET],
       integration: digestIntegration,
-    });
-
-    // ── DynamoDB: user preferences ────────────────────────────────────────────
-    const usersTable = new dynamodb.Table(this, 'UsersTable', {
-      tableName: 'podcastify-users',
-      partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
     // ── IAM: role EventBridge Scheduler uses to invoke the trigger Lambda ─────
@@ -327,6 +349,7 @@ export class PodcastifyStack extends cdk.Stack {
         TRIGGER_LAMBDA_ARN: digestSchedulerTrigger.functionArn,
         SCHEDULER_ROLE_ARN: schedulerExecutionRole.roleArn,
         SCHEDULE_GROUP: scheduleGroupName,
+        SNS_PLATFORM_APPLICATION_ARN: apnsPlatformApplicationArn.valueAsString,
       },
     });
 
@@ -343,6 +366,32 @@ export class PodcastifyStack extends cdk.Stack {
       actions: ['iam:PassRole'],
       resources: [schedulerExecutionRole.roleArn],
     }));
+    userPreferences.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'sns:CreatePlatformEndpoint',
+        'sns:SetEndpointAttributes',
+        'sns:GetEndpointAttributes',
+      ],
+      resources: [apnsPlatformApplicationArn.valueAsString],
+    }));
+    userPreferences.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['sns:SetEndpointAttributes'],
+      resources: ['arn:aws:sns:*:*:endpoint/*'],
+    }));
+    userPreferences.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['sns:Publish'],
+      resources: [
+        apnsPlatformApplicationArn.valueAsString,
+        'arn:aws:sns:*:*:endpoint/*',
+      ],
+    }));
+    digestWorker.addToRolePolicy(new iam.PolicyStatement({
+      actions: ['sns:Publish'],
+      resources: [
+        apnsPlatformApplicationArn.valueAsString,
+        'arn:aws:sns:*:*:endpoint/*',
+      ],
+    }));
 
     // ── API Gateway: user preferences routes ──────────────────────────────────
     const prefsIntegration = new integrations.HttpLambdaIntegration(
@@ -352,6 +401,16 @@ export class PodcastifyStack extends cdk.Stack {
     api.addRoutes({
       path: '/users/preferences',
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST],
+      integration: prefsIntegration,
+    });
+    api.addRoutes({
+      path: '/users/push-token',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: prefsIntegration,
+    });
+    api.addRoutes({
+      path: '/users/push-test',
+      methods: [apigwv2.HttpMethod.POST],
       integration: prefsIntegration,
     });
 

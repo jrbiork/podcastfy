@@ -20,16 +20,26 @@ import RNDateTimePicker from '@react-native-community/datetimepicker';
 const DateTimePicker = RNDateTimePicker as any;
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { loadSession, clearSession, type AuthSession } from '../services/auth';
-import { getUserPreferences, saveUserPreferences, deleteDigestToday, type UserPreferences } from '../services/api';
 import {
-  getTotalGeneratedSeconds,
+  getUserPreferences,
+  saveUserPreferences,
+  deleteDigestToday,
+  sendTestTodayPush,
+  dispatchDigest,
+  type UserPreferences,
+} from '../services/api';
+import {
   getIsSubscribed,
-  FREE_LIMIT_SECONDS,
   clearLocalData,
 } from '../services/subscription';
 import { clearAllEpisodes } from '../services/storage';
+import { clearRssLocalData } from '../services/rssService';
 import { useEpisodes } from '../hooks/useEpisodes';
-import { resetToAuth, resetToOnboarding, navigateToPaywall } from '../navigation/rootNavigationRef';
+import {
+  resetToAuth,
+  resetToOnboarding,
+  navigateToPaywall,
+} from '../navigation/rootNavigationRef';
 import { formatDuration } from '../utils/format';
 import {
   clearOnboardingPrefs,
@@ -43,11 +53,11 @@ import {
 const APP_VERSION = '1.0.0';
 
 const VOICES = [
-  { id: 'alloy',   label: 'Alloy',   description: 'Neutral, versatile' },
-  { id: 'echo',    label: 'Echo',    description: 'Warm, conversational' },
-  { id: 'fable',   label: 'Fable',   description: 'British, authoritative' },
-  { id: 'nova',    label: 'Nova',    description: 'Bright, energetic' },
-  { id: 'onyx',    label: 'Onyx',    description: 'Deep, confident' },
+  { id: 'alloy', label: 'Alloy', description: 'Neutral, versatile' },
+  { id: 'echo', label: 'Echo', description: 'Warm, conversational' },
+  { id: 'fable', label: 'Fable', description: 'British, authoritative' },
+  { id: 'nova', label: 'Nova', description: 'Bright, energetic' },
+  { id: 'onyx', label: 'Onyx', description: 'Deep, confident' },
   { id: 'shimmer', label: 'Shimmer', description: 'Soft, expressive' },
 ];
 
@@ -69,15 +79,16 @@ function hourToDate(hour: number): Date {
 
 export function ProfileScreen() {
   const { episodes, load } = useEpisodes();
-  const [session, setSession]           = useState<AuthSession | null>(null);
-  const [usedSeconds, setUsedSeconds]   = useState(0);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [signingOut, setSigningOut]     = useState(false);
-  const [preferences, setPreferences]   = useState<UserPreferences | null>(null);
-  const [prefs, setPrefs]               = useState<OnboardingPrefs | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [prefs, setPrefs] = useState<OnboardingPrefs | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [pickerDate, setPickerDate]     = useState<Date>(hourToDate(7));
-  const [saving, setSaving]             = useState(false);
+  const [pickerDate, setPickerDate] = useState<Date>(hourToDate(7));
+  const [saving, setSaving] = useState(false);
+  const [sendingTestPush, setSendingTestPush] = useState(false);
+  const [regeneratingDigest, setRegeneratingDigest] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,9 +96,6 @@ export function ProfileScreen() {
       load();
       loadSession().then((s) => {
         if (!cancelled) setSession(s);
-      });
-      getTotalGeneratedSeconds().then((n) => {
-        if (!cancelled) setUsedSeconds(n);
       });
       getIsSubscribed().then((v) => {
         if (!cancelled) setIsSubscribed(v);
@@ -101,7 +109,8 @@ export function ProfileScreen() {
         if (server) setPreferences(server);
         if (local) {
           setPrefs(local);
-          if (local.deliveryHour != null) setPickerDate(hourToDate(local.deliveryHour));
+          if (local.deliveryHour != null)
+            setPickerDate(hourToDate(local.deliveryHour));
         } else if (server?.selectedTopics && server.selectedTopics.length > 0) {
           setPrefs({
             selectedTopics: [...server.selectedTopics],
@@ -109,7 +118,8 @@ export function ProfileScreen() {
             deliveryLabel: 'From account',
             ...(server.voice ? { voice: server.voice } : {}),
           });
-          if (server.deliveryHour != null) setPickerDate(hourToDate(server.deliveryHour));
+          if (server.deliveryHour != null)
+            setPickerDate(hourToDate(server.deliveryHour));
         } else {
           setPrefs(null);
         }
@@ -121,7 +131,7 @@ export function ProfileScreen() {
   );
 
   const currentVoice = prefs?.voice ?? 'alloy';
-  const currentHour  = prefs?.deliveryHour ?? preferences?.deliveryHour ?? 6;
+  const currentHour = prefs?.deliveryHour ?? preferences?.deliveryHour ?? 6;
 
   // ── Save helpers ─────────────────────────────────────────────────────────────
 
@@ -155,30 +165,34 @@ export function ProfileScreen() {
           if (i === cancelIdx) return;
           const voice = VOICES[i].id;
           const updated: OnboardingPrefs = {
-            ...(prefs ?? { selectedTopics: [], deliveryHour: 6, deliveryLabel: 'Before work' }),
+            ...(prefs ?? {
+              selectedTopics: [],
+              deliveryHour: 6,
+              deliveryLabel: 'Before work',
+            }),
             voice,
           };
           await applyPrefs(updated);
         },
       );
     } else {
-      Alert.alert(
-        'Digest Voice',
-        undefined,
-        [
-          ...VOICES.map((v) => ({
-            text: `${v.label} — ${v.description}`,
-            onPress: async () => {
-              const updated: OnboardingPrefs = {
-                ...(prefs ?? { selectedTopics: [], deliveryHour: 6, deliveryLabel: 'Before work' }),
-                voice: v.id,
-              };
-              await applyPrefs(updated);
-            },
-          })),
-          { text: 'Cancel', style: 'cancel' },
-        ],
-      );
+      Alert.alert('Digest Voice', undefined, [
+        ...VOICES.map((v) => ({
+          text: `${v.label} — ${v.description}`,
+          onPress: async () => {
+            const updated: OnboardingPrefs = {
+              ...(prefs ?? {
+                selectedTopics: [],
+                deliveryHour: 6,
+                deliveryLabel: 'Before work',
+              }),
+              voice: v.id,
+            };
+            await applyPrefs(updated);
+          },
+        })),
+        { text: 'Cancel', style: 'cancel' },
+      ]);
     }
   }, [prefs, applyPrefs]);
 
@@ -188,7 +202,11 @@ export function ProfileScreen() {
     setShowTimePicker(false);
     const hour = pickerDate.getHours();
     const updated: OnboardingPrefs = {
-      ...(prefs ?? { selectedTopics: [], deliveryHour: 6, deliveryLabel: 'Before work' }),
+      ...(prefs ?? {
+        selectedTopics: [],
+        deliveryHour: 6,
+        deliveryLabel: 'Before work',
+      }),
       deliveryHour: hour,
       deliveryLabel: 'Custom time',
     };
@@ -229,6 +247,7 @@ export function ProfileScreen() {
             // Delete today's digest from S3 first so a fresh one can be generated
             await deleteDigestToday();
             await clearAllEpisodes();
+            await clearRssLocalData();
             await clearLocalData();
             await clearOnboardingProgress();
             await clearOnboardingPrefs();
@@ -240,15 +259,53 @@ export function ProfileScreen() {
     );
   };
 
-  const avatarInitials = initials(session?.displayName);
-  const totalEpisodeDuration = episodes.reduce((acc, e) => acc + e.durationSeconds, 0);
-  const usedMinutes   = Math.floor(usedSeconds / 60);
-  const totalMinutes  = FREE_LIMIT_SECONDS / 60;
-  const usedPercent   = Math.min(1, usedSeconds / FREE_LIMIT_SECONDS);
+  const onSendTestPush = useCallback(async () => {
+    setSendingTestPush(true);
+    try {
+      await sendTestTodayPush();
+      Alert.alert(
+        'Test push sent',
+        'A push notification was sent to this signed-in user. Tapping it should open Today.',
+      );
+    } catch (e: any) {
+      const message =
+        typeof e?.message === 'string'
+          ? e.message
+          : 'Failed to send test push.';
+      Alert.alert('Push test failed', message);
+    } finally {
+      setSendingTestPush(false);
+    }
+  }, []);
 
-  const voiceLabel = VOICES.find((v) => v.id === currentVoice)?.label ?? 'Alloy';
-  const tz         = preferences?.timezone?.split('/').pop()?.replace(/_/g, ' ') ?? '';
-  const timeLabel     = `Daily at ${formatDeliveryHour(currentHour)}${tz ? ` · ${tz}` : ''}`;
+  const onRegenerateTodayDigest = useCallback(async () => {
+    setRegeneratingDigest(true);
+    try {
+      await dispatchDigest(undefined, true, currentVoice);
+      Alert.alert(
+        'Digest regeneration queued',
+        "Today's digest was queued for regeneration and will replace the previous audio.",
+      );
+    } catch (e: any) {
+      const message =
+        typeof e?.message === 'string'
+          ? e.message
+          : 'Failed to trigger digest regeneration.';
+      Alert.alert('Regeneration failed', message);
+    } finally {
+      setRegeneratingDigest(false);
+    }
+  }, [currentVoice]);
+
+  const avatarInitials = initials(session?.displayName);
+  const totalEpisodeDuration = episodes.reduce(
+    (acc, e) => acc + e.durationSeconds,
+    0,
+  );
+  const voiceLabel =
+    VOICES.find((v) => v.id === currentVoice)?.label ?? 'Alloy';
+  const tz = preferences?.timezone?.split('/').pop()?.replace(/_/g, ' ') ?? '';
+  const timeLabel = `Daily at ${formatDeliveryHour(currentHour)}${tz ? ` · ${tz}` : ''}`;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -281,7 +338,9 @@ export function ProfileScreen() {
             mode="time"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             minuteInterval={60}
-            onChange={(_e: any, date?: Date) => { if (date) setPickerDate(date); }}
+            onChange={(_e: any, date?: Date) => {
+              if (date) setPickerDate(date);
+            }}
             style={styles.picker}
             textColor={Colors.text}
           />
@@ -289,7 +348,6 @@ export function ProfileScreen() {
       </Modal>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrap}>
@@ -305,8 +363,12 @@ export function ProfileScreen() {
               </View>
             )}
           </View>
-          <Text style={styles.displayName}>{session?.displayName ?? 'Sonera User'}</Text>
-          {session?.email ? <Text style={styles.email}>{session.email}</Text> : null}
+          <Text style={styles.displayName}>
+            {session?.displayName ?? 'Sonera User'}
+          </Text>
+          {session?.email ? (
+            <Text style={styles.email}>{session.email}</Text>
+          ) : null}
           <View style={styles.badgeRow}>
             {isSubscribed ? (
               <View style={styles.proBadgeHeader}>
@@ -314,31 +376,16 @@ export function ProfileScreen() {
                 <Text style={styles.proBadgeText}>Pro</Text>
               </View>
             ) : (
-              <TouchableOpacity style={styles.freeBadge} onPress={navigateToPaywall} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.freeBadge}
+                onPress={navigateToPaywall}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.freeBadgeText}>Free</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
-
-        {/* ── Subscription ────────────────────────────────────────────────── */}
-        {!isSubscribed ? (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Usage</Text>
-              <TouchableOpacity style={styles.upgradeBadge} onPress={navigateToPaywall} activeOpacity={0.8}>
-                <Text style={styles.upgradeText}>Upgrade</Text>
-                <Ionicons name="chevron-forward" size={12} color={Colors.primary} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.usageBar}>
-              <View style={[styles.usageFill, { width: `${usedPercent * 100}%` as `${number}%` }]} />
-            </View>
-            <Text style={styles.usageLabel}>
-              {usedMinutes} / {totalMinutes} free minutes used
-            </Text>
-          </View>
-        ) : null}
 
         {/* ── Stats ───────────────────────────────────────────────────────── */}
         <View style={styles.statsRow}>
@@ -349,7 +396,9 @@ export function ProfileScreen() {
           </View>
           <View style={[styles.statCard, { flex: 1 }]}>
             <Ionicons name="time-outline" size={20} color={Colors.accent} />
-            <Text style={styles.statValue}>{formatDuration(totalEpisodeDuration)}</Text>
+            <Text style={styles.statValue}>
+              {formatDuration(totalEpisodeDuration)}
+            </Text>
             <Text style={styles.statLabel}>Total Time</Text>
           </View>
         </View>
@@ -357,7 +406,9 @@ export function ProfileScreen() {
         {/* ── Digest settings ──────────────────────────────────────────────── */}
         <View style={styles.sectionLabel}>
           <Text style={styles.sectionLabelText}>DAILY DIGEST</Text>
-          {saving ? <ActivityIndicator size="small" color={Colors.primary} /> : null}
+          {saving ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : null}
         </View>
         <View style={styles.card}>
           <SettingsRow
@@ -369,7 +420,7 @@ export function ProfileScreen() {
           <View style={styles.divider} />
           <SettingsRow
             icon="time-outline"
-            label="Delivery time"
+            label="Delivery at"
             value={timeLabel}
             onPress={() => setShowTimePicker(true)}
           />
@@ -377,6 +428,34 @@ export function ProfileScreen() {
 
         {/* ── App settings ─────────────────────────────────────────────────── */}
         <View style={styles.card}>
+          <SettingsRow
+            icon="refresh-outline"
+            label={
+              regeneratingDigest
+                ? 'Regenerating today digest…'
+                : 'Regenerate Today Digest (Test)'
+            }
+            onPress={regeneratingDigest ? undefined : onRegenerateTodayDigest}
+            right={
+              regeneratingDigest ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : undefined
+            }
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="notifications-outline"
+            label={
+              sendingTestPush ? 'Sending test push…' : 'Send Test Push (Today)'
+            }
+            onPress={sendingTestPush ? undefined : onSendTestPush}
+            right={
+              sendingTestPush ? (
+                <ActivityIndicator size="small" color={Colors.primary} />
+              ) : undefined
+            }
+          />
+          <View style={styles.divider} />
           <SettingsRow
             icon="information-circle-outline"
             label="App Version"
@@ -390,7 +469,11 @@ export function ProfileScreen() {
             label={signingOut ? 'Signing out…' : 'Sign Out'}
             onPress={signingOut ? undefined : onSignOut}
             danger
-            right={signingOut ? <ActivityIndicator size="small" color={Colors.danger} /> : undefined}
+            right={
+              signingOut ? (
+                <ActivityIndicator size="small" color={Colors.danger} />
+              ) : undefined
+            }
           />
           <View style={styles.divider} />
           <SettingsRow
@@ -400,7 +483,6 @@ export function ProfileScreen() {
             danger
           />
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -424,11 +506,18 @@ function SettingsRow({
   const color = danger ? Colors.danger : Colors.text;
   const inner = (
     <View style={settingsStyles.row}>
-      <Ionicons name={icon as any} size={20} color={danger ? Colors.danger : Colors.primary} />
+      <Ionicons
+        name={icon as any}
+        size={20}
+        color={danger ? Colors.danger : Colors.primary}
+      />
       <Text style={[settingsStyles.label, { color }]}>{label}</Text>
       <View style={settingsStyles.right}>
-        {right ?? (value ? <Text style={settingsStyles.value}>{value}</Text> : null)}
-        {onPress && !right ? <Ionicons name="chevron-forward" size={16} color={Colors.textDim} /> : null}
+        {right ??
+          (value ? <Text style={settingsStyles.value}>{value}</Text> : null)}
+        {onPress && !right ? (
+          <Ionicons name="chevron-forward" size={16} color={Colors.textDim} />
+        ) : null}
       </View>
     </View>
   );
@@ -447,7 +536,11 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   scroll: { padding: Spacing.lg, gap: Spacing.md, paddingBottom: 100 },
 
-  profileHeader: { alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.md },
+  profileHeader: {
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+  },
   avatarWrap: {
     shadowColor: Colors.primary,
     shadowOpacity: 0.3,
@@ -462,10 +555,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarInitials: { color: Colors.primary, fontSize: FontSize.xl, fontWeight: '700' },
+  avatarInitials: {
+    color: Colors.primary,
+    fontSize: FontSize.xl,
+    fontWeight: '700',
+  },
   displayName: { color: Colors.text, fontSize: FontSize.xl, fontWeight: '700' },
   email: { color: Colors.textMuted, fontSize: FontSize.sm },
-  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: 2 },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginTop: 2,
+  },
   proBadgeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -486,7 +588,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
-  freeBadgeText: { color: Colors.textDim, fontSize: FontSize.xs, fontWeight: '600' },
+  freeBadgeText: {
+    color: Colors.textDim,
+    fontSize: FontSize.xs,
+    fontWeight: '600',
+  },
 
   card: {
     backgroundColor: Colors.surface,
@@ -496,20 +602,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     gap: Spacing.sm,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardTitle: {
-    color: Colors.textMuted,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  upgradeBadge: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  upgradeText: { color: Colors.primary, fontSize: FontSize.xs, fontWeight: '700' },
-  usageBar: { height: 6, backgroundColor: Colors.border, borderRadius: 3 },
-  usageFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  usageLabel: { color: Colors.textDim, fontSize: FontSize.xs },
-
   statsRow: { flexDirection: 'row', gap: Spacing.md },
   statCard: {
     backgroundColor: Colors.surface,
@@ -563,12 +655,21 @@ const styles = StyleSheet.create({
   },
   pickerTitle: { color: Colors.text, fontSize: FontSize.md, fontWeight: '600' },
   pickerCancel: { color: Colors.textMuted, fontSize: FontSize.md },
-  pickerDone: { color: Colors.primary, fontSize: FontSize.md, fontWeight: '600' },
+  pickerDone: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: '600',
+  },
   picker: { backgroundColor: Colors.surfaceElevated },
 });
 
 const settingsStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, minHeight: 44 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: 44,
+  },
   label: { flex: 1, fontSize: FontSize.md, fontWeight: '500' },
   right: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   value: { color: Colors.textMuted, fontSize: FontSize.sm },

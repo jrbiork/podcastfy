@@ -25,6 +25,7 @@ import {
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import type { OnboardingPrefs } from '../services/onboarding';
 import { getTopFeedUrlsForTopics } from '../services/rssService';
+import { registerDeviceForPush } from '../services/pushNotifications';
 
 /**
  * Push timezone + onboarding prefs to the server **after** sign-in.
@@ -96,6 +97,7 @@ export function AuthScreen() {
       });
 
       await syncPreferencesAfterSignIn(route.params?.pendingOnboardingPrefs);
+      await registerDeviceForPush().catch(() => {});
       if (route.params?.pendingOnboardingPrefs) {
         await setOnboardingComplete();
         await clearOnboardingPrefs();
@@ -141,6 +143,7 @@ export function AuthScreen() {
       });
 
       await syncPreferencesAfterSignIn(route.params?.pendingOnboardingPrefs);
+      await registerDeviceForPush().catch(() => {});
       if (route.params?.pendingOnboardingPrefs) {
         await setOnboardingComplete();
         await clearOnboardingPrefs();

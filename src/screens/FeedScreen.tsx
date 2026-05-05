@@ -27,7 +27,6 @@ import {
   loadSubscriptions,
   subscribe,
   unsubscribe,
-  pollFeed,
   feedImageUrl,
   loadCustomFeeds,
   addCustomFeed,
@@ -44,6 +43,7 @@ import { saveUserPreferences } from '../services/api';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 type Nav = StackNavigationProp<RootStackParamList>;
+const MY_FEEDS_TAB = '__my_feeds__';
 
 // ── Category metadata ────────────────────────────────────────────────────────
 
@@ -360,8 +360,8 @@ function TopicChips({
   onSelect,
 }: {
   topics: typeof ONBOARDING_TOPICS;
-  selected: string | null;
-  onSelect: (id: string | null) => void;
+  selected: string;
+  onSelect: (id: string) => void;
 }) {
   return (
     <ScrollView
@@ -370,11 +370,11 @@ function TopicChips({
       contentContainerStyle={styles.chipsContainer}
     >
       <TouchableOpacity
-        style={[styles.chip, selected === null && styles.chipActive]}
-        onPress={() => onSelect(null)}
+        style={[styles.chip, selected === MY_FEEDS_TAB && styles.chipActive]}
+        onPress={() => onSelect(MY_FEEDS_TAB)}
         activeOpacity={0.75}
       >
-        <Text style={[styles.chipText, selected === null && styles.chipTextActive]}>All</Text>
+        <Text style={[styles.chipText, selected === MY_FEEDS_TAB && styles.chipTextActive]}>My Feeds</Text>
       </TouchableOpacity>
       {topics.map((t) => {
         const isActive = selected === t.id;
@@ -383,7 +383,7 @@ function TopicChips({
           <TouchableOpacity
             key={t.id}
             style={[styles.chip, isActive && { backgroundColor: color + '22', borderColor: color }]}
-            onPress={() => onSelect(isActive ? null : t.id)}
+            onPress={() => onSelect(isActive ? MY_FEEDS_TAB : t.id)}
             activeOpacity={0.75}
           >
             <Ionicons
@@ -411,7 +411,7 @@ export function FeedScreen() {
   const [toggling, setToggling]           = useState<string | null>(null);
   const [searchQuery, setSearchQuery]     = useState('');
   const [addSheetOpen, setAddSheetOpen]   = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string>(MY_FEEDS_TAB);
   const [userTopics, setUserTopics]       = useState<typeof ONBOARDING_TOPICS>([...ONBOARDING_TOPICS]);
   const isSearching = searchQuery.trim().length > 0;
 
@@ -449,7 +449,6 @@ export function FeedScreen() {
         }
         await subscribe(feed.id);
         setSubscriptions((prev) => [...prev, feed.id]);
-        void pollFeed(feed.id, true, 1);
       }
       // Sync updated feed list to server so scheduled digest uses current selection
       getSubscribedFeedUrls().then((urls) => {
@@ -484,7 +483,15 @@ export function FeedScreen() {
   // ── Build section list ────────────────────────────────────────────────────
 
   const sections: SectionData[] = (() => {
-    const topicId = selectedTopic ? normalizeTopicId(selectedTopic) : null;
+    if (selectedTopic === MY_FEEDS_TAB) {
+      const allFeeds = [...RSS_FEEDS, ...customFeeds];
+      const subscribedFeeds = allFeeds
+        .filter((f) => subscriptions.includes(f.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      return subscribedFeeds.length > 0 ? [{ title: 'My Feeds', data: subscribedFeeds }] : [];
+    }
+
+    const topicId = normalizeTopicId(selectedTopic);
     if (topicId) {
       // Topic filter: first 3 = Top Picks, rest = More channels (up to 5 total curated)
       const topicFeeds = getAllFeedsForTopic(topicId);
@@ -496,19 +503,7 @@ export function FeedScreen() {
       ];
     }
 
-    // "All": My Feeds + one section per onboarding category (top 3–5 curated feeds each)
-    const allFeeds = [...RSS_FEEDS, ...customFeeds];
-    const subscribedFeeds = allFeeds
-      .filter((f) => subscriptions.includes(f.id))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    const curatedSections: SectionData[] = ONBOARDING_TOPICS.map((t) => ({
-      title: t.label,
-      data: getTopFeedsForTopic(t.id, 5),
-    })).filter((s) => s.data.length > 0);
-    return [
-      ...(subscribedFeeds.length > 0 ? [{ title: 'My Feeds', data: subscribedFeeds }] : []),
-      ...curatedSections,
-    ];
+    return [];
   })();
 
   const renderFeedCard = useCallback(({ item }: { item: RssFeed }) => (

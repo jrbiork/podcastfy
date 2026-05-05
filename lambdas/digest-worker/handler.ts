@@ -1,4 +1,6 @@
 import { SQSHandler } from 'aws-lambda';
+import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { extractArticle } from '../shared/scraper';
 import {
   generateAlternatingAudio,
@@ -10,6 +12,11 @@ import { fetchRecentArticles, fetchArticlesByTopic } from './feedFetcher';
 import { deduplicateAndRank } from './digestRanker';
 import { enrichWithPopularity } from './popularityFetcher';
 import { summarizeArticle, generateDigestScript } from './digestWriter';
+import {
+  filterRecentlyServedArticles,
+  loadRecentServedStories,
+  persistServedStories,
+} from './servedHistory';
 import { TOPIC_FEED_URLS_BY_ID } from '../data/topicFeedMap';
 
 // Default feeds cover the four default topics (ai-tech, startups, finance, world)
@@ -62,6 +69,12 @@ const URL_TO_TOPIC = new Map<string, string>();
 for (const [topicId, urls] of Object.entries(TOPIC_FEED_URLS_BY_ID)) {
   for (const url of urls) URL_TO_TOPIC.set(url, topicId);
 }
+
+const dynamo = new DynamoDBClient({});
+const sns = new SNSClient({});
+const USERS_TABLE = process.env.USERS_TABLE!;
+const LOOKBACK_DAYS = 3;
+const FUZZY_TITLE_SIMILARITY_THRESHOLD = 0.75;
 
 /**
  * Infers a topicId for a feed URL.
@@ -126,6 +139,50 @@ interface DigestMessage {
   topN?: number;
   /** Topic that received zero stories yesterday — gets first slot in Pass 1 today. */
   priorityTopicId?: string;
+}
+
+async function publishDigestReadyPush(
+  userId: string,
+  date: string,
+  title: string,
+): Promise<void> {
+  if (!USERS_TABLE) return;
+
+  const user = await dynamo.send(
+    new GetItemCommand({
+      TableName: USERS_TABLE,
+      Key: { userId: { S: userId } },
+      ProjectionExpression: 'iosPushEndpointArn, iosPushEnabled',
+    }),
+  );
+
+  const endpointArn = user.Item?.iosPushEndpointArn?.S;
+  const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
+  if (!endpointArn || !pushEnabled) return;
+
+  const payload = {
+    aps: {
+      alert: {
+        title: 'Your daily digest is ready',
+        body: title,
+      },
+      sound: 'default',
+    },
+    target: 'today',
+    digestDate: date,
+  };
+
+  await sns.send(
+    new PublishCommand({
+      TargetArn: endpointArn,
+      MessageStructure: 'json',
+      Message: JSON.stringify({
+        default: 'Your daily digest is ready',
+        APNS: JSON.stringify(payload),
+        APNS_SANDBOX: JSON.stringify(payload),
+      }),
+    }),
+  );
 }
 
 async function processDigest(msg: DigestMessage): Promise<void> {
@@ -197,11 +254,54 @@ async function processDigest(msg: DigestMessage): Promise<void> {
 
   // 2. Rank + deduplicate
   await writeDigestStatus(userId, date, { status: 'ranking' });
-  const ranked = deduplicateAndRank(enrichedArticles, msg.topN ?? 8, msg.priorityTopicId);
+  const topN = msg.topN ?? 8;
+  let rankingInput = enrichedArticles;
+
+  try {
+    const seen = await loadRecentServedStories(userId, date, LOOKBACK_DAYS);
+    const { withoutExact, withoutExactOrFuzzy, exactFilteredCount, fuzzyFilteredCount } =
+      filterRecentlyServedArticles(
+        enrichedArticles,
+        seen,
+        FUZZY_TITLE_SIMILARITY_THRESHOLD,
+      );
+    const minRequiredCandidates = Math.min(topN, 3);
+    let fallbackMode: 'strict' | 'exact_only' | 'none' = 'strict';
+    rankingInput = withoutExactOrFuzzy;
+
+    if (rankingInput.length < minRequiredCandidates) {
+      rankingInput = withoutExact;
+      fallbackMode = 'exact_only';
+    }
+    if (rankingInput.length < minRequiredCandidates) {
+      rankingInput = enrichedArticles;
+      fallbackMode = 'none';
+    }
+
+    console.log('[digest-worker] cross-day dedup result', {
+      userId,
+      date,
+      candidatesBefore: enrichedArticles.length,
+      candidatesAfter: rankingInput.length,
+      seenCount: seen.length,
+      exactFilteredCount,
+      fuzzyFilteredCount,
+      fallbackMode,
+    });
+  } catch (err) {
+    rankingInput = enrichedArticles;
+    console.warn('[digest-worker] cross-day dedup failed; continuing without filter', {
+      userId,
+      date,
+      err: String(err),
+    });
+  }
+
+  const ranked = deduplicateAndRank(rankingInput, topN, msg.priorityTopicId);
 
   // Detect which topic (if any) had candidates but didn't make it into the final set.
   // The first such topic becomes priorityTopicId for tomorrow's digest.
-  const candidateTopics = new Set(enrichedArticles.map((a) => a.topicId).filter(Boolean) as string[]);
+  const candidateTopics = new Set(rankingInput.map((a) => a.topicId).filter(Boolean) as string[]);
   const rankedTopics = new Set(ranked.map((a) => a.topicId).filter(Boolean) as string[]);
   const skippedTopicId = [...candidateTopics].find((t) => !rankedTopics.has(t));
 
@@ -281,12 +381,39 @@ async function processDigest(msg: DigestMessage): Promise<void> {
     ...(skippedTopicId ? { skippedTopicId } : {}),
   });
 
+  try {
+    await persistServedStories(userId, date, ranked);
+    console.log('[digest-worker] persisted served-story history', {
+      userId,
+      date,
+      count: ranked.length,
+    });
+  } catch (err) {
+    console.warn('[digest-worker] failed to persist served-story history', {
+      userId,
+      date,
+      err: String(err),
+    });
+  }
+
   console.log('[digest-worker] digest complete', {
     userId,
     date,
     title,
     durationSeconds,
   });
+
+  try {
+    await publishDigestReadyPush(userId, date, title);
+    console.log('[digest-worker] push published', { userId, date });
+  } catch (err) {
+    // Best-effort: digest completion must not fail when push delivery fails.
+    console.warn('[digest-worker] push publish failed', {
+      userId,
+      date,
+      err: String(err),
+    });
+  }
 }
 
 export const handler: SQSHandler = async (event) => {
