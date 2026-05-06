@@ -66,6 +66,16 @@ function statusToStepIndex(status: string): number {
   return 0;
 }
 
+function hasKnownStepStatus(status: string): boolean {
+  return (
+    status === 'fetching_feeds' ||
+    status === 'ranking' ||
+    status === 'summarizing' ||
+    status === 'scripting' ||
+    status === 'generating_audio'
+  );
+}
+
 // Source badge colors — deterministic from feed name
 const BADGE_COLORS = [
   '#2D5A27',
@@ -197,6 +207,7 @@ export function DigestScreen() {
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [progressStatus, setProgressStatus] = useState<string>('');
+  const [cyclingStepIndex, setCyclingStepIndex] = useState(0);
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -285,6 +296,19 @@ export function DigestScreen() {
     };
   }, [digestInProgress]);
 
+  // Keep progress indicator alive while digest is in progress, even before
+  // backend status arrives (e.g. app reopen while only checking existing digest).
+  useEffect(() => {
+    if (!digestInProgress) {
+      setCyclingStepIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCyclingStepIndex((prev) => (prev + 1) % PROGRESS_STEPS.length);
+    }, 900);
+    return () => clearInterval(interval);
+  }, [digestInProgress]);
+
   // Boot: dispatch if needed, then return immediately
   useEffect(() => {
     let cancelled = false;
@@ -361,7 +385,9 @@ export function DigestScreen() {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  const stepIndex = statusToStepIndex(progressStatus);
+  const stepIndex = hasKnownStepStatus(progressStatus)
+    ? statusToStepIndex(progressStatus)
+    : cyclingStepIndex;
 
   const totalMs = durationMs || (episode?.durationSeconds ?? 0) * 1000 || 1;
 
@@ -607,7 +633,7 @@ export function DigestScreen() {
             <View style={styles.progressSteps}>
               {PROGRESS_STEPS.map((step, i) => {
                 const isDone = stepIndex > i;
-                const isActive = stepIndex === i && phase === 'preparing';
+                const isActive = stepIndex === i;
                 return (
                   <View key={step.key} style={styles.stepRow}>
                     {isDone ? (
