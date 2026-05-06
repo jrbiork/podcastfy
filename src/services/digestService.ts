@@ -29,6 +29,24 @@ export type DigestPollResult =
   | { type: 'ready'; episode: Episode }
   | { type: 'in_progress'; status: string };
 
+function storiesNeedRefresh(
+  existingStories: import('../types').DigestStory[] | undefined,
+  incomingStories: import('../types').DigestStory[],
+): boolean {
+  if (incomingStories.length === 0) return false;
+  if (!existingStories || existingStories.length === 0) return true;
+  if (existingStories.length !== incomingStories.length) return true;
+
+  for (let i = 0; i < incomingStories.length; i++) {
+    const existing = existingStories[i];
+    const incoming = incomingStories[i];
+    if (!existing || !incoming) return true;
+    if (existing.title !== incoming.title) return true;
+    if (existing.spokenText !== incoming.spokenText) return true;
+  }
+  return false;
+}
+
 function todayUtcDate(): string {
   return getDebugTodayUtc();
 }
@@ -96,11 +114,14 @@ async function downloadAndSaveDigest(
   // Re-check local storage in case another call already downloaded it
   const alreadyDownloaded = await findTodaysDigestEpisode();
   if (alreadyDownloaded) {
-    if (
-      stories.length > 0 &&
-      (!alreadyDownloaded.stories || alreadyDownloaded.stories.length === 0)
-    ) {
-      const updated: Episode = { ...alreadyDownloaded, stories };
+    if (storiesNeedRefresh(alreadyDownloaded.stories, stories)) {
+      const updated: Episode = {
+        ...alreadyDownloaded,
+        title,
+        sourceUrl: digestId,
+        durationSeconds,
+        stories,
+      };
       await saveEpisode(updated);
       return updated;
     }

@@ -4,8 +4,14 @@ export interface DigestStory {
   feedId: string;
   link: string;
   estimatedDurationSeconds: number;
+  /** Exact per-story narration text sent to TTS. */
+  spokenText?: string;
   summary?: string;
   topicLabel?: string;
+  /** Start offset in the digest MP3 (ms), for playback-synced UI. */
+  audioStartMs?: number;
+  /** End offset in the digest MP3 (ms), exclusive. */
+  audioEndMs?: number;
 }
 
 export interface Folder {

@@ -88,6 +88,19 @@ const BADGE_COLORS = [
   '#2B3A5A',
 ];
 
+/** First story whose `[audioStartMs, audioEndMs)` contains `positionMs`, or null. */
+function findActiveDigestStoryIndex(
+  stories: DigestStory[],
+  positionMs: number,
+): number | null {
+  for (let i = 0; i < stories.length; i++) {
+    const s = stories[i]!;
+    if (s.audioStartMs === undefined || s.audioEndMs === undefined) continue;
+    if (positionMs >= s.audioStartMs && positionMs < s.audioEndMs) return i;
+  }
+  return null;
+}
+
 function groupByTopic(
   stories: DigestStory[],
 ): { label: string | undefined; stories: DigestStory[] }[] {
@@ -111,6 +124,17 @@ function getBadgeColor(feedName: string): string {
 
 function getAbbrev(feedName: string): string {
   return feedName.replace(/^The /, '').slice(0, 3).toUpperCase();
+}
+
+function extractDetailText(spokenText?: string, summary?: string): string | undefined {
+  const spoken = spokenText?.trim();
+  if (spoken) {
+    // Drop structural intro + quoted headline, keep only the narrated details.
+    const afterHeadline = spoken.match(/^[\s\S]*["”]\.?\s*([\s\S]+)$/);
+    const body = afterHeadline?.[1]?.trim();
+    return body && body.length > 0 ? body : spoken;
+  }
+  return summary?.trim();
 }
 
 // ── Feed badge (favicon with colored-abbrev fallback) ─────────────────────────
@@ -153,14 +177,16 @@ function FeedBadge({
 
 function StoryRow({
   story,
+  active,
   onPress,
 }: {
   story: DigestStory;
+  active?: boolean;
   onPress: () => void;
 }) {
   return (
     <TouchableOpacity
-      style={styles.storyRow}
+      style={[styles.storyRow, active && styles.storyRowActive]}
       activeOpacity={0.75}
       onPress={onPress}
     >
@@ -428,7 +454,7 @@ export function DigestScreen() {
 
   const handleStoryPress = useCallback(
     (story: DigestStory) => {
-      const preview = story.summary?.trim();
+      const preview = extractDetailText(story.spokenText, story.summary);
       const item: ExtendedRssItem = {
         title: story.title,
         link: story.link,
@@ -461,22 +487,38 @@ export function DigestScreen() {
     day: 'numeric',
   });
   const stories = episode?.stories ?? [];
+  const showContentSkeleton = phase === 'loading' || phase === 'preparing';
   const uniqueFeeds = [...new Map(stories.map((s) => [s.feedId, s])).values()];
+
+  const effectivePlaybackMs = scrubPositionMs ?? positionMs;
+
+  const activeStoryIndex = useMemo(() => {
+    if (phase !== 'ready' || !episode || stories.length === 0) return null;
+    return findActiveDigestStoryIndex(stories, effectivePlaybackMs);
+  }, [phase, episode, stories, effectivePlaybackMs]);
+
+  const groupedStoriesWithGlobalIndex = useMemo(() => {
+    let globalIndex = 0;
+    return groupByTopic(stories).map((group) => ({
+      label: group.label,
+      entries: group.stories.map((story) => ({
+        story,
+        globalIndex: globalIndex++,
+      })),
+    }));
+  }, [stories]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.topSection}>
         {/* ── App header ── */}
         <Text style={styles.appTitle}>Sonera</Text>
         <Text style={styles.appSubtitle}>Your daily audio digest</Text>
 
         {/* ── Debug date nav (dev only) ── */}
-        {__DEV__ && (
+        {/* {__DEV__ && (
           <View style={styles.debugDateRow}>
             <TouchableOpacity
               style={styles.debugBtn}
@@ -498,7 +540,7 @@ export function DigestScreen() {
               <Ionicons name="chevron-forward" size={16} color="orange" />
             </TouchableOpacity>
           </View>
-        )}
+        )} */}
 
         {/* ── Player card (ready phase) ── */}
         {phase === 'ready' && episode && (
@@ -691,27 +733,48 @@ export function DigestScreen() {
             </TouchableOpacity>
           </View>
         )}
+      </View>
+
+      <ScrollView
+        style={styles.contentScroll}
+        contentContainerStyle={styles.contentScrollInner}
+        showsVerticalScrollIndicator={false}
+      >
+        {showContentSkeleton && (
+          <View style={styles.skeletonSection}>
+            <View style={styles.skeletonHeader} />
+            {[0, 1, 2, 3].map((idx) => (
+              <View key={idx} style={styles.skeletonStoryRow}>
+                <View style={styles.skeletonBadge} />
+                <View style={styles.skeletonStoryMeta}>
+                  <View style={styles.skeletonSource} />
+                  <View style={styles.skeletonTitle} />
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* ── Stories list ── */}
         {stories.length > 0 && (
           <View style={styles.storiesSection}>
             <View style={styles.storiesHeader}>
               <Text style={styles.storiesTitle}>IN TODAY'S DIGEST</Text>
-              <Text style={styles.allStoriesLink}>All stories</Text>
             </View>
 
-            {groupByTopic(stories).map((group, gIdx, arr) => (
+            {groupedStoriesWithGlobalIndex.map((group, gIdx, arr) => (
               <View key={gIdx}>
                 <Text style={styles.categoryLabel}>
                   {(group.label ?? 'General').toUpperCase()}
                 </Text>
-                {group.stories.map((story, sIdx) => (
-                  <React.Fragment key={story.link + sIdx}>
+                {group.entries.map(({ story, globalIndex }, sIdx) => (
+                  <React.Fragment key={story.link + globalIndex}>
                     <StoryRow
                       story={story}
+                      active={activeStoryIndex === globalIndex}
                       onPress={() => handleStoryPress(story)}
                     />
-                    {sIdx < group.stories.length - 1 && (
+                    {sIdx < group.entries.length - 1 && (
                       <View style={styles.storyDivider} />
                     )}
                   </React.Fragment>
@@ -793,10 +856,15 @@ export function DigestScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  scroll: {
-    flexGrow: 1,
+  topSection: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
+  },
+  contentScroll: {
+    flex: 1,
+  },
+  contentScrollInner: {
+    paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
 
@@ -818,7 +886,8 @@ const styles = StyleSheet.create({
   playerCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 0,
     marginBottom: Spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
@@ -1027,11 +1096,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.8,
   },
-  allStoriesLink: {
-    color: Colors.primary,
-    fontSize: FontSize.sm,
-    fontWeight: '500',
-  },
   categoryLabel: {
     color: Colors.textMuted,
     fontSize: FontSize.xs,
@@ -1050,6 +1114,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    marginHorizontal: -Spacing.sm,
+    borderRadius: Radius.md,
+  },
+  storyRowActive: {
+    backgroundColor: Colors.primaryGlow,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.primaryDark,
   },
   storyMeta: {
     flex: 1,
@@ -1075,6 +1147,50 @@ const styles = StyleSheet.create({
   storyDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: Colors.border,
+  },
+  skeletonSection: {
+    marginBottom: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    minHeight: 320,
+  },
+  skeletonHeader: {
+    width: 150,
+    height: 10,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceElevated,
+    marginBottom: Spacing.md,
+  },
+  skeletonStoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  skeletonBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surfaceElevated,
+  },
+  skeletonStoryMeta: {
+    flex: 1,
+    gap: 8,
+  },
+  skeletonSource: {
+    width: 110,
+    height: 8,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceElevated,
+  },
+  skeletonTitle: {
+    width: '85%',
+    height: 12,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceElevated,
   },
 
   // Actions
