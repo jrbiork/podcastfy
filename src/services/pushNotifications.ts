@@ -18,8 +18,14 @@ export function notificationTargetsToday(
   return target === 'today';
 }
 
-export async function registerDeviceForPush(): Promise<void> {
-  if (Platform.OS !== 'ios') return;
+export type PushRegistrationStatus =
+  | 'registered'
+  | 'permission_denied'
+  | 'missing_token'
+  | 'unsupported_platform';
+
+export async function registerDeviceForPush(): Promise<PushRegistrationStatus> {
+  if (Platform.OS !== 'ios') return 'unsupported_platform';
 
   const permissions = await Notifications.getPermissionsAsync();
   let status = permissions.status;
@@ -27,11 +33,12 @@ export async function registerDeviceForPush(): Promise<void> {
     const requested = await Notifications.requestPermissionsAsync();
     status = requested.status;
   }
-  if (status !== 'granted') return;
+  if (status !== 'granted') return 'permission_denied';
 
   const tokenResponse = await Notifications.getDevicePushTokenAsync();
   const apnsToken = typeof tokenResponse.data === 'string' ? tokenResponse.data : '';
-  if (!apnsToken) return;
+  if (!apnsToken) return 'missing_token';
 
   await registerPushToken(apnsToken);
+  return 'registered';
 }

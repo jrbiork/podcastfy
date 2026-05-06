@@ -75,6 +75,8 @@ const sns = new SNSClient({});
 const USERS_TABLE = process.env.USERS_TABLE!;
 const LOOKBACK_DAYS = 3;
 const FUZZY_TITLE_SIMILARITY_THRESHOLD = 0.75;
+// Fixed digest size targeting ~5–7 min of audio
+const DEFAULT_TOP_N = 6;
 
 /**
  * Infers a topicId for a feed URL.
@@ -172,7 +174,7 @@ async function publishDigestReadyPush(
     digestDate: date,
   };
 
-  await sns.send(
+  const publishResult = await sns.send(
     new PublishCommand({
       TargetArn: endpointArn,
       MessageStructure: 'json',
@@ -183,6 +185,13 @@ async function publishDigestReadyPush(
       }),
     }),
   );
+  console.log('[digest-worker] push publish result', {
+    userId,
+    date,
+    endpointArn,
+    messageId: publishResult.MessageId,
+    sequenceNumber: publishResult.SequenceNumber ?? null,
+  });
 }
 
 async function processDigest(msg: DigestMessage): Promise<void> {
@@ -254,7 +263,7 @@ async function processDigest(msg: DigestMessage): Promise<void> {
 
   // 2. Rank + deduplicate
   await writeDigestStatus(userId, date, { status: 'ranking' });
-  const topN = msg.topN ?? 8;
+  const topN = msg.topN ?? DEFAULT_TOP_N;
   let rankingInput = enrichedArticles;
 
   try {
@@ -338,7 +347,6 @@ async function processDigest(msg: DigestMessage): Promise<void> {
   const { segments, stories } = await generateDigestScript(
     summaries,
     statusDate,
-    msg.topN ?? 9,
   );
   console.log('[digest-worker] script generated', {
     userId,
@@ -347,7 +355,7 @@ async function processDigest(msg: DigestMessage): Promise<void> {
     stories: stories.length,
   });
 
-  // 5. Generate audio — primary narrator + occasional secondary commentator voice
+  // 5. Generate audio — dual narrator voices that alternate by segment
   await writeDigestStatus(userId, date, { status: 'generating_audio' });
   const primaryVoice = msg.voice ?? 'fable';
   const secondaryVoice = getPairedVoice(primaryVoice);

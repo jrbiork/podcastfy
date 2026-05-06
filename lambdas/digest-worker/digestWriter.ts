@@ -100,12 +100,6 @@ function estimateWordDuration(text: string): number {
   return Math.round((words / TTS_WORDS_PER_MINUTE) * 60);
 }
 
-function topNToTargetMinutes(topN: number): number {
-  if (topN <= 5) return 3;
-  if (topN <= 9) return 5;
-  return 10;
-}
-
 // ── Spoken-name helpers ───────────────────────────────────────────────────────
 
 const FEED_DISPLAY_NAMES: Record<string, string> = {
@@ -198,27 +192,26 @@ function sourceIntroText(feedName: string, sameSource: boolean, idx: number): st
 
 // ── GPT dialogue prompt (body only — structure is handled in code) ─────────────
 
-const DIALOGUE_SYSTEM_PROMPT = `You write the conversational body for a two-host daily news podcast.
+const DIALOGUE_SYSTEM_PROMPT = `You write the spoken body for a two-host daily news podcast.
 
 HOSTS:
-[A] = Host A — delivers key facts, numbers, names, what happened.
-[B] = Host B — adds context, the backstory, or the "why it matters" angle.
+[A] = Narrator A — direct factual delivery.
+[B] = Narrator B — direct factual delivery.
 
-The story title and source have already been announced. Jump straight into [B]'s reaction.
+The story title and source have already been announced. Jump straight into the story facts.
 
-FORMAT — one tag per line, 3–4 exchanges total:
-[B] Reaction or backstory — what's the angle?
-[A] The key facts — specific numbers, names, what actually happened.
-[B] The implication — why does this matter?
-[A] or [B] One closing sentence to move on.
+FORMAT — one tag per line, exactly 2 exchanges:
+[A] Main development in one tight sentence.
+[B] Follow-up facts in one tight sentence (numbers, timeline, place, impact).
 
 RULES:
-- Always start with [B]
+- Always use [A] then [B]
 - Spoken language only — no markdown, no bullet points, no stage directions
+- Keep both lines fast and direct; no analysis banter or opinion
 - NO filler words: never write "absolutely", "totally", "great point", "exactly", "wow", "fascinating", "that's interesting"
-- [B] must add real insight — not just agreement or repetition
 - Do NOT mention apps, newsletters, "read more", or subscriptions
-- 4–5 lines total, tight and punchy`;
+- Do NOT repeat the title or source (already spoken)
+- 2 lines total, tight and punchy`;
 
 /** Parses [A]/[B] tagged lines into ScriptSegments. */
 function parseDialogue(raw: string): ScriptSegment[] {
@@ -236,14 +229,20 @@ function parseDialogue(raw: string): ScriptSegment[] {
   return segments;
 }
 
-/** Generates only the conversational body for one story — no structural duties. */
-async function generateStoryDialogue(summary: ArticleSummary): Promise<ScriptSegment[]> {
+/** Generates only the two-narrator body for one story — no structural duties. */
+async function generateStoryDialogue(
+  summary: ArticleSummary,
+  targetSeconds: number,
+): Promise<ScriptSegment[]> {
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    max_tokens: 350,
+    max_tokens: 160,
     messages: [
       { role: 'system', content: DIALOGUE_SYSTEM_PROMPT },
-      { role: 'user', content: `"${summary.title}"\n${summary.summary}` },
+      {
+        role: 'user',
+        content: `"${summary.title}"\n${summary.summary}\n\nLength target: ~${targetSeconds} seconds of spoken audio. Keep it tight — 2 exchanges max.`,
+      },
     ],
   });
 
@@ -264,9 +263,16 @@ async function generateStoryDialogue(summary: ArticleSummary): Promise<ScriptSeg
 async function generateNarratorScript(
   summaries: ArticleSummary[],
 ): Promise<ScriptSegment[]> {
+  const TOTAL_TARGET_SECONDS = 5.5 * 60;
+  const INTRO_OUTRO_BUDGET_SECONDS = 80;
+  const perStory = Math.max(
+    35,
+    Math.min(60, Math.floor((TOTAL_TARGET_SECONDS - INTRO_OUTRO_BUDGET_SECONDS) / Math.max(1, summaries.length))),
+  );
+
   // Fire all GPT body calls in parallel
   const bodyResults = await Promise.allSettled(
-    summaries.map((s) => generateStoryDialogue(s)),
+    summaries.map((s) => generateStoryDialogue(s, perStory)),
   );
 
   const allSegments: ScriptSegment[] = [];
@@ -356,7 +362,6 @@ const OUTRO_SEGMENTS: ScriptSegment[] = [
 export async function generateDigestScript(
   summaries: ArticleSummary[],
   date: Date,
-  topN = 9,
 ): Promise<DigestScriptResult> {
   if (summaries.length === 0) {
     return {

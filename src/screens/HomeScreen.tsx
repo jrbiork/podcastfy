@@ -21,8 +21,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { useIncomingShare } from '../hooks/useIncomingShare';
 import { MAX_PDF_UPLOAD_BYTES } from '../services/api';
-import { hasReachedFreeLimit } from '../services/subscription';
-import { navigateToPaywall } from '../navigation/rootNavigationRef';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GenerationInput } from '../types';
 import { VoicePickerModal } from '../components/VoicePickerModal';
@@ -133,12 +131,6 @@ export function HomeScreen() {
 
     setChecking(true);
     try {
-      const limited = await hasReachedFreeLimit();
-      if (limited) {
-        navigateToPaywall();
-        return;
-      }
-
       const voiceOpts = mode === 'tts'
         ? { voice: ttsVoice, language: ttsLanguage || undefined }
         : {};

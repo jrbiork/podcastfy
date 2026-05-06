@@ -19,8 +19,6 @@ import {
   isPurchasesConfigured,
   purchaseOffering,
   restorePurchases,
-  getTotalGeneratedSeconds,
-  FREE_LIMIT_SECONDS,
 } from '../services/subscription';
 import { loadSession } from '../services/auth';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
@@ -54,16 +52,11 @@ export function PaywallScreen() {
   const [error, setError] = useState<string | null>(null);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [selected, setSelected] = useState<PurchasesPackage | null>(null);
-  const [usedSeconds, setUsedSeconds] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [session, used] = await Promise.all([
-        loadSession().catch(() => null),
-        getTotalGeneratedSeconds(),
-      ]);
-      if (!cancelled) setUsedSeconds(used);
+      const session = await loadSession().catch(() => null);
 
       await initPurchases(session?.userId).catch(() => {});
 
@@ -119,10 +112,6 @@ export function PaywallScreen() {
     }
   };
 
-  const usedMinutes = Math.floor(usedSeconds / 60);
-  const totalMinutes = FREE_LIMIT_SECONDS / 60;
-  const usedPercent = Math.min(1, usedSeconds / FREE_LIMIT_SECONDS);
-
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
@@ -136,22 +125,6 @@ export function PaywallScreen() {
         </View>
 
         <Text style={styles.title}>Unlock Unlimited</Text>
-
-        {/* Usage bar */}
-        <View style={styles.usageBox}>
-          <View style={styles.usageHeader}>
-            <Text style={styles.usageLabel}>Free minutes used</Text>
-            <Text style={styles.usageCount}>{usedMinutes} / {totalMinutes} min</Text>
-          </View>
-          <View style={styles.usageBar}>
-            <View style={[styles.usageFill, { width: `${usedPercent * 100}%` as `${number}%` }]} />
-          </View>
-          <Text style={styles.usageHint}>
-            {usedSeconds >= FREE_LIMIT_SECONDS
-              ? "You've used all your free minutes."
-              : `${totalMinutes - usedMinutes} free minutes remaining.`}
-          </Text>
-        </View>
 
         <View style={styles.benefits}>
           {BENEFITS.map((line) => (
@@ -249,25 +222,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  usageBox: {
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  usageHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-  usageLabel: { color: Colors.textMuted, fontSize: FontSize.sm },
-  usageCount: { color: Colors.text, fontSize: FontSize.sm, fontWeight: '600' },
-  usageBar: {
-    height: 6,
-    backgroundColor: Colors.border,
-    borderRadius: 3,
-    marginVertical: 2,
-  },
-  usageFill: { height: '100%', backgroundColor: Colors.primary, borderRadius: 3 },
-  usageHint: { color: Colors.textDim, fontSize: FontSize.xs },
   benefits: { gap: Spacing.sm },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   benefitText: { color: Colors.text, fontSize: FontSize.md, flex: 1 },

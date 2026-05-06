@@ -3,7 +3,6 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { GenerationInput, JobStatus } from '../types';
 import { dispatchJob, pollJob, downloadAudio } from './api';
 import { saveEpisode, RSS_FOLDER_ID } from './storage';
-import { addGeneratedSeconds } from './subscription';
 import { generateId } from '../utils/format';
 import { episodeEvents } from '../utils/episodeEvents';
 import { generationStore } from '../utils/generationStore';
@@ -91,7 +90,6 @@ async function persistAndFinalizeEpisode(
   const destUri = `${FileSystem.documentDirectory}${episodeId}-${safeFileTitle}.mp3`;
 
   await downloadAudio(finalStatus.audioUrl, destUri);
-  await addGeneratedSeconds(finalStatus.durationSeconds);
 
   await saveEpisode({
     id: episodeId,

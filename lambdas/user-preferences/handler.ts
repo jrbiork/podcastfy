@@ -53,11 +53,21 @@ function readExistingPrefs(item?: Record<string, AttributeValue>) {
       durationMinutes: null as number | null,
       deliveryHour: 6 as number,
       firstDigestDate: null as string | null,
+      digestListenedDates: null as string[] | null,
       subscribed: false,
     };
   }
   return {
-    feedUrls: item.feedUrls?.SS ?? null,
+    topicFeedUrls: item.topicFeedUrls?.M
+      ? Object.fromEntries(
+          Object.entries(item.topicFeedUrls.M).map(([topicId, urlsAttr]) => [
+            topicId,
+            (urlsAttr.L ?? [])
+              .map((v) => v.S)
+              .filter((u): u is string => typeof u === 'string' && u.length > 0),
+          ]),
+        )
+      : null,
     selectedTopics: item.selectedTopics?.SS ?? null,
     voice: item.voice?.S ?? null,
     durationMinutes:
@@ -65,6 +75,7 @@ function readExistingPrefs(item?: Record<string, AttributeValue>) {
     deliveryHour:
       item.deliveryHour?.N != null ? Number(item.deliveryHour.N) : 6,
     firstDigestDate: item.firstDigestDate?.S ?? null,
+    digestListenedDates: item.digestListenedDates?.SS ?? null,
     subscribed: item.subscribed?.BOOL ?? false,
   };
 }
@@ -120,19 +131,34 @@ async function handleGet(userId: string) {
     if (!result.Item) {
       return json(200, {
         timezone: null,
-        feedUrls: null,
+        topicFeedUrls: null,
         deliveryHour: null,
         selectedTopics: null,
         voice: null,
         durationMinutes: null,
         firstDigestDate: null,
+        digestListenedDates: null,
         subscribed: false,
       });
     }
 
     return json(200, {
       timezone: result.Item.timezone?.S ?? null,
-      feedUrls: result.Item.feedUrls?.SS ?? null,
+      topicFeedUrls: result.Item.topicFeedUrls?.M
+        ? Object.fromEntries(
+            Object.entries(result.Item.topicFeedUrls.M).map(
+              ([topicId, urlsAttr]) => [
+                topicId,
+                (urlsAttr.L ?? [])
+                  .map((v) => v.S)
+                  .filter(
+                    (u): u is string =>
+                      typeof u === 'string' && u.length > 0,
+                  ),
+              ],
+            ),
+          )
+        : null,
       deliveryHour:
         result.Item.deliveryHour?.N != null
           ? Number(result.Item.deliveryHour.N)
@@ -144,6 +170,7 @@ async function handleGet(userId: string) {
           ? Number(result.Item.durationMinutes.N)
           : null,
       firstDigestDate: result.Item.firstDigestDate?.S ?? null,
+      digestListenedDates: result.Item.digestListenedDates?.SS ?? null,
       subscribed: result.Item.subscribed?.BOOL ?? false,
     });
   } catch (err) {
@@ -164,12 +191,13 @@ async function handlePost(userId: string, rawBody: string) {
   }
 
   const timezone = body.timezone;
-  const feedUrlsRaw = body.feedUrls;
+  const topicFeedUrlsRaw = body.topicFeedUrls;
   const deliveryHourRaw = body.deliveryHour;
   const selectedTopicsRaw = body.selectedTopics;
   const voiceRaw = body.voice;
   const durationMinutesRaw = body.durationMinutes;
   const firstDigestDateRaw = body.firstDigestDate;
+  const digestListenedDatesRaw = body.digestListenedDates;
   const subscribedRaw = body.subscribed;
 
   if (!timezone || typeof timezone !== 'string') {
@@ -184,25 +212,41 @@ async function handlePost(userId: string, rawBody: string) {
     return json(400, { error: `Invalid IANA timezone: ${timezone}` });
   }
 
-  let feedUrlsFromBody: string[] | undefined;
-  if (feedUrlsRaw !== undefined) {
+  let topicFeedUrlsFromBody: Record<string, string[]> | undefined;
+  if (topicFeedUrlsRaw !== undefined) {
     if (
-      !Array.isArray(feedUrlsRaw) ||
-      feedUrlsRaw.length > 50 ||
-      !feedUrlsRaw.every((u) => typeof u === 'string')
+      typeof topicFeedUrlsRaw !== 'object' ||
+      topicFeedUrlsRaw === null ||
+      Array.isArray(topicFeedUrlsRaw)
     ) {
-      return json(400, {
-        error: 'feedUrls must be an array of up to 50 strings',
-      });
+      return json(400, { error: 'topicFeedUrls must be an object' });
     }
-    for (const url of feedUrlsRaw) {
-      try {
-        new URL(url);
-      } catch {
-        return json(400, { error: `Invalid feed URL: ${url}` });
+    const entries = Object.entries(topicFeedUrlsRaw as Record<string, unknown>);
+    if (entries.length > 20) {
+      return json(400, { error: 'topicFeedUrls must have at most 20 topics' });
+    }
+    const parsed: Record<string, string[]> = {};
+    for (const [topicId, urls] of entries) {
+      if (
+        !Array.isArray(urls) ||
+        urls.length > 50 ||
+        !urls.every((u) => typeof u === 'string')
+      ) {
+        return json(400, {
+          error: `topicFeedUrls.${topicId} must be an array of up to 50 strings`,
+        });
       }
+      for (const url of urls) {
+        try {
+          new URL(url);
+        } catch {
+          return json(400, { error: `Invalid feed URL: ${url}` });
+        }
+      }
+      const deduped = [...new Set(urls as string[])];
+      if (deduped.length > 0) parsed[topicId] = deduped;
     }
-    feedUrlsFromBody = feedUrlsRaw as string[];
+    topicFeedUrlsFromBody = parsed;
   }
 
   let selectedTopicsFromBody: string[] | undefined;
@@ -264,6 +308,26 @@ async function handlePost(userId: string, rawBody: string) {
     return json(400, { error: 'deliveryHour must be an integer 0–23' });
   }
 
+  let digestListenedDatesFromBody: string[] | undefined;
+  if (digestListenedDatesRaw !== undefined) {
+    if (
+      !Array.isArray(digestListenedDatesRaw) ||
+      digestListenedDatesRaw.length > 31 ||
+      !digestListenedDatesRaw.every((d) => typeof d === 'string')
+    ) {
+      return json(400, {
+        error: 'digestListenedDates must be an array of up to 31 date strings',
+      });
+    }
+    const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    if (!(digestListenedDatesRaw as string[]).every((d) => DATE_RE.test(d))) {
+      return json(400, {
+        error: 'digestListenedDates entries must be YYYY-MM-DD strings',
+      });
+    }
+    digestListenedDatesFromBody = [...new Set(digestListenedDatesRaw as string[])];
+  }
+
   // Load existing row — PutItem replaces the whole item, so partial POSTs must merge
   let existingItem: Record<string, AttributeValue> | undefined;
   try {
@@ -284,12 +348,12 @@ async function handlePost(userId: string, rawBody: string) {
 
   const prev = readExistingPrefs(existingItem);
 
-  const mergedFeedUrls =
-    feedUrlsFromBody !== undefined
-      ? feedUrlsFromBody.length > 0
-        ? feedUrlsFromBody
+  const mergedTopicFeedUrls =
+    topicFeedUrlsFromBody !== undefined
+      ? Object.keys(topicFeedUrlsFromBody).length > 0
+        ? topicFeedUrlsFromBody
         : null
-      : prev.feedUrls;
+      : prev.topicFeedUrls;
 
   const mergedSelectedTopics =
     selectedTopicsFromBody !== undefined
@@ -316,6 +380,13 @@ async function handlePost(userId: string, rawBody: string) {
       ? firstDigestDateRaw
       : prev.firstDigestDate;
 
+  const mergedDigestListenedDates =
+    digestListenedDatesFromBody !== undefined
+      ? digestListenedDatesFromBody.length > 0
+        ? digestListenedDatesFromBody
+        : null
+      : prev.digestListenedDates;
+
   // subscribed: always updated from client (client syncs RevenueCat status on launch)
   const mergedSubscribed =
     typeof subscribedRaw === 'boolean' ? subscribedRaw : prev.subscribed;
@@ -330,8 +401,18 @@ async function handlePost(userId: string, rawBody: string) {
           timezone: { S: timezone },
           deliveryHour: { N: String(mergedDeliveryHour) },
           updatedAt: { N: String(Date.now()) },
-          ...(mergedFeedUrls && mergedFeedUrls.length > 0
-            ? { feedUrls: { SS: mergedFeedUrls } }
+          ...(mergedTopicFeedUrls &&
+          Object.keys(mergedTopicFeedUrls).length > 0
+            ? {
+                topicFeedUrls: {
+                  M: Object.fromEntries(
+                    Object.entries(mergedTopicFeedUrls).map(([topicId, urls]) => [
+                      topicId,
+                      { L: urls.map((url) => ({ S: url })) },
+                    ]),
+                  ),
+                },
+              }
             : {}),
           ...(mergedSelectedTopics && mergedSelectedTopics.length > 0
             ? { selectedTopics: { SS: mergedSelectedTopics } }
@@ -342,6 +423,9 @@ async function handlePost(userId: string, rawBody: string) {
             : {}),
           ...(mergedFirstDigestDate
             ? { firstDigestDate: { S: mergedFirstDigestDate } }
+            : {}),
+          ...(mergedDigestListenedDates && mergedDigestListenedDates.length > 0
+            ? { digestListenedDates: { SS: mergedDigestListenedDates } }
             : {}),
           subscribed: { BOOL: mergedSubscribed },
         },
@@ -359,10 +443,13 @@ async function handlePost(userId: string, rawBody: string) {
     userId,
     timezone,
     deliveryHour: mergedDeliveryHour,
-    hasFeedUrls: Boolean(mergedFeedUrls?.length),
+    hasTopicFeedUrls: Boolean(
+      mergedTopicFeedUrls && Object.keys(mergedTopicFeedUrls).length,
+    ),
     hasSelectedTopics: Boolean(mergedSelectedTopics?.length),
     voice: mergedVoice,
     durationMinutes: mergedDuration,
+    listenedDays: mergedDigestListenedDates?.length ?? 0,
   });
 
   try {
@@ -381,12 +468,13 @@ async function handlePost(userId: string, rawBody: string) {
 
   return json(200, {
     timezone,
-    feedUrls: mergedFeedUrls,
+    topicFeedUrls: mergedTopicFeedUrls,
     deliveryHour: mergedDeliveryHour,
     selectedTopics: mergedSelectedTopics,
     voice: mergedVoice,
     durationMinutes: mergedDuration,
     firstDigestDate: mergedFirstDigestDate,
+    digestListenedDates: mergedDigestListenedDates,
     subscribed: mergedSubscribed,
   });
 }

@@ -33,7 +33,7 @@ import {
   removeCustomFeed,
   saveRssFeedToCustomList,
   searchFeedsOnline,
-  getSubscribedFeedUrls,
+  getSubscribedTopicFeedUrls,
   getTopFeedsForTopic,
   getAllFeedsForTopic,
 } from '../services/rssService';
@@ -450,10 +450,10 @@ export function FeedScreen() {
         await subscribe(feed.id);
         setSubscriptions((prev) => [...prev, feed.id]);
       }
-      // Sync updated feed list to server so scheduled digest uses current selection
-      getSubscribedFeedUrls().then((urls) => {
+      // Sync updated topic→feed URL mapping to server so scheduled digest uses current selection.
+      getSubscribedTopicFeedUrls().then((topicFeedUrls) => {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        saveUserPreferences({ timezone: tz, feedUrls: urls }).catch(() => {});
+        saveUserPreferences({ timezone: tz, topicFeedUrls }).catch(() => {});
       }).catch(() => {});
     } finally {
       setToggling(null);

@@ -9,7 +9,10 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -24,7 +27,7 @@ import {
 } from '../services/onboarding';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import type { OnboardingPrefs } from '../services/onboarding';
-import { getTopFeedUrlsForTopics } from '../services/rssService';
+import { getTopicFeedUrls } from '../services/rssService';
 import { registerDeviceForPush } from '../services/pushNotifications';
 
 /**
@@ -47,7 +50,7 @@ async function syncPreferencesAfterSignIn(
       timezone,
       selectedTopics: topics,
       deliveryHour: prefs.deliveryHour,
-      ...(topics.length > 0 ? { feedUrls: getTopFeedUrlsForTopics(topics) } : {}),
+      ...(topics.length > 0 ? { topicFeedUrls: getTopicFeedUrls(topics) } : {}),
       ...(prefs.voice ? { voice: prefs.voice } : {}),
     });
   } catch {
@@ -56,13 +59,16 @@ async function syncPreferencesAfterSignIn(
 }
 
 GoogleSignin.configure({
-  iosClientId: '979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com',
+  iosClientId:
+    '979236713408-1dgu7kko7r3p3jivaq4jsnhfa87mp929.apps.googleusercontent.com',
 });
 
 type Nav = StackNavigationProp<RootStackParamList, 'Auth'>;
 type AuthRoute = RouteProp<RootStackParamList, 'Auth'>;
 
-function fullNameToDisplayName(fullName: AppleAuthentication.AppleAuthenticationFullName | null): string | undefined {
+function fullNameToDisplayName(
+  fullName: AppleAuthentication.AppleAuthenticationFullName | null,
+): string | undefined {
   if (!fullName) return undefined;
   const parts = [fullName.givenName, fullName.familyName].filter(Boolean);
   return parts.length ? parts.join(' ') : undefined;
@@ -73,6 +79,7 @@ export function AuthScreen() {
   const route = useRoute<AuthRoute>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const showBackToOnboarding = Boolean(route.params?.pendingOnboardingPrefs);
 
   const onGoogle = async () => {
     setError(null);
@@ -82,7 +89,8 @@ export function AuthScreen() {
       const response = await GoogleSignin.signIn();
 
       // Support both v13 (response.data) and older SDK shapes
-      const idToken = (response as any).data?.idToken ?? (response as any).idToken;
+      const idToken =
+        (response as any).data?.idToken ?? (response as any).idToken;
       const user = (response as any).data?.user ?? (response as any).user;
 
       if (!idToken) throw new Error('Google did not return an ID token.');
@@ -121,7 +129,8 @@ export function AuthScreen() {
     setLoading(true);
     try {
       const isAvailable = await AppleAuthentication.isAvailableAsync();
-      if (!isAvailable) throw new Error('Apple Sign-In is not available on this device.');
+      if (!isAvailable)
+        throw new Error('Apple Sign-In is not available on this device.');
 
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -169,7 +178,7 @@ export function AuthScreen() {
           <Ionicons name="headset" size={56} color={Colors.primary} />
         </View>
         <Text style={styles.title}>Sonera</Text>
-        <Text style={styles.subtitle}>Turn articles into audio</Text>
+        <Text style={styles.subtitle}>Skip the noise. Hear what matters</Text>
 
         <View style={styles.buttons}>
           {Platform.OS === 'ios' ? (
@@ -205,10 +214,18 @@ export function AuthScreen() {
               </>
             )}
           </TouchableOpacity>
-
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        {showBackToOnboarding ? (
+          <TouchableOpacity
+            style={styles.backLink}
+            onPress={() => navigation.replace('Onboarding')}
+            hitSlop={{ top: 12, bottom: 12 }}
+          >
+            <Text style={styles.backLinkText}>← Back</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -264,5 +281,14 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     textAlign: 'center',
     marginTop: Spacing.md,
+  },
+  backLink: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  backLinkText: {
+    color: Colors.textDim,
+    fontSize: FontSize.sm,
   },
 });

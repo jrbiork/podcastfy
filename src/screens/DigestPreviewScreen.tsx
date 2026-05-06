@@ -21,7 +21,7 @@ import {
   formatDeliveryClock,
   getPreviewHeadlines,
 } from '../services/onboarding';
-import { fetchPreviewTitlesFromFeedUrls } from '../services/rssService';
+import { fetchPreviewTitlesFromFeedUrls, getTopicFeedUrls } from '../services/rssService';
 import { dispatchJob, pollJob, downloadAudio, saveUserPreferences } from '../services/api';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { formatDuration } from '../utils/format';
@@ -144,8 +144,9 @@ export function DigestPreviewScreen({ onComplete, onBack }: Props) {
       const labels = topics.map((id) => ONBOARDING_TOPICS.find((t) => t.id === id)?.label ?? id);
       setTopicLabels(labels);
 
-      const feedUrls = topicsToFeedUrls(topics);
-      let preview = await fetchPreviewTitlesFromFeedUrls(feedUrls, 3);
+      const previewFeedUrls = topicsToFeedUrls(topics);
+      const topicFeedUrls = getTopicFeedUrls(topics);
+      let preview = await fetchPreviewTitlesFromFeedUrls(previewFeedUrls, 3);
       if (preview.length < 3) {
         const fallback = getPreviewHeadlines(topics);
         for (const h of fallback) {
@@ -191,7 +192,7 @@ export function DigestPreviewScreen({ onComplete, onBack }: Props) {
 
       // Save user preferences
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      saveUserPreferences({ timezone, feedUrls, deliveryHour: hour }).catch(() => {});
+      saveUserPreferences({ timezone, topicFeedUrls, deliveryHour: hour }).catch(() => {});
     } catch (err) {
       console.error('[DigestPreviewScreen] generation failed', err);
       setErrorMsg('Something went wrong generating your preview.');

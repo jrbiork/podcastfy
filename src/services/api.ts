@@ -43,7 +43,12 @@ async function getFreshToken(session: Awaited<ReturnType<typeof loadSession>>): 
     } catch (e: any) {
       console.log('[api] getTokens failed; using cached token', { msg: e?.message });
       try {
-        const silent = await GoogleSignin.signInSilently();
+        const silent = await Promise.race([
+          GoogleSignin.signInSilently(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('signInSilently timeout')), 8_000)
+          ),
+        ]);
         if ((silent as any)?.type === 'success') {
           const silentIdToken = (silent as any)?.data?.idToken;
           if (silentIdToken) token = silentIdToken;
@@ -248,13 +253,10 @@ export async function dispatchDigest(
   force?: boolean,
   voice?: string,
   topN?: number,
-  /** When set (e.g. from user prefs in Dynamo), digest uses these URLs instead of topic buckets. */
-  feedUrls?: string[],
 ): Promise<{ digestId: string; status: string }> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
   const headers = await authHeaders();
   const bodyObj: Record<string, unknown> = {};
-  if (feedUrls && feedUrls.length > 0) bodyObj.feedUrls = feedUrls.slice(0, 50);
   if (topicFeedUrls && Object.keys(topicFeedUrls).length > 0) bodyObj.topicFeedUrls = topicFeedUrls;
   if (force) bodyObj.force = true;
   if (voice) bodyObj.voice = voice;
@@ -305,12 +307,13 @@ export async function getLatestDigest(): Promise<DigestJobStatus> {
 
 export interface UserPreferences {
   timezone: string | null;
-  feedUrls: string[] | null;
+  topicFeedUrls: Record<string, string[]> | null;
   deliveryHour: number | null;
   voice: string | null;
   durationMinutes: number | null;
   selectedTopics: string[] | null;
   firstDigestDate: string | null;
+  digestListenedDates: string[] | null;
   subscribed: boolean | null;
 }
 
@@ -370,12 +373,13 @@ export async function getUserPreferences(): Promise<UserPreferences> {
 
 export async function saveUserPreferences(prefs: {
   timezone: string;
-  feedUrls?: string[];
+  topicFeedUrls?: Record<string, string[]>;
   deliveryHour?: number;
   voice?: string;
   durationMinutes?: number;
   selectedTopics?: string[];
   firstDigestDate?: string | null;
+  digestListenedDates?: string[] | null;
   subscribed?: boolean | null;
 }): Promise<UserPreferences> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });

@@ -12,8 +12,6 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { FeedScreen } from '../screens/FeedScreen';
 import { DigestScreen } from '../screens/DigestScreen';
 import { Colors, FontSize } from '../utils/theme';
-import { resumePersistedGenerations } from '../services/generationService';
-import { pollSubscribedFeeds } from '../services/rssService';
 
 type TabParamList = {
   TodayTab: undefined;
@@ -154,10 +152,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export function MainTabs() {
-  useEffect(() => {
-    void resumePersistedGenerations();
-    void pollSubscribedFeeds();
-  }, []);
 
   return (
     <Tab.Navigator

@@ -49,6 +49,7 @@ import {
   saveOnboardingPrefs,
   type OnboardingPrefs,
 } from '../services/onboarding';
+import { registerDeviceForPush } from '../services/pushNotifications';
 
 const APP_VERSION = '1.0.0';
 
@@ -262,6 +263,16 @@ export function ProfileScreen() {
   const onSendTestPush = useCallback(async () => {
     setSendingTestPush(true);
     try {
+      const registrationStatus = await registerDeviceForPush();
+      if (registrationStatus === 'permission_denied') {
+        throw new Error(
+          'Notifications are disabled for this device. Enable them in iOS Settings and try again.',
+        );
+      }
+      if (registrationStatus === 'missing_token') {
+        throw new Error('Unable to read an APNs token for this device. Please try again.');
+      }
+
       await sendTestTodayPush();
       Alert.alert(
         'Test push sent',
@@ -428,6 +439,16 @@ export function ProfileScreen() {
 
         {/* ── App settings ─────────────────────────────────────────────────── */}
         <View style={styles.card}>
+          {__DEV__ ? (
+            <>
+              <SettingsRow
+                icon="lock-closed-outline"
+                label="Show Hard Paywall (Test)"
+                onPress={navigateToPaywall}
+              />
+              <View style={styles.divider} />
+            </>
+          ) : null}
           <SettingsRow
             icon="refresh-outline"
             label={

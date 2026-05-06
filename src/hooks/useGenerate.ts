@@ -3,7 +3,6 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Episode, GenerationInput, JobStatus } from '../types';
 import { dispatchJob, pollJob, downloadAudio } from '../services/api';
 import { generateId } from '../utils/format';
-import { addGeneratedSeconds } from '../services/subscription';
 
 export type GenerateStep =
   | 'queued'
@@ -73,8 +72,6 @@ export function useGenerate() {
 
         setState({ step: 'downloading', error: null });
         await downloadAudio(finalStatus.audioUrl, destUri);
-
-        await addGeneratedSeconds(finalStatus.durationSeconds);
 
         const episode: Episode = {
           id: episodeId,
