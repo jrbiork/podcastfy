@@ -130,12 +130,13 @@ function getAbbrev(feedName: string): string {
  * Strip digest intro + `Source: "headline".` so detail matches narration body only.
  * Matches the last colon before a quoted headline (see digestWriter source+title line).
  */
-function extractDetailText(spokenText?: string, summary?: string): string | undefined {
+function extractDetailText(
+  spokenText?: string,
+  summary?: string,
+): string | undefined {
   const spoken = spokenText?.trim();
   if (spoken) {
-    const stripped = spoken
-      .replace(/^[\s\S]*?:\s*"[\s\S]*?"\.\s*/, '')
-      .trim();
+    const stripped = spoken.replace(/^[\s\S]*?:\s*"[\s\S]*?"\.\s*/, '').trim();
     return stripped.length > 0 ? stripped : spoken;
   }
   return summary?.trim();
@@ -533,17 +534,20 @@ export function DigestScreen() {
     lastAutoScrollStoryIndexRef.current = null;
   }, [digestStoriesKey]);
 
-  const scrollActiveStoryIntoView = useCallback((index: number, animated: boolean) => {
-    if (digestListUserScrollRef.current) return;
-    const rowY = storyRowYRef.current[index];
-    if (rowY === undefined) return;
-    const sectionY = storiesSectionTopRef.current;
-    const pad = 16;
-    digestScrollRef.current?.scrollTo({
-      y: Math.max(0, sectionY + rowY - pad),
-      animated,
-    });
-  }, []);
+  const scrollActiveStoryIntoView = useCallback(
+    (index: number, animated: boolean) => {
+      if (digestListUserScrollRef.current) return;
+      const rowY = storyRowYRef.current[index];
+      if (rowY === undefined) return;
+      const sectionY = storiesSectionTopRef.current;
+      const pad = 16;
+      digestScrollRef.current?.scrollTo({
+        y: Math.max(0, sectionY + rowY - pad),
+        animated,
+      });
+    },
+    [],
+  );
 
   /**
    * User finished list gesture: do not pull scroll back to the highlight unless playback
@@ -630,9 +634,6 @@ export function DigestScreen() {
       <View style={styles.topSection}>
         {/* ── App header ── */}
         <Text style={styles.appTitle}>Sonera</Text>
-        <Text style={styles.appSubtitle}>
-          Your personal daily update
-        </Text>
 
         {/* ── Debug date nav (dev only) ── */}
         {/* {__DEV__ && (
@@ -662,13 +663,13 @@ export function DigestScreen() {
         {/* ── Player card (ready phase) ── */}
         {phase === 'ready' && episode && (
           <View style={styles.playerCard}>
-            {/* Status row */}
             <View style={styles.statusRow}>
-              <View style={styles.readyBadge}>
-                <View style={styles.readyDot} />
-                <Text style={styles.readyText}>READY TO PLAY</Text>
-              </View>
-              <Text style={styles.metaText}>
+              <Text style={styles.playerCardSubtitle} numberOfLines={2}>
+                Daily update
+              </Text>
+              <Text
+                style={[styles.playerCardSubtitle, { textAlign: 'right' }]}
+              >
                 {dateLabel} · {stories.length}{' '}
                 {stories.length === 1 ? 'story' : 'stories'}
               </Text>
@@ -1004,11 +1005,6 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxxl,
     fontWeight: '700',
     letterSpacing: -0.5,
-  },
-  appSubtitle: {
-    color: Colors.textMuted,
-    fontSize: FontSize.md,
-    marginTop: 2,
     marginBottom: Spacing.sm,
   },
 
@@ -1024,34 +1020,28 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
 
-  // Status row
   statusRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: 4,
+    width: '100%',
   },
-  readyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  readyDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.primary,
-  },
-  readyText: {
-    color: Colors.text,
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  playerCardSubtitle: {
+    flex: 1,
+    minWidth: 0,
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginRight: Spacing.sm,
   },
   metaText: {
+    flexShrink: 0,
     color: Colors.textMuted,
     fontSize: FontSize.xs,
+    textAlign: 'right',
   },
 
   // Sources row — avatar stack + label

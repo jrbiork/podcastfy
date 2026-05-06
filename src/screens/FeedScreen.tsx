@@ -734,7 +734,8 @@ const styles = StyleSheet.create({
 
   // Topic chips
   chipsContainer: {
-    paddingHorizontal: Spacing.md,
+    paddingLeft: 0,
+    paddingRight: Spacing.md,
     gap: Spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
