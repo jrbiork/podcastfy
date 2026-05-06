@@ -23,15 +23,6 @@ const IN_PROGRESS_STATUSES = new Set([
   'generating_audio',
 ]);
 
-function readStringArrayAttr(attr?: { SS?: string[]; L?: Array<{ S?: string }> }): string[] {
-  if (!attr) return [];
-  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
-  if (Array.isArray(attr.L) && attr.L.length > 0) {
-    return attr.L.map((v) => v.S).filter((v): v is string => typeof v === 'string' && v.length > 0);
-  }
-  return [];
-}
-
 function json(statusCode: number, body: unknown) {
   return {
     statusCode,
@@ -119,26 +110,6 @@ async function handleDispatchDigest(
 ) {
   const digestId = `${userId}/${date}`;
 
-  // Validate optional feedUrls (up to 50 — 12 topics × 3–5 feeds each)
-  let feedUrls: string[] | undefined;
-  if (body.feedUrls !== undefined) {
-    if (
-      !Array.isArray(body.feedUrls) ||
-      body.feedUrls.length > 50 ||
-      !body.feedUrls.every((u) => typeof u === 'string')
-    ) {
-      return json(400, { error: 'feedUrls must be an array of up to 50 strings' });
-    }
-    for (const url of body.feedUrls as string[]) {
-      try {
-        new URL(url);
-      } catch {
-        return json(400, { error: `Invalid feed URL: ${url}` });
-      }
-    }
-    feedUrls = body.feedUrls as string[];
-  }
-
   const force = body.force === true;
 
   const VALID_VOICES = new Set(['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']);
@@ -167,22 +138,31 @@ async function handleDispatchDigest(
     topicFeedUrls = body.topicFeedUrls as Record<string, string[]>;
   }
 
-  // If caller didn't provide feeds/topic buckets (e.g. test regenerate button),
+  // If caller didn't provide topic buckets (e.g. test regenerate button),
   // hydrate from saved user prefs so generation uses current preferences.
-  if (!feedUrls && !topicFeedUrls && USERS_TABLE) {
+  if (!topicFeedUrls && USERS_TABLE) {
     try {
       const user = await dynamo.send(new GetItemCommand({
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
-        ProjectionExpression: 'feedUrls',
+        ProjectionExpression: 'topicFeedUrls',
       }));
       const item = user.Item;
-      const fromSet = readStringArrayAttr(item?.feedUrls as any);
-      if (fromSet.length > 0) {
-        feedUrls = fromSet.slice(0, 50);
+      if (item?.topicFeedUrls?.M) {
+        const parsed = Object.fromEntries(
+          Object.entries(item.topicFeedUrls.M).map(([topicId, urlsAttr]) => [
+            topicId,
+            (urlsAttr.L ?? [])
+              .map((v) => v.S)
+              .filter((u): u is string => typeof u === 'string' && u.length > 0),
+          ]),
+        );
+        if (Object.keys(parsed).length > 0) {
+          topicFeedUrls = parsed;
+        }
       }
     } catch (err) {
-      console.warn('[digest-dispatcher] failed to hydrate feedUrls from prefs', {
+      console.warn('[digest-dispatcher] failed to hydrate topicFeedUrls from prefs', {
         requestId,
         userId,
         err: String(err),
@@ -221,9 +201,7 @@ async function handleDispatchDigest(
   console.log('[digest-dispatcher] digest status queued', { requestId, userId, date });
 
   const message: Record<string, unknown> = { userId, date };
-  // Prefer explicit subscription URLs from user prefs over topic buckets
-  if (feedUrls && feedUrls.length > 0) message.feedUrls = feedUrls;
-  else if (topicFeedUrls && Object.keys(topicFeedUrls).length > 0) message.topicFeedUrls = topicFeedUrls;
+  if (topicFeedUrls && Object.keys(topicFeedUrls).length > 0) message.topicFeedUrls = topicFeedUrls;
   if (voice)          message.voice          = voice;
   if (topN)           message.topN           = topN;
 

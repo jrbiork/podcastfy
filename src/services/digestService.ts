@@ -1,39 +1,46 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Episode } from '../types';
-import { dispatchDigest, getLatestDigest, downloadAudio, getUserPreferences } from './api';
-import { loadEpisodes, saveEpisode, permanentDeleteEpisode, RSS_FOLDER_ID } from './storage';
+import {
+  dispatchDigest,
+  getLatestDigest,
+  downloadAudio,
+  getUserPreferences,
+} from './api';
+import {
+  loadEpisodes,
+  saveEpisode,
+  permanentDeleteEpisode,
+  RSS_FOLDER_ID,
+} from './storage';
 import { generateId } from '../utils/format';
 import { episodeEvents } from '../utils/episodeEvents';
 import { loadOnboardingPrefs, DEFAULT_TOPICS } from './onboarding';
 import { getTopicFeedUrls } from './rssService';
+import { getDebugTodayUtc, getDebugDateOffset } from '../utils/debugDate';
 
-const POLL_INTERVAL_MS = 3_000;
-const POLL_TIMEOUT_MS = 15 * 60 * 1_000;
+// Fixed digest size targeting ~5–7 min of audio
+const DEFAULT_TOP_N = 6;
 
-export type DigestProgress = {
-  status: string;
-  label: string;
-};
+export type DigestBootResult =
+  | { type: 'ready'; episode: Episode }
+  | { type: 'preparing' };
 
-export const DIGEST_STATUS_LABELS: Record<string, string> = {
-  queued: 'Getting started…',
-  fetching_feeds: "Fetching today's news…",
-  ranking: 'Selecting top stories…',
-  summarizing: 'Reading articles…',
-  scripting: 'Writing your briefing…',
-  generating_audio: 'Recording audio…',
-  done: 'Ready',
-};
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// Fixed digest size targeting ~5–8 min of audio
-const DEFAULT_TOP_N = 9;
+export type DigestPollResult =
+  | { type: 'ready'; episode: Episode }
+  | { type: 'in_progress'; status: string };
 
 function todayUtcDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return getDebugTodayUtc();
+}
+
+/**
+ * Returns true when the server's digestId is for the current (debug-aware) date.
+ * In __DEV__ with a non-zero offset we skip the check so the forced-regenerated
+ * digest is always accepted, regardless of the server's real date.
+ */
+function isDigestForToday(digestId: string): boolean {
+  if (__DEV__ && getDebugDateOffset() !== 0) return true;
+  return digestId?.endsWith(`/${todayUtcDate()}`);
 }
 
 async function findTodaysDigestEpisode(): Promise<Episode | null> {
@@ -43,40 +50,12 @@ async function findTodaysDigestEpisode(): Promise<Episode | null> {
     (ep) =>
       ep.sourceType === 'digest' &&
       // digestId format is "{userId}/{date}" — ends with today's date
-      ep.sourceUrl.endsWith(`/${today}`)
+      ep.sourceUrl.endsWith(`/${today}`),
   );
   return match ?? null;
 }
 
-/**
- * Returns the episode with stories backfilled from the server, or null when the
- * server is also "done" but has no stories (caller should force-regenerate).
- */
-async function backfillStories(episode: Episode): Promise<Episode | null> {
-  try {
-    const serverStatus = await getLatestDigest();
-    if (serverStatus.status === 'done') {
-      const stories = Array.isArray((serverStatus as Record<string, unknown>).stories)
-        ? (serverStatus as { stories: import('../types').DigestStory[] }).stories
-        : [];
-      if (stories.length > 0) {
-        const updated: Episode = { ...episode, stories };
-        await saveEpisode(updated);
-        return updated;
-      }
-      // Server is done but also missing stories — signal caller to force-regenerate
-      return null;
-    }
-  } catch {
-    // Server unreachable — return episode as-is
-  }
-  return episode;
-}
-
-export async function getOrCreateTodayDigest(
-  onProgress: (p: DigestProgress) => void,
-): Promise<Episode> {
-  // Local prefs are cleared after onboarding; server (Dynamo) is source of truth for topics, voice, length, feed URLs.
+async function resolvePrefs() {
   const [localPrefs, serverPrefs] = await Promise.all([
     loadOnboardingPrefs(),
     getUserPreferences().catch(() => null),
@@ -90,87 +69,21 @@ export async function getOrCreateTodayDigest(
     DEFAULT_TOPICS;
 
   const voice =
-    (typeof localPrefs?.voice === 'string' && localPrefs.voice ? localPrefs.voice : undefined) ??
-    (typeof serverPrefs?.voice === 'string' && serverPrefs.voice ? serverPrefs.voice : undefined);
+    (typeof localPrefs?.voice === 'string' && localPrefs.voice
+      ? localPrefs.voice
+      : undefined) ??
+    (typeof serverPrefs?.voice === 'string' && serverPrefs.voice
+      ? serverPrefs.voice
+      : undefined);
 
   const topicFeedUrls = getTopicFeedUrls(selectedTopics);
-  const flatFeedUrls =
-    serverPrefs?.feedUrls && serverPrefs.feedUrls.length > 0
-      ? serverPrefs.feedUrls.slice(0, 50)
-      : undefined;
+  const effectiveTopicFeedUrls =
+    serverPrefs?.topicFeedUrls &&
+    Object.keys(serverPrefs.topicFeedUrls).length > 0
+      ? serverPrefs.topicFeedUrls
+      : topicFeedUrls;
 
-  const topN = DEFAULT_TOP_N;
-
-  // 1. Check local storage first (handles re-mounts and app restarts)
-  const existing = await findTodaysDigestEpisode();
-  if (existing) {
-    onProgress({ status: 'done', label: DIGEST_STATUS_LABELS.done });
-    // Backfill stories if the episode was saved before the stories field existed
-    if (!existing.stories || existing.stories.length === 0) {
-      const backfilled = await backfillStories(existing);
-      if (backfilled !== null) return backfilled;
-      // Server is also done with no stories: permanently delete stale local copy
-      // and force-regenerate so the worker re-runs from scratch.
-      await permanentDeleteEpisode(existing.id);
-      await dispatchDigest(
-        flatFeedUrls?.length ? undefined : topicFeedUrls,
-        true,
-        voice,
-        topN,
-        flatFeedUrls?.length ? flatFeedUrls : undefined,
-      );
-      onProgress({ status: 'queued', label: DIGEST_STATUS_LABELS.queued });
-      return pollUntilDone(onProgress);
-    }
-    return existing;
-  }
-
-  // 2. Check server state
-  const serverStatus = await getLatestDigest();
-
-  if (serverStatus.status === 'done') {
-    return downloadAndSaveDigest(serverStatus.digestId, serverStatus.audioUrl, serverStatus.title, serverStatus.durationSeconds, serverStatus.stories, onProgress);
-  }
-
-  // 3. Dispatch (idempotent — server returns existing status if already in-progress)
-  if (serverStatus.status === 'not_started' || serverStatus.status === 'error') {
-    await dispatchDigest(
-      flatFeedUrls?.length ? undefined : topicFeedUrls,
-      false,
-      voice,
-      topN,
-      flatFeedUrls?.length ? flatFeedUrls : undefined,
-    );
-  }
-
-  onProgress({ status: 'queued', label: DIGEST_STATUS_LABELS.queued });
-
-  return pollUntilDone(onProgress);
-}
-
-async function pollUntilDone(onProgress: (p: DigestProgress) => void): Promise<Episode> {
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
-
-  while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS);
-
-    const status = await getLatestDigest();
-
-    if (status.status === 'error') {
-      throw Object.assign(new Error(status.error), { code: status.error });
-    }
-
-    if (status.status === 'done') {
-      return downloadAndSaveDigest(status.digestId, status.audioUrl, status.title, status.durationSeconds, status.stories, onProgress);
-    }
-
-    onProgress({
-      status: status.status,
-      label: DIGEST_STATUS_LABELS[status.status] ?? status.status,
-    });
-  }
-
-  throw Object.assign(new Error('timeout'), { code: 'timeout' });
+  return { voice, effectiveTopicFeedUrls };
 }
 
 async function downloadAndSaveDigest(
@@ -179,13 +92,14 @@ async function downloadAndSaveDigest(
   title: string,
   durationSeconds: number,
   stories: import('../types').DigestStory[],
-  onProgress: (p: DigestProgress) => void
 ): Promise<Episode> {
   // Re-check local storage in case another call already downloaded it
   const alreadyDownloaded = await findTodaysDigestEpisode();
   if (alreadyDownloaded) {
-    onProgress({ status: 'done', label: DIGEST_STATUS_LABELS.done });
-    if (stories.length > 0 && (!alreadyDownloaded.stories || alreadyDownloaded.stories.length === 0)) {
+    if (
+      stories.length > 0 &&
+      (!alreadyDownloaded.stories || alreadyDownloaded.stories.length === 0)
+    ) {
       const updated: Episode = { ...alreadyDownloaded, stories };
       await saveEpisode(updated);
       return updated;
@@ -194,7 +108,11 @@ async function downloadAndSaveDigest(
   }
 
   const episodeId = generateId();
-  const safeTitle = title.replace(/[^a-z0-9 _-]+/gi, ' ').trim().slice(0, 80) || 'Daily Briefing';
+  const safeTitle =
+    title
+      .replace(/[^a-z0-9 _-]+/gi, ' ')
+      .trim()
+      .slice(0, 80) || 'Daily Briefing';
   const destUri = `${FileSystem.documentDirectory}${episodeId}-${safeTitle}.mp3`;
 
   await downloadAudio(audioUrl, destUri);
@@ -215,7 +133,113 @@ async function downloadAndSaveDigest(
 
   await saveEpisode(episode);
   episodeEvents.emit();
-
-  onProgress({ status: 'done', label: DIGEST_STATUS_LABELS.done });
   return episode;
+}
+
+/**
+ * Fast boot: dispatches generation if needed but never waits for it.
+ * Returns immediately with either the ready episode or a 'preparing' token.
+ * The caller is responsible for polling via pollTodayDigestStatus.
+ */
+export async function bootTodayDigest(): Promise<DigestBootResult> {
+  const { voice, effectiveTopicFeedUrls } = await resolvePrefs();
+  const existing = await findTodaysDigestEpisode();
+
+  let serverStatus: Awaited<ReturnType<typeof getLatestDigest>> | null = null;
+  try {
+    serverStatus = await getLatestDigest();
+  } catch {
+    // Offline — serve local copy if available, otherwise show preparing
+    if (existing) return { type: 'ready', episode: existing };
+    return { type: 'preparing' };
+  }
+
+  if (serverStatus.status === 'done') {
+    if (isDigestForToday(serverStatus.digestId)) {
+      // Today's digest is ready — download and return it
+      if (existing) await permanentDeleteEpisode(existing.id);
+      episodeEvents.emit();
+      const episode = await downloadAndSaveDigest(
+        serverStatus.digestId,
+        serverStatus.audioUrl,
+        serverStatus.title,
+        serverStatus.durationSeconds,
+        serverStatus.stories,
+      );
+      return { type: 'ready', episode };
+    }
+
+    // Done digest is from a previous day — treat as stale and regenerate.
+    // In __DEV__ with an offset we force-regenerate so the server overwrites
+    // the cached done status; in production the new date key is always fresh.
+    if (existing) {
+      await permanentDeleteEpisode(existing.id);
+      episodeEvents.emit();
+    }
+    const forceRegen = __DEV__ && getDebugDateOffset() !== 0;
+    try {
+      await dispatchDigest(effectiveTopicFeedUrls, forceRegen, voice, DEFAULT_TOP_N);
+    } catch {
+      // Dispatch failed (network) — show preparing; will retry on next poll
+    }
+    return { type: 'preparing' };
+  }
+
+  // Already generating — nothing extra to dispatch
+  const inProgressStatuses = new Set([
+    'queued',
+    'fetching_feeds',
+    'ranking',
+    'summarizing',
+    'scripting',
+    'generating_audio',
+  ]);
+  if (inProgressStatuses.has(serverStatus.status)) {
+    return { type: 'preparing' };
+  }
+
+  // not_started or error — kick off generation and return immediately
+  if (existing) {
+    await permanentDeleteEpisode(existing.id);
+    episodeEvents.emit();
+  }
+  try {
+    await dispatchDigest(effectiveTopicFeedUrls, false, voice, DEFAULT_TOP_N);
+  } catch {
+    // Dispatch failed (network) — show preparing anyway; will retry on next poll
+  }
+
+  return { type: 'preparing' };
+}
+
+/**
+ * Single non-blocking poll for background status checks.
+ * Returns 'ready' + episode once done, or 'in_progress' + current server
+ * status string so the caller can drive step-by-step progress UI.
+ */
+export async function pollTodayDigestStatus(): Promise<DigestPollResult> {
+  try {
+    const status = await getLatestDigest();
+
+    if (status.status === 'done' && isDigestForToday(status.digestId)) {
+      const existing = await findTodaysDigestEpisode();
+      if (existing) await permanentDeleteEpisode(existing.id);
+      episodeEvents.emit();
+      const episode = await downloadAndSaveDigest(
+        status.digestId,
+        status.audioUrl,
+        status.title,
+        status.durationSeconds,
+        status.stories,
+      );
+      return { type: 'ready', episode };
+    }
+
+    return { type: 'in_progress', status: status.status };
+  } catch {
+    // Network unavailable — check local storage as a last resort
+    const local = await findTodaysDigestEpisode();
+    if (local) return { type: 'ready', episode: local };
+    return { type: 'in_progress', status: '' };
+  }
 }

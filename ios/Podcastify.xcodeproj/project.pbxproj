@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DFF4695D6EC444280C0D731 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F9C4BAE212774FF4BDFE754E /* GoogleService-Info.plist */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		320194C4777483C88CC567A3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 822BBEE71FD07E0838971315 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
@@ -31,6 +32,16 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		26144A2EEA294BD6A9EE1C77 /* Copy Files */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Copy Files";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		48EED8D58255477DAACB05EF /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -72,6 +83,16 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DFC275066D444F11AB609F3A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -95,6 +116,7 @@
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Podcastify/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Podcastify-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Podcastify-Bridging-Header.h"; path = "Podcastify/Podcastify-Bridging-Header.h"; sourceTree = "<group>"; };
 		F30A76C3A4F9EBCEAD9016D4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Podcastify/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F9C4BAE212774FF4BDFE754E /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Podcastify/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FD923098BC788AC148A69939 /* Pods-Podcastify.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Podcastify.debug.xcconfig"; path = "Target Support Files/Pods-Podcastify/Pods-Podcastify.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -136,6 +158,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				F30A76C3A4F9EBCEAD9016D4 /* PrivacyInfo.xcprivacy */,
+				F9C4BAE212774FF4BDFE754E /* GoogleService-Info.plist */,
 			);
 			name = Podcastify;
 			sourceTree = "<group>";
@@ -160,9 +183,6 @@
 		7A55D439A3B647FB9C52A269 /* PodcastifyShareExtension */ = {
 			isa = PBXGroup;
 			children = (
-				2485AD47EA6E4EC682C9B4A9 /* ShareExtensionViewController.swift */,
-				D1577DCD924C4B1CB6734EDA /* Info.plist */,
-				86C30E0473E445B9A347A18C /* PodcastifyShareExtension.entitlements */,
 			);
 			path = PodcastifyShareExtension;
 			sourceTree = "<group>";
@@ -185,6 +205,7 @@
 				C1215DF1CDF4256139A35939 /* Pods */,
 				C3AD16083022FBECFF2A5310 /* ExpoModulesProviders */,
 				7A55D439A3B647FB9C52A269 /* PodcastifyShareExtension */,
+				D6B897F082A14DD58963BC21 /* PodcastifyShareExtension */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -237,6 +258,16 @@
 			name = PodcastifyShareExtension;
 			sourceTree = "<group>";
 		};
+		D6B897F082A14DD58963BC21 /* PodcastifyShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				2485AD47EA6E4EC682C9B4A9 /* ShareExtensionViewController.swift */,
+				D1577DCD924C4B1CB6734EDA /* Info.plist */,
+				86C30E0473E445B9A347A18C /* PodcastifyShareExtension.entitlements */,
+			);
+			path = PodcastifyShareExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -256,6 +287,8 @@
 				F616DA5CE3D217336398772E /* [CP] Embed Pods Frameworks */,
 				C6C9978768914CDCA92A0D7D /* Embed Foundation Extensions */,
 				552FAD7183284E7084D04A89 /* Copy Files */,
+				DFC275066D444F11AB609F3A /* Embed Foundation Extensions */,
+				26144A2EEA294BD6A9EE1C77 /* Copy Files */,
 			);
 			buildRules = (
 			);
@@ -337,6 +370,7 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				4E082C55BA3F7D6FF00CC54B /* PrivacyInfo.xcprivacy in Resources */,
+				0DFF4695D6EC444280C0D731 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

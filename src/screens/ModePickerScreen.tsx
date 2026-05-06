@@ -12,8 +12,6 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
-import { hasReachedFreeLimit } from '../services/subscription';
-import { navigateToPaywall } from '../navigation/rootNavigationRef';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import { useState } from 'react';
 
@@ -29,11 +27,6 @@ export function ModePickerScreen() {
   const pick = async (mode: 'podcast' | 'tts') => {
     setChecking(true);
     try {
-      const limited = await hasReachedFreeLimit();
-      if (limited) {
-        navigateToPaywall();
-        return;
-      }
       navigation.replace('Generating', { input, mode });
     } finally {
       setChecking(false);

@@ -1,6 +1,5 @@
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
-import { TOPIC_FEED_URLS_BY_ID } from '../data/topicFeedMap';
 import { readDigestStatus } from '../shared/s3';
 
 const IN_PROGRESS = new Set([
@@ -15,29 +14,8 @@ const IN_PROGRESS = new Set([
 const dynamo = new DynamoDBClient({});
 const sqsClient = new SQSClient({});
 
-const FEEDS_PER_TOPIC = 5;
-
-// Fixed digest size targeting ~5–8 min of audio
-const DEFAULT_TOP_N = 9;
-
-/** Mirrors app `getTopicFeedUrls`: up to 5 RSS URLs per stored topic id (incl. legacy keys). */
-function buildTopicFeedUrls(selectedTopics: string[]): Record<string, string[]> {
-  const result: Record<string, string[]> = {};
-  for (const topicId of selectedTopics) {
-    const urls = TOPIC_FEED_URLS_BY_ID[topicId];
-    if (urls?.length) result[topicId] = [...urls].slice(0, FEEDS_PER_TOPIC);
-  }
-  return result;
-}
-
-function readStringArrayAttr(attr?: { SS?: string[]; L?: Array<{ S?: string }> }): string[] {
-  if (!attr) return [];
-  if (Array.isArray(attr.SS) && attr.SS.length > 0) return attr.SS;
-  if (Array.isArray(attr.L) && attr.L.length > 0) {
-    return attr.L.map((v) => v.S).filter((v): v is string => typeof v === 'string' && v.length > 0);
-  }
-  return [];
-}
+// Fixed digest size targeting ~5–7 min of audio
+const DEFAULT_TOP_N = 6;
 
 export const handler = async (event: { userId: string }): Promise<void> => {
   const { userId } = event;
@@ -64,8 +42,7 @@ export const handler = async (event: { userId: string }): Promise<void> => {
   const priorityTopicId =
     prevStatus?.status === 'done' ? prevStatus.skippedTopicId : undefined;
 
-  // Read user prefs from DynamoDB (same precedence as client: feedUrls → topic buckets)
-  let feedUrls: string[] | undefined;
+  // Read user prefs from DynamoDB (topicFeedUrls is canonical input)
   let topicFeedUrls: Record<string, string[]> | undefined;
   let voice: string | undefined;
 
@@ -77,27 +54,31 @@ export const handler = async (event: { userId: string }): Promise<void> => {
 
     const item = result.Item;
     if (item) {
-      const fromSubs = readStringArrayAttr(item.feedUrls as any);
-      if (fromSubs.length > 0) {
-        feedUrls = fromSubs.slice(0, 50);
-      } else {
-        const selectedTopics = readStringArrayAttr(item.selectedTopics as any);
-        if (selectedTopics.length > 0) {
-          const built = buildTopicFeedUrls(selectedTopics);
-          if (Object.keys(built).length > 0) topicFeedUrls = built;
-        }
+      if (item.topicFeedUrls?.M) {
+        const parsed = Object.fromEntries(
+          Object.entries(item.topicFeedUrls.M).map(([topicId, urlsAttr]) => [
+            topicId,
+            (urlsAttr.L ?? [])
+              .map((v) => v.S)
+              .filter((u): u is string => typeof u === 'string' && u.length > 0),
+          ]),
+        );
+        if (Object.keys(parsed).length > 0) topicFeedUrls = parsed;
       }
 
       if (item.voice?.S) voice = item.voice.S;
 
-      const firstDigestDate = item.firstDigestDate?.S ?? null;
       const subscribed = item.subscribed?.BOOL ?? false;
+      const digestListenedDates = item.digestListenedDates?.SS ?? [];
 
-      if (firstDigestDate && !subscribed) {
-        const HARD_PAYWALL_DAYS = 4;
-        const daysSince = (Date.now() - new Date(firstDigestDate).getTime()) / (1000 * 60 * 60 * 24);
-        if (daysSince >= HARD_PAYWALL_DAYS) {
-          console.log('[scheduler-trigger] skipping free user past trial', { userId, daysSince: daysSince.toFixed(1) });
+      // Hard paywall from day 4: once 3 unique digest days were completed.
+      if (!subscribed) {
+        const HARD_PAYWALL_LISTEN_DAYS = 3;
+        if (digestListenedDates.length >= HARD_PAYWALL_LISTEN_DAYS) {
+          console.log('[scheduler-trigger] skipping free user at hard paywall', {
+            userId,
+            listenedDays: digestListenedDates.length,
+          });
           return;
         }
       }
@@ -107,8 +88,7 @@ export const handler = async (event: { userId: string }): Promise<void> => {
   }
 
   const message: Record<string, unknown> = { userId, date, topN: DEFAULT_TOP_N };
-  if (feedUrls && feedUrls.length > 0) message.feedUrls = feedUrls;
-  else if (topicFeedUrls) message.topicFeedUrls = topicFeedUrls;
+  if (topicFeedUrls) message.topicFeedUrls = topicFeedUrls;
   if (voice) message.voice = voice;
   if (priorityTopicId) message.priorityTopicId = priorityTopicId;
 
@@ -120,7 +100,6 @@ export const handler = async (event: { userId: string }): Promise<void> => {
   console.log('[scheduler-trigger] enqueued digest', {
     userId,
     date,
-    flatFeedCount: feedUrls?.length ?? 0,
     topicCount: Object.keys(topicFeedUrls ?? {}).length,
     voice,
     topN: DEFAULT_TOP_N,

@@ -101,3 +101,4 @@ target 'PodcastifyShareExtension' do
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
 end
+

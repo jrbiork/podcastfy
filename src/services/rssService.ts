@@ -36,6 +36,31 @@ export interface RssFeed {
   custom?: boolean;
 }
 
+function inferFeedCategoryFromUrl(url: string): FeedCategory {
+  const u = url.toLowerCase();
+  if (/parent|family|child|kid|baby/.test(u)) return 'parenting';
+  if (/nme\.com|\/music\/|pitchfork|rollingstone|billboard/.test(u)) return 'music';
+  if (/health|wellness|medical|medicine|webmd|healthline|statnews/.test(u)) return 'health-wellness';
+  if (/mental.?health|therapy|psycholog|mindful/.test(u)) return 'mental-health';
+  if (/fitness|workout|running|runnersworld|menshealth|shape\.com/.test(u)) return 'fitness';
+  if (/openai|deepmind|anthropic|machine.learn|artificial.intell|\/ai\//.test(u)) return 'technology';
+  if (/tech|software|hardware|gadget|engadget|theverge|arstechnica|wired\.com/.test(u)) return 'technology';
+  if (/startup|venture|ycombinator|producthunt/.test(u)) return 'startups';
+  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto-web3';
+  if (/science|research|scidaily|quanta|newscientist/.test(u)) return 'science';
+  if (/finance|invest|market|economic|bloomberg|wsj|nasdaq/.test(u)) return 'business-finance';
+  if (/\/sport|football|soccer|basketball|nfl|nba|espn|bleacher/.test(u)) return 'sports';
+  if (/film|movie|cinema|\/tv\/|television|imdb|rottentomato/.test(u)) return 'movies-tv';
+  if (/gaming|\/game|esport|playstation|xbox|nintendo|ign\.com|kotaku/.test(u)) return 'gaming';
+  if (/books?|lithu?b|novel|fiction|literary|goodread/.test(u)) return 'books';
+  if (/food|recipe|cook|cuisine|restaurant|eater\.com/.test(u)) return 'food';
+  if (/travel|destination|hotel|tourist|lonely.?planet/.test(u)) return 'travel';
+  if (/politic|democrat|republican|congress|senate/.test(u)) return 'politics';
+  if (/environment|climate|green|sustainab|ecolog/.test(u)) return 'environment';
+  if (/entertain|celebrity|popculture|variety\.com/.test(u)) return 'entertainment-news';
+  return 'news';
+}
+
 /** Internal item used by pollFeed — includes description for text-mode dispatch. */
 interface RssItem {
   title: string;
@@ -327,7 +352,13 @@ export async function addCustomFeed(url: string): Promise<RssFeed> {
   }
 
   const id = `custom_${Date.now()}`;
-  const feed: RssFeed = { id, name, url: trimmed, category: 'Custom', custom: true };
+  const feed: RssFeed = {
+    id,
+    name,
+    url: trimmed,
+    category: inferFeedCategoryFromUrl(trimmed),
+    custom: true,
+  };
   await AsyncStorage.setItem(CUSTOM_FEEDS_KEY, JSON.stringify([...existing, feed]));
   return feed;
 }
@@ -345,7 +376,11 @@ export async function removeCustomFeed(id: string): Promise<void> {
 export async function saveRssFeedToCustomList(feed: RssFeed): Promise<void> {
   const existing = await loadCustomFeeds();
   if (existing.some((f) => f.id === feed.id) || RSS_FEEDS.some((f) => f.id === feed.id)) return;
-  const toSave: RssFeed = { ...feed, custom: true };
+  const toSave: RssFeed = {
+    ...feed,
+    category: feed.category === 'Custom' ? inferFeedCategoryFromUrl(feed.url) : feed.category,
+    custom: true,
+  };
   await AsyncStorage.setItem(CUSTOM_FEEDS_KEY, JSON.stringify([...existing, toSave]));
 }
 
@@ -485,6 +520,20 @@ export async function getSubscribedFeedUrls(): Promise<string[]> {
   const [subs, custom] = await Promise.all([loadSubscriptions(), loadCustomFeeds()]);
   const allFeeds = [...RSS_FEEDS, ...custom];
   return allFeeds.filter((f) => subs.includes(f.id)).map((f) => f.url);
+}
+
+export async function getSubscribedTopicFeedUrls(): Promise<Record<string, string[]>> {
+  const [subs, custom] = await Promise.all([loadSubscriptions(), loadCustomFeeds()]);
+  const allFeeds = [...RSS_FEEDS, ...custom];
+  const topicFeedUrls: Record<string, string[]> = {};
+
+  for (const feed of allFeeds) {
+    if (!subs.includes(feed.id)) continue;
+    const topicId = feed.category === 'Custom' ? inferFeedCategoryFromUrl(feed.url) : feed.category;
+    (topicFeedUrls[topicId] ??= []).push(feed.url);
+  }
+
+  return topicFeedUrls;
 }
 
 /**

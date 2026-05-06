@@ -25,9 +25,13 @@ export function RootNavigator() {
 
   useEffect(() => {
     let cancelled = false;
+
+    // Fire-and-forget — these don't affect which route to show and can block
+    // startup indefinitely (e.g. signInSilently hanging on a real device).
+    void initPurchases().catch(() => {});
+    void syncSubscriptionToServer().catch(() => {});
+
     (async () => {
-      await initPurchases().catch(() => {});
-      await syncSubscriptionToServer().catch(() => {});
       const onboard = await hasCompletedOnboarding();
       const session = await loadSession();
       if (cancelled) return;

@@ -17,6 +17,7 @@ import {
   Easing,
   Image,
   Modal,
+  AppState,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
@@ -24,17 +25,29 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, FontSize, Radius } from '../utils/theme';
 import { Episode, DigestStory } from '../types';
-import { getOrCreateTodayDigest, DigestProgress } from '../services/digestService';
-import { recordFirstDigestUse, getDigestTrialState } from '../services/subscription';
+import {
+  bootTodayDigest,
+  pollTodayDigestStatus,
+} from '../services/digestService';
+import {
+  getDebugDateOffset,
+  setDebugDateOffset,
+  getDebugDate,
+} from '../utils/debugDate';
+import {
+  recordDigestListened,
+  getDigestTrialState,
+} from '../services/subscription';
 import { navigateToPaywall } from '../navigation/rootNavigationRef';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useEpisodes } from '../hooks/useEpisodes';
 import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import { feedImageUrl } from '../services/rssService';
 import type { RssFeed, ExtendedRssItem } from '../services/rssService';
 
 type Nav = StackNavigationProp<RootStackParamList>;
-type Phase = 'loading' | 'generating' | 'ready' | 'error';
+type Phase = 'loading' | 'preparing' | 'ready' | 'error';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,7 +78,9 @@ const BADGE_COLORS = [
   '#2B3A5A',
 ];
 
-function groupByTopic(stories: DigestStory[]): { label: string | undefined; stories: DigestStory[] }[] {
+function groupByTopic(
+  stories: DigestStory[],
+): { label: string | undefined; stories: DigestStory[] }[] {
   const groups: { label: string | undefined; stories: DigestStory[] }[] = [];
   for (const story of stories) {
     const last = groups[groups.length - 1];
@@ -178,12 +193,14 @@ function ActionButton({
 
 export function DigestScreen() {
   const navigation = useNavigation<Nav>();
+  const { update: updateEpisode } = useEpisodes();
 
   const [phase, setPhase] = useState<Phase>('loading');
-  const [progress, setProgress] = useState<DigestProgress | null>(null);
+  const [progressStatus, setProgressStatus] = useState<string>('');
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [dateOffset, setDateOffset] = useState(() => getDebugDateOffset());
   const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);
   const SPEEDS: (0.5 | 0.75 | 1 | 1.5 | 2)[] = [0.5, 0.75, 1, 1.5, 2];
   const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
@@ -192,6 +209,16 @@ export function DigestScreen() {
   // Always call hooks at top level
   const spinAnim = useRef(new Animated.Value(0)).current;
   const spinLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  const handleDurationResolved = useCallback(
+    (durationSeconds: number) => {
+      if (!episode || durationSeconds === episode.durationSeconds) return;
+      const updated = { ...episode, durationSeconds };
+      setEpisode(updated);
+      void updateEpisode(updated);
+    },
+    [episode, updateEpisode],
+  );
 
   const {
     isPlaying,
@@ -207,7 +234,11 @@ export function DigestScreen() {
   } = useAudioPlayer(
     episode?.uri ?? null,
     episode
-      ? { title: episode.title, durationSeconds: episode.durationSeconds }
+      ? {
+          title: episode.title,
+          durationSeconds: episode.durationSeconds,
+          onDurationResolved: handleDurationResolved,
+        }
       : undefined,
   );
 
@@ -219,15 +250,16 @@ export function DigestScreen() {
     }
   }, [positionMs, scrubPositionMs]);
 
-  // Record first digest use when ready (idempotent)
+  // Trigger paywall milestone when a daily digest is fully listened.
   useEffect(() => {
-    if (phase === 'ready') void recordFirstDigestUse();
-  }, [phase]);
+    if (!hasEnded || !episode) return;
+    const date = new Date(episode.createdAt).toISOString().slice(0, 10);
+    void recordDigestListened(date).then((shouldShowSoftPaywall) => {
+      if (shouldShowSoftPaywall) setShowSoftPaywall(true);
+    });
+  }, [hasEnded, episode]);
 
-  // Spinner: one continuous loop while digest is in progress. Do not key on `phase`
-  // alone — it goes `loading` → `generating` on first progress tick, which would
-  // restart the animation and look like a reset every step.
-  const digestInProgress = phase === 'loading' || phase === 'generating';
+  const digestInProgress = phase === 'loading' || phase === 'preparing';
   useEffect(() => {
     if (!digestInProgress) {
       spinLoop.current?.stop();
@@ -253,69 +285,83 @@ export function DigestScreen() {
     };
   }, [digestInProgress]);
 
-  // Fetch / generate digest on mount and retry
+  // Boot: dispatch if needed, then return immediately
   useEffect(() => {
     let cancelled = false;
 
-    // Errors that should never auto-retry — user must act
-    const PERMANENT_ERRORS = new Set(['auth_expired', 'not_signed_in', 'timeout']);
-    // Max silent auto-retries before showing the error screen
-    const MAX_AUTO_RETRIES = 2;
-
-    const ERROR_LABELS: Record<string, string> = {
-      timeout: 'Generation timed out. Tap to try again.',
-      auth_expired: 'Session expired. Please sign in again.',
-      not_signed_in: "You're not signed in.",
-      network_error: "Can't reach the server. Check your connection.",
-    };
-
     setPhase('loading');
-    setProgress(null);
+    setProgressStatus('');
     setEpisode(null);
     setErrorMsg(null);
 
-    const attempt = async (retriesLeft: number) => {
+    const ERROR_LABELS: Record<string, string> = {
+      auth_expired: 'Session expired. Please sign in again.',
+      not_signed_in: "You're not signed in.",
+    };
+
+    (async () => {
       try {
-        const ep = await getOrCreateTodayDigest((p) => {
-          if (cancelled) return;
-          setProgress(p);
-          setPhase('generating');
-        });
+        const result = await bootTodayDigest();
         if (cancelled) return;
-        setEpisode(ep);
-        setPhase('ready');
+        if (result.type === 'ready') {
+          setEpisode(result.episode);
+          setPhase('ready');
+        } else {
+          setPhase('preparing');
+        }
       } catch (err: unknown) {
         if (cancelled) return;
         const code =
           (err as { code?: string }).code ??
           (err as Error).message ??
           'unknown';
-
-        // For transient errors with retries remaining, wait 5 s and silently retry
-        if (!PERMANENT_ERRORS.has(code) && retriesLeft > 0) {
-          setPhase('loading');
-          await new Promise<void>((res) => setTimeout(res, 5_000));
-          if (!cancelled) attempt(retriesLeft - 1);
-          return;
-        }
-
-        setErrorMsg(ERROR_LABELS[code] ?? 'Something went wrong. Tap to try again.');
+        setErrorMsg(
+          ERROR_LABELS[code] ?? 'Something went wrong. Tap to try again.',
+        );
         setPhase('error');
       }
-    };
-
-    attempt(MAX_AUTO_RETRIES);
+    })();
 
     return () => {
       cancelled = true;
     };
   }, [retryKey]);
 
+  // Background poll every 5 s while preparing + re-check on foreground
+  useEffect(() => {
+    if (phase !== 'preparing') return;
+
+    let cancelled = false;
+
+    const check = async () => {
+      if (cancelled) return;
+      const result = await pollTodayDigestStatus();
+      if (cancelled) return;
+      if (result.type === 'ready') {
+        setEpisode(result.episode);
+        setPhase('ready');
+      } else if (result.status) {
+        setProgressStatus(result.status);
+      }
+    };
+
+    const interval = setInterval(check, 5_000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void check();
+    });
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      sub.remove();
+    };
+  }, [phase]);
+
   const spin = spinAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  const stepIndex = progress ? statusToStepIndex(progress.status) : 0;
+  const stepIndex = statusToStepIndex(progressStatus);
 
   const totalMs = durationMs || (episode?.durationSeconds ?? 0) * 1000 || 1;
 
@@ -328,10 +374,18 @@ export function DigestScreen() {
 
   const handlePlayPress = useCallback(async () => {
     const state = await getDigestTrialState();
-    if (state === 'hard') { navigateToPaywall(); return; }
-    if (state === 'soft') { setShowSoftPaywall(true); return; }
-    if (hasEnded) { void restart(); return; }
-    if (isPlaying) { void pause(); return; }
+    if (state === 'hard') {
+      navigateToPaywall();
+      return;
+    }
+    if (hasEnded) {
+      void restart();
+      return;
+    }
+    if (isPlaying) {
+      void pause();
+      return;
+    }
     void play();
   }, [hasEnded, isPlaying, restart, pause, play]);
 
@@ -353,9 +407,7 @@ export function DigestScreen() {
         title: story.title,
         link: story.link,
         guid: story.link,
-        ...(preview
-          ? { description: preview, fullDescription: preview }
-          : {}),
+        ...(preview ? { description: preview, fullDescription: preview } : {}),
       };
       const feed: RssFeed = {
         id: story.feedId,
@@ -368,7 +420,17 @@ export function DigestScreen() {
     [navigation],
   );
 
-  const dateLabel = new Date().toLocaleDateString('en-US', {
+  const handleDateShift = useCallback(
+    (delta: number) => {
+      const next = dateOffset + delta;
+      setDebugDateOffset(next);
+      setDateOffset(next);
+      setRetryKey((k) => k + 1);
+    },
+    [dateOffset],
+  );
+
+  const dateLabel = getDebugDate().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
   });
@@ -387,6 +449,31 @@ export function DigestScreen() {
         <Text style={styles.appTitle}>Sonera</Text>
         <Text style={styles.appSubtitle}>Your daily audio digest</Text>
 
+        {/* ── Debug date nav (dev only) ── */}
+        {__DEV__ && (
+          <View style={styles.debugDateRow}>
+            <TouchableOpacity
+              style={styles.debugBtn}
+              onPress={() => handleDateShift(-1)}
+            >
+              <Ionicons name="chevron-back" size={16} color="orange" />
+            </TouchableOpacity>
+            <Text style={styles.debugDateText}>
+              {dateOffset === 0
+                ? 'Today (real)'
+                : dateOffset > 0
+                  ? `+${dateOffset}d from today`
+                  : `${dateOffset}d from today`}
+            </Text>
+            <TouchableOpacity
+              style={styles.debugBtn}
+              onPress={() => handleDateShift(1)}
+            >
+              <Ionicons name="chevron-forward" size={16} color="orange" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── Player card (ready phase) ── */}
         {phase === 'ready' && episode && (
           <View style={styles.playerCard}>
@@ -398,8 +485,7 @@ export function DigestScreen() {
               </View>
               <Text style={styles.metaText}>
                 {dateLabel} · {stories.length}{' '}
-                {stories.length === 1 ? 'story' : 'stories'} ·{' '}
-                {formatDuration(episode.durationSeconds)}
+                {stories.length === 1 ? 'story' : 'stories'}
               </Text>
             </View>
 
@@ -508,14 +594,20 @@ export function DigestScreen() {
           </View>
         )}
 
-        {/* ── Generating progress (loading / generating phases) ── */}
-        {(phase === 'loading' || phase === 'generating') && (
-          <View style={styles.generatingCard}>
-            <Text style={styles.generatingTitle}>Preparing your briefing…</Text>
+        {/* ── Loading / Preparing card ── */}
+        {(phase === 'loading' || phase === 'preparing') && (
+          <View style={styles.preparingCard}>
+            <Text style={styles.preparingTitle}>Preparing your briefing…</Text>
+            {phase === 'preparing' && (
+              <Text style={styles.preparingBody}>
+                This usually takes 2–5 minutes. Feel free to come back later —
+                we'll notify you when it's ready.
+              </Text>
+            )}
             <View style={styles.progressSteps}>
               {PROGRESS_STEPS.map((step, i) => {
                 const isDone = stepIndex > i;
-                const isActive = stepIndex === i;
+                const isActive = stepIndex === i && phase === 'preparing';
                 return (
                   <View key={step.key} style={styles.stepRow}>
                     {isDone ? (
@@ -593,10 +685,14 @@ export function DigestScreen() {
                       story={story}
                       onPress={() => handleStoryPress(story)}
                     />
-                    {sIdx < group.stories.length - 1 && <View style={styles.storyDivider} />}
+                    {sIdx < group.stories.length - 1 && (
+                      <View style={styles.storyDivider} />
+                    )}
                   </React.Fragment>
                 ))}
-                {gIdx < arr.length - 1 && <View style={styles.categoryDivider} />}
+                {gIdx < arr.length - 1 && (
+                  <View style={styles.categoryDivider} />
+                )}
               </View>
             ))}
           </View>
@@ -637,9 +733,12 @@ export function DigestScreen() {
         <View style={styles.paywallBackdrop}>
           <View style={styles.paywallCard}>
             <Ionicons name="sparkles" size={32} color={Colors.primary} />
-            <Text style={styles.paywallHeadline}>Enjoying your daily digest?</Text>
+            <Text style={styles.paywallHeadline}>
+              Enjoying your daily digest?
+            </Text>
             <Text style={styles.paywallBody}>
-              Subscribe to keep your daily audio briefing going — unlimited digests, every day.
+              Subscribe to keep your daily audio briefing going — unlimited
+              digests, every day.
             </Text>
             <TouchableOpacity
               style={styles.paywallSubscribeBtn}
@@ -653,7 +752,9 @@ export function DigestScreen() {
               activeOpacity={0.75}
               onPress={handleSoftPaywallContinue}
             >
-              <Text style={styles.paywallContinueBtnText}>Continue listening</Text>
+              <Text style={styles.paywallContinueBtnText}>
+                Continue listening
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -829,8 +930,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
 
-  // Generating card
-  generatingCard: {
+  // Preparing card
+  preparingCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
@@ -839,10 +940,15 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     gap: Spacing.md,
   },
-  generatingTitle: {
+  preparingTitle: {
     color: Colors.text,
     fontSize: FontSize.md,
     fontWeight: '600',
+  },
+  preparingBody: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    lineHeight: 20,
   },
   progressSteps: { gap: 10 },
   stepRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
@@ -1017,5 +1123,29 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: FontSize.md,
     fontWeight: '600',
+  },
+
+  // Debug date navigator (dev only)
+  debugDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    backgroundColor: 'rgba(255,165,0,0.08)',
+    borderRadius: Radius.md,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,165,0,0.25)',
+  },
+  debugBtn: {
+    padding: 4,
+  },
+  debugDateText: {
+    color: 'orange',
+    fontSize: FontSize.sm,
+    fontWeight: '700',
+    minWidth: 120,
+    textAlign: 'center',
   },
 });

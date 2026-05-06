@@ -3,12 +3,9 @@ import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
 
 export const ENTITLEMENT_ID = 'premium';
-export const FREE_LIMIT_SECONDS = 60; // 1 minute
-export const DIGEST_SOFT_PAYWALL_DAYS = 3;
-export const DIGEST_HARD_PAYWALL_DAYS = 4;
-
-const TOTAL_SECONDS_KEY = 'podcastify_total_seconds';
+const DIGEST_LISTENED_DATES_KEY = 'podcastify_digest_listened_dates';
 const FIRST_DIGEST_DATE_KEY = 'podcastify_first_digest_date';
+const DIGEST_HARD_PAYWALL_LISTEN_DAYS = 3;
 
 let configured = false;
 
@@ -57,47 +54,62 @@ export async function getIsSubscribed(): Promise<boolean> {
   }
 }
 
-export async function getTotalGeneratedSeconds(): Promise<number> {
+export type DigestTrialState = 'active' | 'hard';
+
+async function getListenedDigestDates(): Promise<string[]> {
   try {
-    const raw = await AsyncStorage.getItem(TOTAL_SECONDS_KEY);
-    return raw ? parseInt(raw, 10) : 0;
+    const raw = await AsyncStorage.getItem(DIGEST_LISTENED_DATES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((d): d is string => typeof d === 'string' && d.length > 0);
   } catch {
-    return 0;
+    return [];
   }
 }
-
-export async function addGeneratedSeconds(seconds: number): Promise<void> {
-  const current = await getTotalGeneratedSeconds();
-  await AsyncStorage.setItem(TOTAL_SECONDS_KEY, String(current + seconds));
-}
-
-export type DigestTrialState = 'active' | 'soft' | 'hard';
 
 export async function getDigestTrialState(): Promise<DigestTrialState> {
   try {
     const isSubscribed = await getIsSubscribed();
     if (isSubscribed) return 'active';
-    const raw = await AsyncStorage.getItem(FIRST_DIGEST_DATE_KEY);
-    if (!raw) return 'active';
-    const daysSince = (Date.now() - parseInt(raw, 10)) / (1000 * 60 * 60 * 24);
-    if (daysSince >= DIGEST_HARD_PAYWALL_DAYS) return 'hard';
-    if (daysSince >= DIGEST_SOFT_PAYWALL_DAYS) return 'soft';
+    const listenedDates = await getListenedDigestDates();
+    if (listenedDates.length >= DIGEST_HARD_PAYWALL_LISTEN_DAYS) return 'hard';
     return 'active';
   } catch {
     return 'active';
   }
 }
 
-export async function recordFirstDigestUse(): Promise<void> {
+export async function recordDigestListened(date: string): Promise<boolean> {
   try {
-    const existing = await AsyncStorage.getItem(FIRST_DIGEST_DATE_KEY);
-    if (existing) return;
-    const isoDate = new Date().toISOString().slice(0, 10);
-    await AsyncStorage.setItem(FIRST_DIGEST_DATE_KEY, String(Date.now()));
     const { saveUserPreferences } = await import('./api');
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    await saveUserPreferences({ timezone: tz, firstDigestDate: isoDate }).catch(() => {});
-  } catch { /* non-fatal */ }
+    const listenedDates = await getListenedDigestDates();
+    const alreadyCounted = listenedDates.includes(date);
+    const nextDates = alreadyCounted ? listenedDates : [...listenedDates, date];
+    if (!alreadyCounted) {
+      await AsyncStorage.setItem(
+        DIGEST_LISTENED_DATES_KEY,
+        JSON.stringify(nextDates),
+      );
+      await saveUserPreferences({
+        timezone: tz,
+        digestListenedDates: nextDates,
+      }).catch(() => {});
+    }
+
+    // Preserve first-digest server sync behavior for backend analytics/scheduling.
+    const existingFirstDigest = await AsyncStorage.getItem(FIRST_DIGEST_DATE_KEY);
+    if (!existingFirstDigest) {
+      await AsyncStorage.setItem(FIRST_DIGEST_DATE_KEY, String(Date.now()));
+      await saveUserPreferences({ timezone: tz, firstDigestDate: date }).catch(() => {});
+    }
+
+    // Soft paywall should show once after completing day 1 and day 2 digests.
+    return !alreadyCounted && nextDates.length <= DIGEST_HARD_PAYWALL_LISTEN_DAYS;
+  } catch {
+    return false;
+  }
 }
 
 export async function syncSubscriptionToServer(): Promise<void> {
@@ -107,13 +119,6 @@ export async function syncSubscriptionToServer(): Promise<void> {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     await saveUserPreferences({ timezone: tz, subscribed: isSubscribed }).catch(() => {});
   } catch { /* non-fatal */ }
-}
-
-export async function hasReachedFreeLimit(): Promise<boolean> {
-  const isSubscribed = await getIsSubscribed();
-  if (isSubscribed) return false;
-  const used = await getTotalGeneratedSeconds();
-  return used >= FREE_LIMIT_SECONDS;
 }
 
 export async function purchaseOffering(packageToPurchase: Purchases.PurchasesPackage): Promise<boolean> {
@@ -136,7 +141,7 @@ export async function restorePurchases(): Promise<boolean> {
 
 export async function clearLocalData(): Promise<void> {
   try {
-    await AsyncStorage.removeItem(TOTAL_SECONDS_KEY);
+    await AsyncStorage.removeItem(DIGEST_LISTENED_DATES_KEY);
     await AsyncStorage.removeItem(FIRST_DIGEST_DATE_KEY);
   } catch {
     /* ignore */

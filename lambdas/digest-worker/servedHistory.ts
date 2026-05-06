@@ -115,7 +115,7 @@ function canonicalizeUrl(rawUrl: string): string {
 export function createServedStoryRecord(article: FeedArticle): ServedStoryRecord {
   const normalizedTitle = normalizeTitle(article.title);
   const tokens = titleTokensFromNormalized(normalizedTitle);
-  const sortedTokens = [...tokens].sort();
+  const sortedTokens = [...new Set(tokens)].sort();
   const canonicalUrl = canonicalizeUrl(article.link);
 
   const titleFingerprint = hash(normalizedTitle);
