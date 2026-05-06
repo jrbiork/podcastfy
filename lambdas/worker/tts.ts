@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import getMp3Duration from 'get-mp3-duration';
 import type { ScriptTurn } from './scriptWriter';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -56,6 +57,12 @@ export async function generateAudio(script: ScriptTurn[], ttsVoice?: string): Pr
   return Buffer.concat(chunks);
 }
 
+/** Returns measured MP3 duration in seconds from frame data. */
+export function mp3ChunkDurationSeconds(chunk: Buffer): number {
+  if (!chunk.byteLength) return 0;
+  return getMp3Duration(chunk) / 1000;
+}
+
 /**
  * Generates audio for a digest script. Each segment carries an explicit voice tag:
  * 'primary' → voiceA (narrator A), 'secondary' → voiceB (narrator B).
@@ -64,22 +71,42 @@ export async function generateAlternatingAudio(
   segments: Array<{ text: string; voice: 'primary' | 'secondary' }>,
   voiceA: string,
   voiceB: string,
-): Promise<Buffer> {
+): Promise<{
+  buffer: Buffer;
+  chunkDurationSeconds: number[];
+  timeline: Array<{ start: number; end: number }>;
+  totalDurationSeconds: number;
+}> {
   const a: OAIVoice = VALID_VOICES.has(voiceA as OAIVoice) ? (voiceA as OAIVoice) : VOICES.narrator;
   const b: OAIVoice = VALID_VOICES.has(voiceB as OAIVoice) ? (voiceB as OAIVoice) : VOICES.guest;
   const chunks: Buffer[] = [];
+  const chunkDurationSeconds: number[] = [];
+  const timeline: Array<{ start: number; end: number }> = [];
+  let currentTime = 0;
 
   for (const seg of segments) {
-    chunks.push(await ttsChunk(seg.text, seg.voice === 'secondary' ? b : a));
+    const buf = await ttsChunk(seg.text, seg.voice === 'secondary' ? b : a);
+    const duration = mp3ChunkDurationSeconds(buf);
+    chunks.push(buf);
+    chunkDurationSeconds.push(duration);
+    timeline.push({
+      start: currentTime,
+      end: currentTime + duration,
+    });
+    currentTime += duration;
   }
 
-  return Buffer.concat(chunks);
+  const buffer = Buffer.concat(chunks);
+  // Source of truth for final digest duration.
+  const totalDurationSeconds = mp3ChunkDurationSeconds(buffer);
+
+  return { buffer, chunkDurationSeconds, timeline, totalDurationSeconds };
 }
 
-// OpenAI TTS-1 outputs MP3 at ~128 kbps — derive duration from buffer size
+// Prefer measured MP3 duration when audio is available.
 export function estimateDurationSeconds(_script: ScriptTurn[], audioBuffer?: Buffer): number {
   if (audioBuffer && audioBuffer.byteLength > 0) {
-    return Math.round(audioBuffer.byteLength * 8 / 128_000);
+    return Math.round(getMp3Duration(audioBuffer) / 1000);
   }
   // Fallback before audio is available: 150 wpm estimate
   const totalWords = _script.reduce((acc, turn) => acc + turn.text.split(/\s+/).length, 0);

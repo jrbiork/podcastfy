@@ -605,7 +605,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "a12793ed63f199f1a70c3155eb3924104b13d2bf3e6a09d6fd98957739dffb3e.zip"
+     "S3Key": "1e495bb3b04f685e82a1a6c24dbb5648816a80a2de3ad1b08f15c3cd2305941b.zip"
     },
     "Environment": {
      "Variables": {
@@ -636,7 +636,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/Worker/Resource",
-    "aws:asset:path": "asset.a12793ed63f199f1a70c3155eb3924104b13d2bf3e6a09d6fd98957739dffb3e",
+    "aws:asset:path": "asset.1e495bb3b04f685e82a1a6c24dbb5648816a80a2de3ad1b08f15c3cd2305941b",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -1872,7 +1872,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "5b87562352a252a004cf465d30e61d21c300ae87daa9397507b37eda4d3c3580.zip"
+     "S3Key": "a8c90af0aa0505c7092095241a056ca06c4dbdd53db82f72a81ab55e71a66eec.zip"
     },
     "Environment": {
      "Variables": {
@@ -1912,7 +1912,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestWorker/Resource",
-    "aws:asset:path": "asset.5b87562352a252a004cf465d30e61d21c300ae87daa9397507b37eda4d3c3580",
+    "aws:asset:path": "asset.a8c90af0aa0505c7092095241a056ca06c4dbdd53db82f72a81ab55e71a66eec",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }

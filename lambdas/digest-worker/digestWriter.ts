@@ -44,6 +44,12 @@ export interface ScriptSegment {
   voice: 'primary' | 'secondary';
 }
 
+/** Parallel to each TTS segment — used to fold chunk durations into per-story audio bounds. */
+export type DigestSegmentLabel =
+  | { phase: 'intro' }
+  | { phase: 'story'; storyIndex: number }
+  | { phase: 'outro' };
+
 export async function summarizeArticle(
   article: FeedArticle,
   fullText: string
@@ -262,7 +268,7 @@ async function generateStoryDialogue(
  */
 async function generateNarratorScript(
   summaries: ArticleSummary[],
-): Promise<ScriptSegment[]> {
+): Promise<{ segments: ScriptSegment[]; labels: DigestSegmentLabel[]; spokenTextByStory: string[] }> {
   const TOTAL_TARGET_SECONDS = 5.5 * 60;
   const INTRO_OUTRO_BUDGET_SECONDS = 80;
   const perStory = Math.max(
@@ -276,6 +282,9 @@ async function generateNarratorScript(
   );
 
   const allSegments: ScriptSegment[] = [];
+  const allLabels: DigestSegmentLabel[] = [];
+  const storyLabel = (index: number): DigestSegmentLabel => ({ phase: 'story', storyIndex: index });
+  const spokenLinesByStory: string[][] = summaries.map(() => []);
 
   summaries.forEach((summary, i) => {
     const prev = summaries[i - 1];
@@ -285,30 +294,50 @@ async function generateNarratorScript(
 
     // 1. Topic transition — always injected in code, never delegated to GPT
     if (topicLabel) {
-      allSegments.push({ text: topicTransitionText(topicLabel, i), voice: 'primary' });
+      const line = topicTransitionText(topicLabel, i);
+      allSegments.push({ text: line, voice: 'primary' });
+      allLabels.push(storyLabel(i));
+      spokenLinesByStory[i]?.push(line);
     }
 
     // 2. Source + title — always injected in code, never delegated to GPT
     const sourcePrefix = sourceIntroText(summary.feedName, sameSource, i);
-    allSegments.push({ text: `${sourcePrefix} "${summary.title}".`, voice: 'primary' });
+    const sourceAndTitle = `${sourcePrefix} "${summary.title}".`;
+    allSegments.push({ text: sourceAndTitle, voice: 'primary' });
+    allLabels.push(storyLabel(i));
+    spokenLinesByStory[i]?.push(sourceAndTitle);
 
     // 3. GPT conversational body
     const body = bodyResults[i];
     if (body.status === 'fulfilled' && body.value.length > 0) {
+      for (const segment of body.value) {
+        spokenLinesByStory[i]?.push(segment.text);
+      }
+      for (const _ of body.value) {
+        allLabels.push(storyLabel(i));
+      }
       allSegments.push(...body.value);
     } else {
       const reason = body.status === 'rejected' ? String(body.reason) : 'empty';
       console.warn('[digestWriter] story body failed, using fallback', { title: summary.title, reason });
       allSegments.push({ text: summary.summary, voice: 'secondary' as const });
+      allLabels.push(storyLabel(i));
+      spokenLinesByStory[i]?.push(summary.summary);
     }
   });
 
-  return allSegments;
+  return {
+    segments: allSegments,
+    labels: allLabels,
+    spokenTextByStory: spokenLinesByStory.map((lines) => lines.join(' ').trim()),
+  };
 }
 
 export interface DigestScriptResult {
   segments: ScriptSegment[];
   stories: DigestStory[];
+  /** Same length as `segments` — each entry tags the matching TTS chunk for timeline merge. */
+  segmentLabels: DigestSegmentLabel[];
 }
 
 function buildIntroSegments(date: Date, summaries: ArticleSummary[]): ScriptSegment[] {
@@ -367,36 +396,98 @@ export async function generateDigestScript(
     return {
       segments: [{ text: "No stories available for today's briefing.", voice: 'primary' }],
       stories: [],
+      segmentLabels: [{ phase: 'intro' }],
     };
   }
 
   let storySegments: ScriptSegment[];
+  let storyLabels: DigestSegmentLabel[];
+  let spokenTextByStory: string[];
   try {
-    storySegments = await generateNarratorScript(summaries);
+    const narrator = await generateNarratorScript(summaries);
+    storySegments = narrator.segments;
+    storyLabels = narrator.labels;
+    spokenTextByStory = narrator.spokenTextByStory;
   } catch (err) {
     console.warn('[digestWriter] generateNarratorScript failed, using fallback', { err: String(err) });
     const CONNECTORS = ['First,', 'Next,', 'Also,', 'And finally,'];
-    storySegments = summaries.map((s, i) => ({
-      text: `${CONNECTORS[Math.min(i, CONNECTORS.length - 1)]} ${s.title}. ${s.summary}`,
-      voice: 'primary' as const,
-    }));
+    storySegments = [];
+    storyLabels = [];
+    spokenTextByStory = [];
+    summaries.forEach((s, i) => {
+      const spokenText = `${CONNECTORS[Math.min(i, CONNECTORS.length - 1)]} ${s.title}. ${s.summary}`.trim();
+      storySegments.push({
+        text: spokenText,
+        voice: 'primary' as const,
+      });
+      storyLabels.push({ phase: 'story', storyIndex: i });
+      spokenTextByStory.push(spokenText);
+    });
   }
 
-  const segments = [
-    ...buildIntroSegments(date, summaries),
-    ...storySegments,
-    ...OUTRO_SEGMENTS,
-  ];
+  const introSegs = buildIntroSegments(date, summaries);
+  const introLabels: DigestSegmentLabel[] = introSegs.map(() => ({ phase: 'intro' }));
+  const outroLabels: DigestSegmentLabel[] = OUTRO_SEGMENTS.map(() => ({ phase: 'outro' }));
 
-  const stories: DigestStory[] = summaries.map((s) => ({
+  const segments = [...introSegs, ...storySegments, ...OUTRO_SEGMENTS];
+  const segmentLabels = [...introLabels, ...storyLabels, ...outroLabels];
+
+  const stories: DigestStory[] = summaries.map((s, i) => ({
     title: s.title,
     feedName: s.feedName,
     feedId: s.feedId,
     link: s.link,
     estimatedDurationSeconds: estimateWordDuration(`${s.title}. ${s.summary}`),
+    spokenText: spokenTextByStory[i] || undefined,
     summary: s.summary,
     topicLabel: s.topicId ? (TOPIC_LABELS[s.topicId] ?? undefined) : undefined,
   }));
 
-  return { segments, stories };
+  return { segments, stories, segmentLabels };
+}
+
+/**
+ * Folds per-chunk TTS durations into each story's `[audioStartMs, audioEndMs)` window
+ * in the concatenated digest MP3 (same order as `stories`).
+ */
+export function mergeStoryAudioBounds(
+  stories: DigestStory[],
+  segmentLabels: DigestSegmentLabel[],
+  chunkDurationSeconds: number[],
+): DigestStory[] {
+  if (
+    stories.length === 0 ||
+    segmentLabels.length !== chunkDurationSeconds.length ||
+    segmentLabels.length === 0
+  ) {
+    return stories;
+  }
+
+  const starts: number[] = stories.map(() => -1);
+  const ends: number[] = stories.map(() => 0);
+
+  let cursorMsFloat = 0;
+  for (let i = 0; i < segmentLabels.length; i++) {
+    const durSec = chunkDurationSeconds[i] ?? 0;
+    const durMs = Math.max(0, durSec * 1000);
+    const label = segmentLabels[i]!;
+
+    if (label.phase === 'story') {
+      const idx = label.storyIndex;
+      if (idx >= 0 && idx < stories.length) {
+        if (starts[idx]! < 0) starts[idx] = Math.round(cursorMsFloat);
+        ends[idx] = Math.round(cursorMsFloat + durMs);
+      }
+    }
+    cursorMsFloat += durMs;
+  }
+
+  return stories.map((s, idx) => {
+    if (starts[idx]! < 0) return { ...s };
+    return {
+      ...s,
+      audioStartMs: starts[idx],
+      audioEndMs: ends[idx],
+    };
+  });
 }

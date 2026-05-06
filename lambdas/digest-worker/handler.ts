@@ -5,13 +5,16 @@ import { extractArticle } from '../shared/scraper';
 import {
   generateAlternatingAudio,
   getPairedVoice,
-  estimateDurationSeconds,
 } from '../worker/tts';
 import { writeDigestStatus, uploadDigestAudio } from '../shared/s3';
 import { fetchRecentArticles, fetchArticlesByTopic } from './feedFetcher';
 import { deduplicateAndRank } from './digestRanker';
 import { enrichWithPopularity } from './popularityFetcher';
-import { summarizeArticle, generateDigestScript } from './digestWriter';
+import {
+  summarizeArticle,
+  generateDigestScript,
+  mergeStoryAudioBounds,
+} from './digestWriter';
 import {
   filterRecentlyServedArticles,
   loadRecentServedStories,
@@ -344,27 +347,28 @@ async function processDigest(msg: DigestMessage): Promise<void> {
 
   // 4. Generate script
   await writeDigestStatus(userId, date, { status: 'scripting' });
-  const { segments, stories } = await generateDigestScript(
-    summaries,
-    statusDate,
-  );
+  const { segments, stories: scriptStories, segmentLabels } =
+    await generateDigestScript(summaries, statusDate);
   console.log('[digest-worker] script generated', {
     userId,
     date,
     segments: segments.length,
-    stories: stories.length,
+    stories: scriptStories.length,
   });
 
   // 5. Generate audio — dual narrator voices that alternate by segment
   await writeDigestStatus(userId, date, { status: 'generating_audio' });
   const primaryVoice = msg.voice ?? 'fable';
   const secondaryVoice = getPairedVoice(primaryVoice);
-  const audioBuffer = await generateAlternatingAudio(
-    segments,
-    primaryVoice,
-    secondaryVoice,
+  const { buffer: audioBuffer, chunkDurationSeconds, totalDurationSeconds } =
+    await generateAlternatingAudio(segments, primaryVoice, secondaryVoice);
+  const durationSeconds = Math.round(totalDurationSeconds);
+
+  const stories = mergeStoryAudioBounds(
+    scriptStories,
+    segmentLabels,
+    chunkDurationSeconds,
   );
-  const durationSeconds = estimateDurationSeconds([], audioBuffer);
   console.log('[digest-worker] audio generated', {
     userId,
     date,
