@@ -13,7 +13,7 @@ const VOICES: Record<string, OAIVoice> = {
 
 const VALID_VOICES = new Set<OAIVoice>(['alloy', 'echo', 'fable', 'nova', 'onyx', 'shimmer']);
 
-// Default digest voices: Fable = presenter (Host A), Nova = commentator (Host B)
+// Default digest voices: Fable = Narrator A, Nova = Narrator B
 const DIGEST_VOICE_A: OAIVoice = 'fable';
 const DIGEST_VOICE_B: OAIVoice = 'nova';
 
@@ -58,7 +58,7 @@ export async function generateAudio(script: ScriptTurn[], ttsVoice?: string): Pr
 
 /**
  * Generates audio for a digest script. Each segment carries an explicit voice tag:
- * 'primary' → voiceA (main narrator), 'secondary' → voiceB (occasional commentator).
+ * 'primary' → voiceA (narrator A), 'secondary' → voiceB (narrator B).
  */
 export async function generateAlternatingAudio(
   segments: Array<{ text: string; voice: 'primary' | 'secondary' }>,
