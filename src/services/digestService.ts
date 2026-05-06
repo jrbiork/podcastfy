@@ -19,7 +19,7 @@ import { getTopicFeedUrls } from './rssService';
 import { getDebugTodayUtc, getDebugDateOffset } from '../utils/debugDate';
 
 // Fixed digest size targeting ~5–7 min of audio
-const DEFAULT_TOP_N = 6;
+const DEFAULT_TOP_N = 9;
 
 export type DigestBootResult =
   | { type: 'ready'; episode: Episode }

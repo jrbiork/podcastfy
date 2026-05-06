@@ -126,13 +126,17 @@ function getAbbrev(feedName: string): string {
   return feedName.replace(/^The /, '').slice(0, 3).toUpperCase();
 }
 
+/**
+ * Strip digest intro + `Source: "headline".` so detail matches narration body only.
+ * Matches the last colon before a quoted headline (see digestWriter source+title line).
+ */
 function extractDetailText(spokenText?: string, summary?: string): string | undefined {
   const spoken = spokenText?.trim();
   if (spoken) {
-    // Drop structural intro + quoted headline, keep only the narrated details.
-    const afterHeadline = spoken.match(/^[\s\S]*["”]\.?\s*([\s\S]+)$/);
-    const body = afterHeadline?.[1]?.trim();
-    return body && body.length > 0 ? body : spoken;
+    const stripped = spoken
+      .replace(/^[\s\S]*?:\s*"[\s\S]*?"\.\s*/, '')
+      .trim();
+    return stripped.length > 0 ? stripped : spoken;
   }
   return summary?.trim();
 }
@@ -243,6 +247,19 @@ export function DigestScreen() {
   const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
   const [showSoftPaywall, setShowSoftPaywall] = useState(false);
 
+  const digestScrollRef = useRef<ScrollView>(null);
+  /** Top of storiesSection inside scroll content (from onLayout). */
+  const storiesSectionTopRef = useRef(0);
+  /** Each story row's y relative to storiesSection (from onLayout). */
+  const storyRowYRef = useRef<Record<number, number>>({});
+  const scrubbingRef = useRef(false);
+  scrubbingRef.current = scrubPositionMs !== null;
+  /** True while the user is dragging / coasting the digest list — skip auto-scroll to avoid fighting them. */
+  const digestListUserScrollRef = useRef(false);
+  const activeStoryIndexRef = useRef<number | null>(null);
+  /** Last story index we auto-scrolled for; only scroll again when playback enters a different story. */
+  const lastAutoScrollStoryIndexRef = useRef<number | null>(null);
+
   // Always call hooks at top level
   const spinAnim = useRef(new Animated.Value(0)).current;
   const spinLoop = useRef<Animated.CompositeAnimation | null>(null);
@@ -329,8 +346,9 @@ export function DigestScreen() {
       setCyclingStepIndex(0);
       return;
     }
+    const lastStep = PROGRESS_STEPS.length - 1;
     const interval = setInterval(() => {
-      setCyclingStepIndex((prev) => (prev + 1) % PROGRESS_STEPS.length);
+      setCyclingStepIndex((prev) => Math.min(prev + 1, lastStep));
     }, 900);
     return () => clearInterval(interval);
   }, [digestInProgress]);
@@ -496,6 +514,7 @@ export function DigestScreen() {
     if (phase !== 'ready' || !episode || stories.length === 0) return null;
     return findActiveDigestStoryIndex(stories, effectivePlaybackMs);
   }, [phase, episode, stories, effectivePlaybackMs]);
+  activeStoryIndexRef.current = activeStoryIndex;
 
   const groupedStoriesWithGlobalIndex = useMemo(() => {
     let globalIndex = 0;
@@ -508,6 +527,102 @@ export function DigestScreen() {
     }));
   }, [stories]);
 
+  const digestStoriesKey = `${episode?.sourceUrl ?? ''}:${stories.length}`;
+  useEffect(() => {
+    storyRowYRef.current = {};
+    lastAutoScrollStoryIndexRef.current = null;
+  }, [digestStoriesKey]);
+
+  const scrollActiveStoryIntoView = useCallback((index: number, animated: boolean) => {
+    if (digestListUserScrollRef.current) return;
+    const rowY = storyRowYRef.current[index];
+    if (rowY === undefined) return;
+    const sectionY = storiesSectionTopRef.current;
+    const pad = 16;
+    digestScrollRef.current?.scrollTo({
+      y: Math.max(0, sectionY + rowY - pad),
+      animated,
+    });
+  }, []);
+
+  /**
+   * User finished list gesture: do not pull scroll back to the highlight unless playback
+   * moved to another story while they were dragging (catch-up once).
+   */
+  const endDigestListUserScroll = useCallback(() => {
+    if (!digestListUserScrollRef.current) return;
+    digestListUserScrollRef.current = false;
+    const idx = activeStoryIndexRef.current;
+    if (idx == null) return;
+    if (idx === lastAutoScrollStoryIndexRef.current) return;
+    requestAnimationFrame(() => {
+      if (digestListUserScrollRef.current) return;
+      if (storyRowYRef.current[idx] === undefined) return;
+      scrollActiveStoryIntoView(idx, !scrubbingRef.current);
+      lastAutoScrollStoryIndexRef.current = idx;
+    });
+  }, [scrollActiveStoryIntoView]);
+
+  const handleDigestScrollBeginDrag = useCallback(() => {
+    digestListUserScrollRef.current = true;
+  }, []);
+
+  const handleDigestScrollEndDrag = useCallback(
+    (e: { nativeEvent: { velocity?: { y?: number } } }) => {
+      if (!digestListUserScrollRef.current) return;
+      const vy = e.nativeEvent.velocity?.y;
+      if (vy === undefined) {
+        return;
+      }
+      if (Math.abs(vy) >= 0.5) {
+        return;
+      }
+      requestAnimationFrame(() => endDigestListUserScroll());
+    },
+    [endDigestListUserScroll],
+  );
+
+  const handleDigestMomentumScrollEnd = useCallback(() => {
+    if (!digestListUserScrollRef.current) return;
+    requestAnimationFrame(() => endDigestListUserScroll());
+  }, [endDigestListUserScroll]);
+
+  useEffect(() => {
+    if (phase !== 'ready' || stories.length === 0) {
+      return;
+    }
+    if (activeStoryIndex == null) {
+      lastAutoScrollStoryIndexRef.current = null;
+      return;
+    }
+    if (activeStoryIndex === lastAutoScrollStoryIndexRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+    const targetIndex = activeStoryIndex;
+    const animated = !scrubbingRef.current;
+    const run = (attempt: number) => {
+      if (cancelled) return;
+      if (digestListUserScrollRef.current) return;
+      if (storyRowYRef.current[targetIndex] !== undefined) {
+        scrollActiveStoryIntoView(targetIndex, animated);
+        lastAutoScrollStoryIndexRef.current = targetIndex;
+        return;
+      }
+      if (attempt >= 8) {
+        lastAutoScrollStoryIndexRef.current = targetIndex;
+        return;
+      }
+      requestAnimationFrame(() => run(attempt + 1));
+    };
+    const id = requestAnimationFrame(() => run(0));
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(id);
+    };
+  }, [phase, activeStoryIndex, stories.length, scrollActiveStoryIntoView]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
@@ -515,7 +630,9 @@ export function DigestScreen() {
       <View style={styles.topSection}>
         {/* ── App header ── */}
         <Text style={styles.appTitle}>Sonera</Text>
-        <Text style={styles.appSubtitle}>Your daily audio digest</Text>
+        <Text style={styles.appSubtitle}>
+          Your personal daily update
+        </Text>
 
         {/* ── Debug date nav (dev only) ── */}
         {/* {__DEV__ && (
@@ -736,80 +853,93 @@ export function DigestScreen() {
       </View>
 
       <ScrollView
+        ref={digestScrollRef}
         style={styles.contentScroll}
         contentContainerStyle={styles.contentScrollInner}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={handleDigestScrollBeginDrag}
+        onScrollEndDrag={handleDigestScrollEndDrag}
+        onMomentumScrollEnd={handleDigestMomentumScrollEnd}
       >
-        {showContentSkeleton && (
-          <View style={styles.skeletonSection}>
-            <View style={styles.skeletonHeader} />
-            {[0, 1, 2, 3].map((idx) => (
-              <View key={idx} style={styles.skeletonStoryRow}>
-                <View style={styles.skeletonBadge} />
-                <View style={styles.skeletonStoryMeta}>
-                  <View style={styles.skeletonSource} />
-                  <View style={styles.skeletonTitle} />
+        <View>
+          {showContentSkeleton && (
+            <View style={styles.skeletonSection}>
+              {[0, 1, 2, 3].map((idx) => (
+                <View key={idx} style={styles.skeletonStoryRow}>
+                  <View style={styles.skeletonBadge} />
+                  <View style={styles.skeletonStoryMeta}>
+                    <View style={styles.skeletonSource} />
+                    <View style={styles.skeletonTitle} />
+                  </View>
                 </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* ── Stories list ── */}
-        {stories.length > 0 && (
-          <View style={styles.storiesSection}>
-            <View style={styles.storiesHeader}>
-              <Text style={styles.storiesTitle}>IN TODAY'S DIGEST</Text>
+              ))}
             </View>
+          )}
 
-            {groupedStoriesWithGlobalIndex.map((group, gIdx, arr) => (
-              <View key={gIdx}>
-                <Text style={styles.categoryLabel}>
-                  {(group.label ?? 'General').toUpperCase()}
-                </Text>
-                {group.entries.map(({ story, globalIndex }, sIdx) => (
-                  <React.Fragment key={story.link + globalIndex}>
-                    <StoryRow
-                      story={story}
-                      active={activeStoryIndex === globalIndex}
-                      onPress={() => handleStoryPress(story)}
-                    />
-                    {sIdx < group.entries.length - 1 && (
-                      <View style={styles.storyDivider} />
-                    )}
-                  </React.Fragment>
-                ))}
-                {gIdx < arr.length - 1 && (
-                  <View style={styles.categoryDivider} />
-                )}
-              </View>
-            ))}
+          {/* ── Stories list (Fragment groups so row onLayout y is relative to storiesSection) ── */}
+          {stories.length > 0 && (
+            <View
+              style={styles.storiesSection}
+              onLayout={(e) => {
+                storiesSectionTopRef.current = e.nativeEvent.layout.y;
+              }}
+            >
+              {groupedStoriesWithGlobalIndex.map((group, gIdx, arr) => (
+                <React.Fragment key={gIdx}>
+                  <Text style={styles.categoryLabel}>
+                    {(group.label ?? 'General').toUpperCase()}
+                  </Text>
+                  {group.entries.map(({ story, globalIndex }, sIdx) => (
+                    <View
+                      key={story.link + globalIndex}
+                      collapsable={false}
+                      onLayout={(ev) => {
+                        storyRowYRef.current[globalIndex] =
+                          ev.nativeEvent.layout.y;
+                      }}
+                    >
+                      <StoryRow
+                        story={story}
+                        active={activeStoryIndex === globalIndex}
+                        onPress={() => handleStoryPress(story)}
+                      />
+                      {sIdx < group.entries.length - 1 && (
+                        <View style={styles.storyDivider} />
+                      )}
+                    </View>
+                  ))}
+                  {gIdx < arr.length - 1 && (
+                    <View style={styles.categoryDivider} />
+                  )}
+                </React.Fragment>
+              ))}
+            </View>
+          )}
+
+          {/* ── Bottom actions ── */}
+          <View style={styles.actionsRow}>
+            <ActionButton
+              icon="radio-outline"
+              label="Manage Feeds"
+              onPress={() =>
+                (navigation as any).navigate('Main', { screen: 'FeedTab' })
+              }
+            />
+            <ActionButton
+              icon="albums-outline"
+              label="Past Digests"
+              onPress={() =>
+                (navigation as any).navigate('Main', { screen: 'LibraryTab' })
+              }
+            />
+            <ActionButton
+              icon="mic-outline"
+              label="Convert Article"
+              onPress={() =>
+                (navigation as any).navigate('Main', { screen: 'HomeTab' })
+              }
+            />
           </View>
-        )}
-
-        {/* ── Bottom actions ── */}
-        <View style={styles.actionsRow}>
-          <ActionButton
-            icon="radio-outline"
-            label="Manage Feeds"
-            onPress={() =>
-              (navigation as any).navigate('Main', { screen: 'FeedTab' })
-            }
-          />
-          <ActionButton
-            icon="albums-outline"
-            label="Past Digests"
-            onPress={() =>
-              (navigation as any).navigate('Main', { screen: 'LibraryTab' })
-            }
-          />
-          <ActionButton
-            icon="mic-outline"
-            label="Convert Article"
-            onPress={() =>
-              (navigation as any).navigate('Main', { screen: 'HomeTab' })
-            }
-          />
         </View>
       </ScrollView>
 
@@ -879,7 +1009,7 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: 2,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
 
   // Player card
@@ -887,8 +1017,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 0,
-    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
     gap: Spacing.sm,
@@ -1084,18 +1214,6 @@ const styles = StyleSheet.create({
   storiesSection: {
     marginBottom: Spacing.lg,
   },
-  storiesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  storiesTitle: {
-    color: Colors.textMuted,
-    fontSize: FontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
   categoryLabel: {
     color: Colors.textMuted,
     fontSize: FontSize.xs,
@@ -1156,13 +1274,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     padding: Spacing.md,
     minHeight: 320,
-  },
-  skeletonHeader: {
-    width: 150,
-    height: 10,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.surfaceElevated,
-    marginBottom: Spacing.md,
   },
   skeletonStoryRow: {
     flexDirection: 'row',

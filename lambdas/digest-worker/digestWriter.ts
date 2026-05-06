@@ -242,7 +242,7 @@ async function generateStoryDialogue(
 ): Promise<ScriptSegment[]> {
   const res = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    max_tokens: 160,
+    max_tokens: 220,
     messages: [
       { role: 'system', content: DIALOGUE_SYSTEM_PROMPT },
       {
@@ -269,11 +269,11 @@ async function generateStoryDialogue(
 async function generateNarratorScript(
   summaries: ArticleSummary[],
 ): Promise<{ segments: ScriptSegment[]; labels: DigestSegmentLabel[]; spokenTextByStory: string[] }> {
-  const TOTAL_TARGET_SECONDS = 5.5 * 60;
-  const INTRO_OUTRO_BUDGET_SECONDS = 80;
+  const TOTAL_TARGET_SECONDS = 6 * 60;
+  const INTRO_OUTRO_BUDGET_SECONDS = 90;
   const perStory = Math.max(
-    35,
-    Math.min(60, Math.floor((TOTAL_TARGET_SECONDS - INTRO_OUTRO_BUDGET_SECONDS) / Math.max(1, summaries.length))),
+    30,
+    Math.min(58, Math.floor((TOTAL_TARGET_SECONDS - INTRO_OUTRO_BUDGET_SECONDS) / Math.max(1, summaries.length))),
   );
 
   // Fire all GPT body calls in parallel

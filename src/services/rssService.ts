@@ -437,7 +437,7 @@ function urlsToUniqueFeedIds(urls: readonly string[]): string[] {
   return ids;
 }
 
-/** First 3 feed IDs per topic are “Top Picks” in the Feed screen when a topic is selected. */
+/** Feed IDs per topic (order = onboarding priority; first items surface as “Top Picks”). */
 export const TOPIC_TO_RSS_FEED_IDS: Record<string, string[]> = (() => {
   const built: Record<string, string[]> = {};
   for (const [topicId, urls] of Object.entries(TOPIC_FEED_URLS_BY_ID)) {
@@ -446,10 +446,10 @@ export const TOPIC_TO_RSS_FEED_IDS: Record<string, string[]> = (() => {
   return built;
 })();
 
-const FEEDS_PER_TOPIC_BOOTSTRAP = 3;
+const FEEDS_PER_TOPIC_BOOTSTRAP = 5;
 
 /**
- * Sets built-in RSS subscriptions from onboarding topics (top 3 feeds per topic).
+ * Sets built-in RSS subscriptions from onboarding topics (up to 5 feeds per topic).
  * Removes previous built-in subscriptions so stale feeds do not stay checked;
  * custom / online feed IDs are preserved.
  */
@@ -466,7 +466,7 @@ export async function bootstrapSubscriptionsFromTopics(topicIds: string[]): Prom
 }
 
 /**
- * Returns a map of topicId → all 5 feed URLs for each selected topic.
+ * Returns a map of topicId → feed URLs for each selected topic (all resolved curated URLs).
  * Used by the digest service to build a topic-balanced, category-diverse feed request.
  */
 export function getTopicFeedUrls(selectedTopics: string[]): Record<string, string[]> {
@@ -484,9 +484,9 @@ export function getTopicFeedUrls(selectedTopics: string[]): Record<string, strin
 
 /**
  * Returns the top `count` predefined feeds for a given topic ID.
- * The first 3 in the list are the "Top Picks"; feeds 4–5 are "More Channels".
+ * Earlier items in the curated list are shown first in the Feed screen.
  */
-export function getTopFeedsForTopic(topicId: string, count = 3): RssFeed[] {
+export function getTopFeedsForTopic(topicId: string, count = 5): RssFeed[] {
   const ids = (TOPIC_TO_RSS_FEED_IDS[topicId] ?? []).slice(0, count);
   return ids.map((id) => RSS_FEEDS.find((f) => f.id === id)).filter((f): f is RssFeed => Boolean(f));
 }
@@ -501,7 +501,7 @@ export function getAllFeedsForTopic(topicId: string): RssFeed[] {
  * Returns the top `feedsPerTopic` feed URLs for each of the given topic IDs,
  * deduplicated. Used by the digest service to build a category-balanced feed list.
  */
-export function getTopFeedUrlsForTopics(topicIds: string[], feedsPerTopic = 3): string[] {
+export function getTopFeedUrlsForTopics(topicIds: string[], feedsPerTopic = 5): string[] {
   const seen = new Set<string>();
   const urls: string[] = [];
   for (const topicId of topicIds) {
