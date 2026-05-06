@@ -15,7 +15,7 @@ const dynamo = new DynamoDBClient({});
 const sqsClient = new SQSClient({});
 
 // Fixed digest size targeting ~5–7 min of audio
-const DEFAULT_TOP_N = 6;
+const DEFAULT_TOP_N = 9;
 
 export const handler = async (event: { userId: string }): Promise<void> => {
   const { userId } = event;

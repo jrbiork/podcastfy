@@ -19,7 +19,6 @@ import { Colors, Spacing, FontSize, Radius } from '../utils/theme';
 import {
   ONBOARDING_TOPICS,
   TOPIC_GROUPS,
-  DEFAULT_TOPICS,
   OnboardingPrefs,
   saveOnboardingPrefs,
   formatDeliveryHour,
@@ -66,9 +65,11 @@ interface Props {
 
 export function OnboardingConfigScreen({ onComplete }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set(DEFAULT_TOPICS));
+  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(
+    () => new Set(['news']),
+  );
   const [timeOption, setTimeOption] = useState<number | null>(7);
-  const [customDate, setCustomDate] = useState<Date>(hourToDate(7));
+  const [customDate, setCustomDate] = useState<Date>(hourToDate(10));
   const [showPicker, setShowPicker] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(0)).current;

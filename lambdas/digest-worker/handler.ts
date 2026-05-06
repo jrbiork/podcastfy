@@ -22,8 +22,8 @@ import {
 } from './servedHistory';
 import { TOPIC_FEED_URLS_BY_ID } from '../data/topicFeedMap';
 
-// Default feeds cover the four default topics (ai-tech, startups, finance, world)
-// with 3 feeds each so every category is represented in the digest.
+// Default feeds cover multiple topics with several sources each so every category
+// can be represented in the digest (see `TOPIC_FEED_URLS_BY_ID` for canonical lists).
 const DEFAULT_DIGEST_FEEDS = [
   // AI & Tech
   {
@@ -79,7 +79,7 @@ const USERS_TABLE = process.env.USERS_TABLE!;
 const LOOKBACK_DAYS = 3;
 const FUZZY_TITLE_SIMILARITY_THRESHOLD = 0.75;
 // Fixed digest size targeting ~5–7 min of audio
-const DEFAULT_TOP_N = 6;
+const DEFAULT_TOP_N = 9;
 
 /**
  * Infers a topicId for a feed URL.
