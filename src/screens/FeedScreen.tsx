@@ -50,6 +50,7 @@ const MY_FEEDS_TAB = '__my_feeds__';
 const CATEGORY_META: Record<FeedCategory, { icon: string; color: string }> = {
   news:                 { icon: 'newspaper-outline',       color: '#34D399' },
   technology:           { icon: 'hardware-chip-outline',   color: '#60A5FA' },
+  economy:              { icon: 'cash-outline',            color: '#F59E0B' },
   'business-finance':   { icon: 'briefcase-outline',       color: '#FBBF24' },
   politics:             { icon: 'megaphone-outline',       color: '#818CF8' },
   'health-wellness':    { icon: 'heart-outline',           color: '#F87171' },
@@ -66,7 +67,7 @@ const CATEGORY_META: Record<FeedCategory, { icon: string; color: string }> = {
   gaming:               { icon: 'game-controller-outline', color: '#4ADE80' },
   books:                { icon: 'book-outline',            color: '#93C5FD' },
   startups:             { icon: 'bulb-outline',            color: '#FCD34D' },
-  'crypto-web3':        { icon: 'logo-bitcoin',            color: '#F59E0B' },
+  crypto:               { icon: 'logo-bitcoin',            color: '#F59E0B' },
   environment:          { icon: 'leaf-outline',            color: '#4ADE80' },
   sports:               { icon: 'trophy-outline',          color: '#FB923C' },
   Custom:               { icon: 'rss-outline',             color: '#60A5FA' },
@@ -77,12 +78,13 @@ function categoryMeta(category: FeedCategory): { icon: string; color: string } {
 }
 
 const CATEGORY_LABEL_OVERRIDES: Partial<Record<FeedCategory, string>> = {
+  economy: 'Economy',
   'business-finance': 'Business & Finance',
   'health-wellness': 'Health & Wellness',
   'mental-health': 'Mental Health',
   'entertainment-news': 'Entertainment News',
   'movies-tv': 'Movies & TV',
-  'crypto-web3': 'Crypto & Web3',
+  crypto: 'Crypto',
 };
 
 function formatCategoryLabel(category: FeedCategory): string {
@@ -94,6 +96,7 @@ function formatCategoryLabel(category: FeedCategory): string {
 const TOPIC_CHIP_COLOR: Record<string, string> = {
   news: '#34D399',
   technology: '#60A5FA',
+  economy: '#F59E0B',
   'business-finance': '#FBBF24',
   politics: '#818CF8',
   'health-wellness': '#F87171',
@@ -110,7 +113,7 @@ const TOPIC_CHIP_COLOR: Record<string, string> = {
   gaming: '#4ADE80',
   books: '#93C5FD',
   startups: '#FCD34D',
-  'crypto-web3': '#F59E0B',
+  crypto: '#F59E0B',
   environment: '#4ADE80',
   'ai-tech': '#60A5FA',
   world: '#34D399',

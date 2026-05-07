@@ -243,8 +243,8 @@ export function DigestScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [dateOffset, setDateOffset] = useState(() => getDebugDateOffset());
-  const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);
-  const SPEEDS: (0.5 | 0.75 | 1 | 1.5 | 2)[] = [0.5, 0.75, 1, 1.5, 2];
+  const [speed, setSpeed] = useState<0.75 | 1 | 1.25>(1);
+  const SPEEDS: (0.75 | 1 | 1.25)[] = [0.75, 1, 1.25];
   const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
   const [showSoftPaywall, setShowSoftPaywall] = useState(false);
 
@@ -636,7 +636,7 @@ export function DigestScreen() {
         <Text style={styles.appTitle}>Sonera</Text>
 
         {/* ── Debug date nav (dev only) ── */}
-        {/* {__DEV__ && (
+        {__DEV__ && (
           <View style={styles.debugDateRow}>
             <TouchableOpacity
               style={styles.debugBtn}
@@ -658,7 +658,7 @@ export function DigestScreen() {
               <Ionicons name="chevron-forward" size={16} color="orange" />
             </TouchableOpacity>
           </View>
-        )} */}
+        )}
 
         {/* ── Player card (ready phase) ── */}
         {phase === 'ready' && episode && (

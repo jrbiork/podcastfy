@@ -24,6 +24,7 @@ type Nav   = StackNavigationProp<RootStackParamList, 'ArticleDetail'>;
 const CATEGORY_COLORS: Record<string, string> = {
   news: '#34D399',
   technology: '#60A5FA',
+  economy: '#F59E0B',
   'business-finance': '#FBBF24',
   politics: '#818CF8',
   'health-wellness': '#F87171',
@@ -40,7 +41,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   gaming: '#4ADE80',
   books: '#93C5FD',
   startups: '#FCD34D',
-  'crypto-web3': '#F59E0B',
+  crypto: '#F59E0B',
   environment: '#4ADE80',
   sports: '#FB923C',
   Custom: '#60A5FA',

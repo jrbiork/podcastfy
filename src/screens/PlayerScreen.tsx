@@ -53,11 +53,11 @@ export function PlayerScreen() {
       onDurationResolved: handleDurationResolved,
     });
 
-  const [speed, setSpeed] = useState<0.5 | 0.75 | 1 | 1.5 | 2>(1);
-  const SPEEDS: (0.5 | 0.75 | 1 | 1.5 | 2)[] = [0.5, 0.75, 1, 1.5, 2];
+  const [speed, setSpeed] = useState<0.75 | 1 | 1.25>(1);
+  const SPEEDS: (0.75 | 1 | 1.25)[] = [0.75, 1, 1.25];
 
   const handleSpeedPress = useCallback(
-    async (s: 0.5 | 0.75 | 1 | 1.5 | 2) => {
+    async (s: 0.75 | 1 | 1.25) => {
       setSpeed(s);
       await setRate(s);
     },
