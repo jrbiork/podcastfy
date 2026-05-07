@@ -22,6 +22,7 @@ import {
 } from '../services/subscription';
 import { loadSession } from '../services/auth';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import { Analytics } from '../services/analytics';
 
 type Nav = StackNavigationProp<RootStackParamList, 'Paywall'>;
 
@@ -52,6 +53,8 @@ export function PaywallScreen() {
   const [error, setError] = useState<string | null>(null);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [selected, setSelected] = useState<PurchasesPackage | null>(null);
+
+  useEffect(() => { void Analytics.paywallShown('hard'); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,11 +90,18 @@ export function PaywallScreen() {
     if (!selected) return;
     setError(null);
     setActionLoading(true);
+    void Analytics.paywallSubscribeTapped(selected.packageType, selected.product.priceString);
     try {
       const ok = await purchaseOffering(selected);
-      if (ok) navigation.goBack();
-      else setError('Purchase completed but subscription not active. Check RevenueCat entitlement.');
+      if (ok) {
+        void Analytics.subscriptionStarted(selected.identifier);
+        navigation.goBack();
+      } else {
+        void Analytics.purchaseFailed(selected.packageType, 'entitlement_inactive');
+        setError('Purchase completed but subscription not active. Check RevenueCat entitlement.');
+      }
     } catch (e: unknown) {
+      void Analytics.purchaseFailed(selected.packageType, e instanceof Error ? e.message : 'unknown');
       setError(e instanceof Error ? e.message : 'Purchase failed');
     } finally {
       setActionLoading(false);
@@ -101,11 +111,18 @@ export function PaywallScreen() {
   const onRestore = async () => {
     setError(null);
     setActionLoading(true);
+    void Analytics.restoreTapped();
     try {
       const ok = await restorePurchases();
-      if (ok) navigation.goBack();
-      else setError('No active subscription found to restore.');
+      if (ok) {
+        void Analytics.restoreSuccess();
+        navigation.goBack();
+      } else {
+        void Analytics.restoreFailed('no_active_subscription');
+        setError('No active subscription found to restore.');
+      }
     } catch (e: unknown) {
+      void Analytics.restoreFailed(e instanceof Error ? e.message : 'unknown');
       setError(e instanceof Error ? e.message : 'Restore failed');
     } finally {
       setActionLoading(false);

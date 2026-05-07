@@ -26,6 +26,7 @@ import { GenerationInput } from '../types';
 import { VoicePickerModal } from '../components/VoicePickerModal';
 import { LanguageWheelPicker, LANGUAGES } from '../components/LanguageWheelPicker';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import { Analytics } from '../services/analytics';
 
 const TTS_VOICE_KEY = 'podcastify_tts_voice';
 
@@ -144,6 +145,7 @@ export function HomeScreen() {
           : { type: 'text', text, summarize, ...voiceOpts };
       }
 
+      void Analytics.generateStarted(mode, pdfInput ? 'pdf' : isUrl ? 'url' : 'text', summarize);
       navigation.navigate('Generating', { input, mode });
     } finally {
       setChecking(false);

@@ -22,7 +22,7 @@ type AudioTrackMeta = {
 
 let playerSetupPromise: Promise<void> | null = null;
 
-async function ensurePlayerSetup() {
+export async function ensurePlayerSetup() {
   if (!playerSetupPromise) {
     playerSetupPromise = (async () => {
       await TrackPlayer.setupPlayer({
