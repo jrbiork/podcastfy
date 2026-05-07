@@ -45,6 +45,7 @@ import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import { feedImageUrl } from '../services/rssService';
 import type { RssFeed, ExtendedRssItem } from '../services/rssService';
+import { Analytics } from '../services/analytics';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 type Phase = 'loading' | 'preparing' | 'ready' | 'error';
@@ -305,14 +306,22 @@ export function DigestScreen() {
     }
   }, [positionMs, scrubPositionMs]);
 
+  // Log when episode becomes available for playback
+  useEffect(() => {
+    if (!episode) return;
+    void Analytics.playerOpened(episode.title, episode.mode);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [episode?.id]);
+
   // Trigger paywall milestone when a daily digest is fully listened.
   useEffect(() => {
     if (!hasEnded || !episode) return;
+    void Analytics.episodeCompleted(episode.title, Math.floor((durationMs || episode.durationSeconds * 1000) / 1000));
     const date = new Date(episode.createdAt).toISOString().slice(0, 10);
     void recordDigestListened(date).then((shouldShowSoftPaywall) => {
       if (shouldShowSoftPaywall) setShowSoftPaywall(true);
     });
-  }, [hasEnded, episode]);
+  }, [hasEnded, episode, durationMs]);
 
   const digestInProgress = phase === 'loading' || phase === 'preparing';
   useEffect(() => {
@@ -450,15 +459,18 @@ export function DigestScreen() {
       return;
     }
     if (hasEnded) {
+      if (episode) void Analytics.episodeRestarted(episode.title);
       void restart();
       return;
     }
     if (isPlaying) {
+      if (episode) void Analytics.episodePaused(episode.title, Math.floor(positionMs / 1000));
       void pause();
       return;
     }
+    if (episode) void Analytics.episodePlayed(episode.title, Math.floor(positionMs / 1000));
     void play();
-  }, [hasEnded, isPlaying, restart, pause, play]);
+  }, [hasEnded, isPlaying, restart, pause, play, episode, positionMs]);
 
   const handleSoftPaywallSubscribe = useCallback(() => {
     setShowSoftPaywall(false);
@@ -715,6 +727,7 @@ export function DigestScreen() {
                 thumbTintColor={Colors.primary}
                 onValueChange={(v) => setScrubPositionMs(v)}
                 onSlidingComplete={(v) => {
+                  if (episode) void Analytics.episodeSeeked(episode.title, Math.floor(positionMs / 1000), Math.floor(v / 1000));
                   seek(v);
                   setScrubPositionMs(v);
                 }}
@@ -735,7 +748,7 @@ export function DigestScreen() {
             <View style={styles.controlsRow}>
               <TouchableOpacity
                 style={styles.iconBtn}
-                onPress={() => skip(-15_000)}
+                onPress={() => { if (episode) void Analytics.episodeSkipped(episode.title, 'back', 15, Math.floor(positionMs / 1000)); skip(-15_000); }}
               >
                 <Ionicons name="play-back" size={18} color={Colors.text} />
                 <Text style={styles.skipLabel}>15</Text>
@@ -762,7 +775,7 @@ export function DigestScreen() {
 
               <TouchableOpacity
                 style={styles.iconBtn}
-                onPress={() => skip(15_000)}
+                onPress={() => { if (episode) void Analytics.episodeSkipped(episode.title, 'forward', 15, Math.floor(positionMs / 1000)); skip(15_000); }}
               >
                 <Ionicons name="play-forward" size={18} color={Colors.text} />
                 <Text style={styles.skipLabel}>15</Text>

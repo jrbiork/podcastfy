@@ -45,6 +45,11 @@ export function PlayerScreen() {
     [episode, update],
   );
 
+  useEffect(() => {
+    void Analytics.playerOpened(episode.title, episode.mode);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { isPlaying, positionMs, durationMs, hasEnded, play, pause, seek, skip, restart, setRate } =
     useAudioPlayer(episode.uri, {
       title: episode.title,
@@ -106,8 +111,8 @@ export function PlayerScreen() {
   }, [durationMs, episode.positionMs, seek]);
 
   useEffect(() => {
-    if (hasEnded) void Analytics.episodeCompleted(episode.title);
-  }, [hasEnded, episode.title]);
+    if (hasEnded) void Analytics.episodeCompleted(episode.title, Math.floor(totalMs / 1000));
+  }, [hasEnded, episode.title, totalMs]);
 
   const handlePlayPress = useCallback(() => {
     if (hasEnded) {
@@ -190,7 +195,11 @@ export function PlayerScreen() {
             maximumTrackTintColor={Colors.border}
             thumbTintColor={Colors.primary}
             onValueChange={(v) => setScrubPositionMs(v)}
-            onSlidingComplete={(v) => { seek(v); setScrubPositionMs(v); }}
+            onSlidingComplete={(v) => {
+              void Analytics.episodeSeeked(episode.title, Math.floor(positionMs / 1000), Math.floor(v / 1000));
+              seek(v);
+              setScrubPositionMs(v);
+            }}
           />
           <View style={styles.timeRow}>
             <Text style={styles.timeText}>{formatDuration(Math.floor((scrubPositionMs ?? positionMs) / 1000))}</Text>
@@ -216,7 +225,7 @@ export function PlayerScreen() {
 
         {/* Controls */}
         <View style={styles.controls}>
-          <TouchableOpacity style={styles.skipBtn} onPress={() => skip(-15000)} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.skipBtn} onPress={() => { void Analytics.episodeSkipped(episode.title, 'back', 15, Math.floor(positionMs / 1000)); skip(-15000); }} activeOpacity={0.7}>
             <Ionicons name="play-back-outline" size={20} color={Colors.textMuted} />
             <Text style={styles.skipText}>15</Text>
           </TouchableOpacity>
@@ -229,7 +238,7 @@ export function PlayerScreen() {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipBtn} onPress={() => skip(30000)} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.skipBtn} onPress={() => { void Analytics.episodeSkipped(episode.title, 'forward', 30, Math.floor(positionMs / 1000)); skip(30000); }} activeOpacity={0.7}>
             <Ionicons name="play-forward-outline" size={20} color={Colors.textMuted} />
             <Text style={styles.skipText}>30</Text>
           </TouchableOpacity>

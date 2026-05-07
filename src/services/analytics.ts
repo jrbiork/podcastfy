@@ -48,19 +48,23 @@ export async function trackEvent(
 
   try {
     const clientId = await getClientId();
-    await fetch(
+    const res = await fetch(
       `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           client_id: clientId,
-          events: [{ name, params: params ?? {} }],
+          events: [{
+            name,
+            params: { engagement_time_msec: 100, debug_mode: 1, ...(params ?? {}) },
+          }],
         }),
       }
     );
-  } catch {
-    // silently ignore — analytics should never crash the app
+    console.log(`[Analytics] HTTP ${res.status} for ${name}`);
+  } catch (e) {
+    console.log(`[Analytics] fetch error for ${name}:`, e);
   }
 }
 
@@ -86,12 +90,19 @@ export const Analytics = {
     trackEvent('sign_in_error', { provider, error }),
   generateStarted: (mode: string, inputType: 'url' | 'text' | 'pdf', summarize: boolean) =>
     trackEvent('generate_started', { mode, input_type: inputType, summarize }),
+  playerOpened: (title: string, mode: string) =>
+    trackEvent('player_opened', { episode_title: title, mode }),
   episodePlayed: (title: string, positionS: number) =>
     trackEvent('episode_played', { episode_title: title, position_s: positionS }),
   episodePaused: (title: string, positionS: number) =>
     trackEvent('episode_paused', { episode_title: title, position_s: positionS }),
-  episodeCompleted: (title: string) => trackEvent('episode_completed', { episode_title: title }),
+  episodeCompleted: (title: string, durationS: number) =>
+    trackEvent('episode_completed', { episode_title: title, duration_s: durationS }),
   episodeRestarted: (title: string) => trackEvent('episode_restarted', { episode_title: title }),
+  episodeSeeked: (title: string, fromS: number, toS: number) =>
+    trackEvent('episode_seeked', { episode_title: title, from_s: fromS, to_s: toS }),
+  episodeSkipped: (title: string, direction: 'back' | 'forward', amountS: number, positionS: number) =>
+    trackEvent('episode_skipped', { episode_title: title, direction, amount_s: amountS, position_s: positionS }),
   playbackSpeedChanged: (speed: number, title: string) =>
     trackEvent('playback_speed_changed', { speed, episode_title: title }),
 };
