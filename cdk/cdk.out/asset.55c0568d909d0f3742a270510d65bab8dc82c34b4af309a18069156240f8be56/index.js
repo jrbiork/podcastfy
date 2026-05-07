@@ -13274,6 +13274,26 @@ var openai_default = OpenAI;
 
 // worker/tts.ts
 var import_get_mp3_duration = __toESM(require_get_mp3_duration());
+
+// shared/concurrency.ts
+async function mapOrderedConcurrent(items, concurrency, fn) {
+  if (items.length === 0) return [];
+  const limit2 = Math.max(1, Math.min(concurrency, items.length));
+  const results = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (true) {
+      const i2 = next++;
+      if (i2 >= items.length) return;
+      results[i2] = await fn(items[i2], i2);
+    }
+  };
+  await Promise.all(Array.from({ length: limit2 }, worker));
+  return results;
+}
+
+// worker/tts.ts
+var TTS_CONCURRENCY = 8;
 var openai = new openai_default({ apiKey: process.env.OPENAI_API_KEY });
 var VOICES = {
   host: "nova",
@@ -13310,12 +13330,16 @@ function mp3ChunkDurationSeconds(chunk) {
 async function generateAlternatingAudio(segments, voiceA, voiceB) {
   const a2 = VALID_VOICES.has(voiceA) ? voiceA : VOICES.narrator;
   const b2 = VALID_VOICES.has(voiceB) ? voiceB : VOICES.guest;
+  const orderedChunks = await mapOrderedConcurrent(
+    segments,
+    TTS_CONCURRENCY,
+    (seg) => ttsChunk(seg.text, seg.voice === "secondary" ? b2 : a2)
+  );
   const chunks = [];
   const chunkDurationSeconds = [];
   const timeline = [];
   let currentTime = 0;
-  for (const seg of segments) {
-    const buf = await ttsChunk(seg.text, seg.voice === "secondary" ? b2 : a2);
+  for (const buf of orderedChunks) {
     const duration = mp3ChunkDurationSeconds(buf);
     chunks.push(buf);
     chunkDurationSeconds.push(duration);
@@ -14307,7 +14331,7 @@ async function persistServedStories(userId, date, selectedArticles, ttlDays = 4)
 var TOPIC_FEED_URLS_BY_ID = {
   news: [
     "https://www.reuters.com/rssFeed/topNews",
-    "https://apnews.com/rss",
+    "https://www.theguardian.com/world/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     "https://feeds.bbci.co.uk/news/rss.xml",
     "https://feeds.npr.org/1001/rss.xml"
@@ -14359,7 +14383,7 @@ var TOPIC_FEED_URLS_BY_ID = {
     "https://breakingmuscle.com/feed/",
     "https://www.acefitness.org/resources/everyone/blog/rss/",
     "https://www.runnersworld.com/rss/all/index.xml",
-    "https://www.shape.com/feeds/all.xml"
+    "https://www.self.com/feed/rss"
   ],
   "mental-health": [
     "https://www.psychologytoday.com/us/rss",
@@ -14376,7 +14400,7 @@ var TOPIC_FEED_URLS_BY_ID = {
     "https://www.smittenkitchen.com/feed/"
   ],
   travel: [
-    "https://www.lonelyplanet.com/news/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml",
     "https://www.cntraveler.com/feed/rss",
     "https://thepointsguy.com/feed/",
     "https://skift.com/feed/",
@@ -14454,7 +14478,7 @@ var TOPIC_FEED_URLS_BY_ID = {
   ],
   world: [
     "https://www.reuters.com/rssFeed/topNews",
-    "https://apnews.com/rss",
+    "https://www.theguardian.com/world/rss",
     "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     "https://feeds.bbci.co.uk/news/rss.xml",
     "https://feeds.npr.org/1001/rss.xml"
@@ -14504,6 +14528,7 @@ var TOPIC_FEED_URLS_BY_ID = {
 };
 
 // digest-worker/handler.ts
+var SUMMARY_CONCURRENCY = 3;
 var DEFAULT_DIGEST_FEEDS = [
   // AI & Tech
   {
@@ -14604,12 +14629,16 @@ async function publishDigestReadyPush(userId, date, title) {
     new import_client_dynamodb2.GetItemCommand({
       TableName: USERS_TABLE,
       Key: { userId: { S: userId } },
-      ProjectionExpression: "iosPushEndpointArn, iosPushEnabled"
+      ProjectionExpression: "iosPushEndpointArn, iosPushEnabled, iosPushEndpoints"
     })
   );
   const endpointArn = user.Item?.iosPushEndpointArn?.S;
   const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
-  if (!endpointArn || !pushEnabled) return;
+  if (!pushEnabled) return;
+  const endpoints = user.Item?.iosPushEndpoints?.M;
+  const endpointArns = endpoints ? Object.values(endpoints).map((v2) => v2.M?.endpointArn?.S).filter((v2) => typeof v2 === "string" && v2.length > 0) : [];
+  const targets = [.../* @__PURE__ */ new Set([...endpointArn ? [endpointArn] : [], ...endpointArns])];
+  if (targets.length === 0) return;
   const payload = {
     aps: {
       alert: {
@@ -14621,23 +14650,26 @@ async function publishDigestReadyPush(userId, date, title) {
     target: "today",
     digestDate: date
   };
-  const publishResult = await sns.send(
-    new import_client_sns.PublishCommand({
-      TargetArn: endpointArn,
-      MessageStructure: "json",
-      Message: JSON.stringify({
-        default: "Your daily digest is ready",
-        APNS: JSON.stringify(payload),
-        APNS_SANDBOX: JSON.stringify(payload)
-      })
-    })
+  const results = await Promise.all(
+    targets.map(
+      (arn) => sns.send(
+        new import_client_sns.PublishCommand({
+          TargetArn: arn,
+          MessageStructure: "json",
+          Message: JSON.stringify({
+            default: "Your daily digest is ready",
+            APNS: JSON.stringify(payload),
+            APNS_SANDBOX: JSON.stringify(payload)
+          })
+        })
+      )
+    )
   );
   console.log("[digest-worker] push publish result", {
     userId,
     date,
-    endpointArn,
-    messageId: publishResult.MessageId,
-    sequenceNumber: publishResult.SequenceNumber ?? null
+    targets: targets.length,
+    messageIds: results.map((r2) => r2.MessageId).filter(Boolean)
   });
 }
 async function processDigest(msg) {
@@ -14744,19 +14776,22 @@ async function processDigest(msg) {
     throw new Error("No articles available for digest");
   }
   await writeDigestStatus(userId, date, { status: "summarizing" });
-  const summaries = [];
-  for (const article of ranked) {
-    let fullText = "";
-    try {
-      const extracted = await extractArticle(article.link);
-      fullText = extracted.text ?? "";
-    } catch {
-      fullText = article.description;
+  const summaries = await mapOrderedConcurrent(
+    ranked,
+    SUMMARY_CONCURRENCY,
+    async (article) => {
+      let fullText = "";
+      try {
+        const extracted = await extractArticle(article.link);
+        fullText = extracted.text ?? "";
+      } catch {
+        fullText = article.description;
+      }
+      const summary = await summarizeArticle(article, fullText);
+      console.log("[digest-worker] summarized", { title: article.title });
+      return summary;
     }
-    const summary = await summarizeArticle(article, fullText);
-    summaries.push(summary);
-    console.log("[digest-worker] summarized", { title: article.title });
-  }
+  );
   await writeDigestStatus(userId, date, { status: "scripting" });
   const { segments, stories: scriptStories, segmentLabels } = await generateDigestScript(summaries, statusDate);
   console.log("[digest-worker] script generated", {

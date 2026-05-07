@@ -1810,8 +1810,10 @@ async function handlePushToken(userId, rawBody) {
     return json(400, { error: "Invalid JSON body" });
   }
   const tokenRaw = body.token;
+  const deviceIdRaw = body.deviceId;
   const enabledRaw = body.enabled;
   const token = typeof tokenRaw === "string" ? tokenRaw.trim() : "";
+  const providedDeviceId = typeof deviceIdRaw === "string" ? deviceIdRaw.trim() : "";
   const enabled = enabledRaw === void 0 ? true : Boolean(enabledRaw);
   if (!enabled) {
     try {
@@ -1840,6 +1842,8 @@ async function handlePushToken(userId, rawBody) {
       error: "token is required and must be a valid APNs token"
     });
   }
+  const deviceId = providedDeviceId && providedDeviceId.length >= 8 ? providedDeviceId : `legacy_${token.slice(-16)}`;
+  const deviceKey = `d_${deviceId.replace(/[^a-zA-Z0-9_]/g, "_")}`;
   if (!SNS_PLATFORM_APPLICATION_ARN) {
     return json(500, { error: "Push notifications are not configured" });
   }
@@ -1893,12 +1897,34 @@ async function handlePushToken(userId, rawBody) {
       new import_client_dynamodb.UpdateItemCommand({
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
-        UpdateExpression: "SET iosPushToken = :token, iosPushEndpointArn = :endpointArn, iosPushEnabled = :enabled, updatedAt = :updatedAt",
+        UpdateExpression: "SET iosPushEndpoints = if_not_exists(iosPushEndpoints, :emptyMap)",
+        ExpressionAttributeValues: {
+          ":emptyMap": { M: {} }
+        }
+      })
+    );
+    await dynamo.send(
+      new import_client_dynamodb.UpdateItemCommand({
+        TableName: USERS_TABLE,
+        Key: { userId: { S: userId } },
+        UpdateExpression: "SET iosPushToken = :token, iosPushEndpointArn = :endpointArn, iosPushEnabled = :enabled, updatedAt = :updatedAt, iosPushEndpoints.#deviceId = :device",
         ExpressionAttributeValues: {
           ":token": { S: token },
           ":endpointArn": { S: endpointArn },
           ":enabled": { BOOL: true },
-          ":updatedAt": { N: String(Date.now()) }
+          ":updatedAt": { N: String(Date.now()) },
+          ":device": {
+            M: {
+              deviceId: { S: deviceId },
+              token: { S: token },
+              endpointArn: { S: endpointArn },
+              enabled: { BOOL: true },
+              updatedAt: { N: String(Date.now()) }
+            }
+          }
+        },
+        ExpressionAttributeNames: {
+          "#deviceId": deviceKey
         }
       })
     );
@@ -1914,16 +1940,22 @@ async function handlePushToken(userId, rawBody) {
 }
 async function handlePushTest(userId) {
   let endpointArn = "";
+  let endpointArns = [];
   try {
     const user = await dynamo.send(
       new import_client_dynamodb.GetItemCommand({
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
-        ProjectionExpression: "iosPushEndpointArn, iosPushEnabled"
+        ProjectionExpression: "iosPushEndpointArn, iosPushEnabled, iosPushEndpoints"
       })
     );
     endpointArn = user.Item?.iosPushEndpointArn?.S ?? "";
     const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
+    const endpoints = user.Item?.iosPushEndpoints?.M;
+    if (endpoints) {
+      endpointArns = Object.values(endpoints).map((v) => v.M?.endpointArn?.S).filter((v) => typeof v === "string" && v.length > 0);
+    }
+    if (endpointArn) endpointArns = [.../* @__PURE__ */ new Set([...endpointArns, endpointArn])];
     if (!endpointArn || !pushEnabled) {
       return json(400, {
         error: "Push is not enabled for this user on this device."
@@ -1947,16 +1979,21 @@ async function handlePushTest(userId) {
     target: "today"
   };
   try {
-    await sns.send(
-      new import_client_sns.PublishCommand({
-        TargetArn: endpointArn,
-        MessageStructure: "json",
-        Message: JSON.stringify({
-          APNS: JSON.stringify(payload),
-          APNS_SANDBOX: JSON.stringify(payload),
-          default: "Podcastify test notification"
-        })
-      })
+    const targets = endpointArns.length ? endpointArns : endpointArn ? [endpointArn] : [];
+    await Promise.all(
+      targets.map(
+        (arn) => sns.send(
+          new import_client_sns.PublishCommand({
+            TargetArn: arn,
+            MessageStructure: "json",
+            Message: JSON.stringify({
+              APNS: JSON.stringify(payload),
+              APNS_SANDBOX: JSON.stringify(payload),
+              default: "Podcastify test notification"
+            })
+          })
+        )
+      )
     );
   } catch (err) {
     console.error("[user-preferences] push test publish failed", {

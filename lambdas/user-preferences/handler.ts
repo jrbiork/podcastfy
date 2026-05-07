@@ -492,7 +492,7 @@ async function handlePushToken(userId: string, rawBody: string) {
   const enabledRaw = body.enabled;
 
   const token = typeof tokenRaw === 'string' ? tokenRaw.trim() : '';
-  const deviceId =
+  const providedDeviceId =
     typeof deviceIdRaw === 'string' ? deviceIdRaw.trim() : '';
   const enabled = enabledRaw === undefined ? true : Boolean(enabledRaw);
 
@@ -525,9 +525,14 @@ async function handlePushToken(userId: string, rawBody: string) {
       error: 'token is required and must be a valid APNs token',
     });
   }
-  if (!deviceId || deviceId.length < 8) {
-    return json(400, { error: 'deviceId is required' });
-  }
+  // Backward compatibility: old clients don't send deviceId yet.
+  // Derive a stable fallback key from the APNs token so registration still works.
+  const deviceId =
+    providedDeviceId && providedDeviceId.length >= 8
+      ? providedDeviceId
+      : `legacy_${token.slice(-16)}`;
+  // DynamoDB expression paths are safest with alnum/underscore keys.
+  const deviceKey = `d_${deviceId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
   if (!SNS_PLATFORM_APPLICATION_ARN) {
     return json(500, { error: 'Push notifications are not configured' });
   }
@@ -586,6 +591,18 @@ async function handlePushToken(userId: string, rawBody: string) {
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
         UpdateExpression:
+          'SET iosPushEndpoints = if_not_exists(iosPushEndpoints, :emptyMap)',
+        ExpressionAttributeValues: {
+          ':emptyMap': { M: {} },
+        },
+      }),
+    );
+
+    await dynamo.send(
+      new UpdateItemCommand({
+        TableName: USERS_TABLE,
+        Key: { userId: { S: userId } },
+        UpdateExpression:
           'SET iosPushToken = :token, iosPushEndpointArn = :endpointArn, iosPushEnabled = :enabled, updatedAt = :updatedAt, iosPushEndpoints.#deviceId = :device',
         ExpressionAttributeValues: {
           ':token': { S: token },
@@ -594,6 +611,7 @@ async function handlePushToken(userId: string, rawBody: string) {
           ':updatedAt': { N: String(Date.now()) },
           ':device': {
             M: {
+              deviceId: { S: deviceId },
               token: { S: token },
               endpointArn: { S: endpointArn },
               enabled: { BOOL: true },
@@ -602,7 +620,7 @@ async function handlePushToken(userId: string, rawBody: string) {
           },
         },
         ExpressionAttributeNames: {
-          '#deviceId': deviceId,
+          '#deviceId': deviceKey,
         },
       }),
     );

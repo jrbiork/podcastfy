@@ -1,6 +1,11 @@
 import OpenAI from 'openai';
 import getMp3Duration from 'get-mp3-duration';
 import type { ScriptTurn } from './scriptWriter';
+import { mapOrderedConcurrent } from '../shared/concurrency';
+
+// Tuned for OpenAI tts-1 Tier 1 (50 RPM): 35 segments × ~2.6s each at conc 8
+// = ~13s wall-clock, ~35 requests inside the 60s window. Headroom for SDK retries.
+const TTS_CONCURRENCY = 8;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -79,13 +84,21 @@ export async function generateAlternatingAudio(
 }> {
   const a: OAIVoice = VALID_VOICES.has(voiceA as OAIVoice) ? (voiceA as OAIVoice) : VOICES.narrator;
   const b: OAIVoice = VALID_VOICES.has(voiceB as OAIVoice) ? (voiceB as OAIVoice) : VOICES.guest;
+
+  // Issue TTS calls with bounded concurrency, then assemble timeline in original
+  // segment order so playback, durations, and downstream story-bound mapping stay aligned.
+  const orderedChunks = await mapOrderedConcurrent(
+    segments,
+    TTS_CONCURRENCY,
+    (seg) => ttsChunk(seg.text, seg.voice === 'secondary' ? b : a),
+  );
+
   const chunks: Buffer[] = [];
   const chunkDurationSeconds: number[] = [];
   const timeline: Array<{ start: number; end: number }> = [];
   let currentTime = 0;
 
-  for (const seg of segments) {
-    const buf = await ttsChunk(seg.text, seg.voice === 'secondary' ? b : a);
+  for (const buf of orderedChunks) {
     const duration = mp3ChunkDurationSeconds(buf);
     chunks.push(buf);
     chunkDurationSeconds.push(duration);
