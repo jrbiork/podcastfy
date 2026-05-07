@@ -115,7 +115,9 @@ function inferTopicFromUrl(url: string): string | undefined {
   )
     return 'ai-tech';
   if (/startup|venture|ycombinator|producthunt/.test(u)) return 'startups';
-  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto-web3';
+  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto';
+  if (/economic|economy|macro|inflation|gdp|unemployment|cpi/.test(u))
+    return 'economy';
   if (/science|research|scidaily|quanta|newscientist/.test(u)) return 'science';
   if (/finance|invest|market|economic|bloomberg|wsj|nasdaq/.test(u))
     return 'business-finance';

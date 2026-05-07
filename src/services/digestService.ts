@@ -165,10 +165,11 @@ async function downloadAndSaveDigest(
 export async function bootTodayDigest(): Promise<DigestBootResult> {
   const { voice, effectiveTopicFeedUrls } = await resolvePrefs();
   const existing = await findTodaysDigestEpisode();
+  const targetDate = todayUtcDate();
 
   let serverStatus: Awaited<ReturnType<typeof getLatestDigest>> | null = null;
   try {
-    serverStatus = await getLatestDigest();
+    serverStatus = await getLatestDigest(targetDate);
   } catch {
     // Offline — serve local copy if available, otherwise show preparing
     if (existing) return { type: 'ready', episode: existing };
@@ -199,7 +200,13 @@ export async function bootTodayDigest(): Promise<DigestBootResult> {
     }
     const forceRegen = __DEV__ && getDebugDateOffset() !== 0;
     try {
-      await dispatchDigest(effectiveTopicFeedUrls, forceRegen, voice, DEFAULT_TOP_N);
+      await dispatchDigest(
+        effectiveTopicFeedUrls,
+        forceRegen,
+        voice,
+        DEFAULT_TOP_N,
+        targetDate,
+      );
     } catch {
       // Dispatch failed (network) — show preparing; will retry on next poll
     }
@@ -225,7 +232,13 @@ export async function bootTodayDigest(): Promise<DigestBootResult> {
     episodeEvents.emit();
   }
   try {
-    await dispatchDigest(effectiveTopicFeedUrls, false, voice, DEFAULT_TOP_N);
+    await dispatchDigest(
+      effectiveTopicFeedUrls,
+      false,
+      voice,
+      DEFAULT_TOP_N,
+      targetDate,
+    );
   } catch {
     // Dispatch failed (network) — show preparing anyway; will retry on next poll
   }
@@ -239,8 +252,9 @@ export async function bootTodayDigest(): Promise<DigestBootResult> {
  * status string so the caller can drive step-by-step progress UI.
  */
 export async function pollTodayDigestStatus(): Promise<DigestPollResult> {
+  const targetDate = todayUtcDate();
   try {
-    const status = await getLatestDigest();
+    const status = await getLatestDigest(targetDate);
 
     if (status.status === 'done' && isDigestForToday(status.digestId)) {
       const existing = await findTodaysDigestEpisode();

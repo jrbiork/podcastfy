@@ -1533,6 +1533,18 @@ function json(statusCode, body) {
     body: JSON.stringify(body)
   };
 }
+function isValidTargetDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = /* @__PURE__ */ new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+function resolveTargetDate(raw, fallbackDate) {
+  if (raw === void 0 || raw === null || raw === "") return fallbackDate;
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!isValidTargetDate(trimmed)) return null;
+  return trimmed;
+}
 var handler = async (event) => {
   const requestId = event.requestContext.requestId ?? "unknown";
   const rawPath = event.rawPath ?? "";
@@ -1556,12 +1568,16 @@ var handler = async (event) => {
     });
     return json(err.statusCode ?? 401, { error: err.message });
   }
-  const date = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const serverToday = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
   if (method === "GET") {
-    return handleGetLatest(requestId, userId, date);
+    const date2 = resolveTargetDate(event.queryStringParameters?.targetDate, serverToday);
+    if (!date2) return json(400, { error: "targetDate must be YYYY-MM-DD" });
+    return handleGetLatest(requestId, userId, date2);
   }
   if (method === "DELETE") {
-    return handleDeleteToday(requestId, userId, date);
+    const date2 = resolveTargetDate(event.queryStringParameters?.targetDate, serverToday);
+    if (!date2) return json(400, { error: "targetDate must be YYYY-MM-DD" });
+    return handleDeleteToday(requestId, userId, date2);
   }
   let body;
   try {
@@ -1569,6 +1585,8 @@ var handler = async (event) => {
   } catch {
     return json(400, { error: "Invalid JSON body" });
   }
+  const date = resolveTargetDate(body.targetDate, serverToday);
+  if (!date) return json(400, { error: "targetDate must be YYYY-MM-DD" });
   return handleDispatchDigest(requestId, userId, date, body);
 };
 async function handleGetLatest(requestId, userId, date) {

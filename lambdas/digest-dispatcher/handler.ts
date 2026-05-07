@@ -31,6 +31,20 @@ function json(statusCode: number, body: unknown) {
   };
 }
 
+function isValidTargetDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function resolveTargetDate(raw: unknown, fallbackDate: string): string | null {
+  if (raw === undefined || raw === null || raw === '') return fallbackDate;
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!isValidTargetDate(trimmed)) return null;
+  return trimmed;
+}
+
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   const requestId = event.requestContext.requestId ?? 'unknown';
   const rawPath = event.rawPath ?? '';
@@ -57,13 +71,17 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     return json(err.statusCode ?? 401, { error: err.message });
   }
 
-  const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+  const serverToday = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
 
   if (method === 'GET') {
+    const date = resolveTargetDate(event.queryStringParameters?.targetDate, serverToday);
+    if (!date) return json(400, { error: 'targetDate must be YYYY-MM-DD' });
     return handleGetLatest(requestId, userId, date);
   }
 
   if (method === 'DELETE') {
+    const date = resolveTargetDate(event.queryStringParameters?.targetDate, serverToday);
+    if (!date) return json(400, { error: 'targetDate must be YYYY-MM-DD' });
     return handleDeleteToday(requestId, userId, date);
   }
 
@@ -74,6 +92,9 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   } catch {
     return json(400, { error: 'Invalid JSON body' });
   }
+
+  const date = resolveTargetDate(body.targetDate, serverToday);
+  if (!date) return json(400, { error: 'targetDate must be YYYY-MM-DD' });
 
   return handleDispatchDigest(requestId, userId, date, body);
 };
