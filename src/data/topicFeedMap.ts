@@ -5,7 +5,7 @@
  */
 export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
   news: [
-    'https://www.reuters.com/rssFeed/topNews',
+    'https://www.axios.com/feeds/feed.rss',
     'https://www.theguardian.com/world/rss',
     'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
     'https://feeds.bbci.co.uk/news/rss.xml',
@@ -17,6 +17,13 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.wired.com/feed/rss',
     'https://feeds.arstechnica.com/arstechnica/index',
     'https://www.technologyreview.com/feed/',
+  ],
+  economy: [
+    'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+    'https://feeds.reuters.com/reuters/businessNews',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',
+    'https://www.bloomberg.com/feed/podcast/etf-report.xml',
+    'https://www.cnbc.com/id/100003114/device/rss/rss.html',
   ],
   'business-finance': [
     'https://www.bloomberg.com/feed/podcast/etf-report.xml',
@@ -33,7 +40,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.theatlantic.com/feed/all/',
   ],
   'health-wellness': [
-    'https://www.health.harvard.edu/rss/blog.xml',
+    'https://feeds.bbci.co.uk/news/health/rss.xml',
     'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
     'https://tools.cdc.gov/api/v2/resources/media/403372.rss',
     'https://www.healthline.com/rss/health-news',
@@ -130,7 +137,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://hnrss.org/best',
     'https://www.inc.com/rss',
   ],
-  'crypto-web3': [
+  crypto: [
     'https://www.coindesk.com/arc/outboundfeeds/rss/',
     'https://cointelegraph.com/rss',
     'https://decrypt.co/feed',
@@ -153,7 +160,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.technologyreview.com/feed/',
   ],
   world: [
-    'https://www.reuters.com/rssFeed/topNews',
+    'https://www.axios.com/feeds/feed.rss',
     'https://www.theguardian.com/world/rss',
     'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
     'https://feeds.bbci.co.uk/news/rss.xml',
@@ -181,7 +188,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://feeds.npr.org/1008/rss.xml',
   ],
   health: [
-    'https://www.health.harvard.edu/rss/blog.xml',
+    'https://feeds.bbci.co.uk/news/health/rss.xml',
     'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC',
     'https://tools.cdc.gov/api/v2/resources/media/403372.rss',
     'https://www.healthline.com/rss/health-news',
@@ -195,6 +202,13 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.cbssports.com/rss/headlines/',
   ],
   crypto: [
+    'https://www.coindesk.com/arc/outboundfeeds/rss/',
+    'https://cointelegraph.com/rss',
+    'https://decrypt.co/feed',
+    'https://bitcoinmagazine.com/.rss/full/',
+    'https://www.theblock.co/rss.xml',
+  ],
+  'crypto-web3': [
     'https://www.coindesk.com/arc/outboundfeeds/rss/',
     'https://cointelegraph.com/rss',
     'https://decrypt.co/feed',

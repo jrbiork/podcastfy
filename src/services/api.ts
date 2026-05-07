@@ -253,6 +253,7 @@ export async function dispatchDigest(
   force?: boolean,
   voice?: string,
   topN?: number,
+  targetDate?: string,
 ): Promise<{ digestId: string; status: string }> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
   const headers = await authHeaders();
@@ -261,6 +262,7 @@ export async function dispatchDigest(
   if (force) bodyObj.force = true;
   if (voice) bodyObj.voice = voice;
   if (topN) bodyObj.topN = topN;
+  if (targetDate) bodyObj.targetDate = targetDate;
   const body = JSON.stringify(bodyObj);
   let res: Response;
   try {
@@ -281,22 +283,24 @@ export async function dispatchDigest(
  * Used by "Clear All Data" in the Profile screen so a fresh digest can be
  * generated immediately during testing without waiting until tomorrow.
  */
-export async function deleteDigestToday(): Promise<void> {
+export async function deleteDigestToday(targetDate?: string): Promise<void> {
   if (!API_BASE) return;
   const headers = await authHeaders();
+  const qs = targetDate ? `?targetDate=${encodeURIComponent(targetDate)}` : '';
   try {
-    await fetchWithTimeout(`${API_BASE}/digests`, { method: 'DELETE', headers }, 15_000);
+    await fetchWithTimeout(`${API_BASE}/digests${qs}`, { method: 'DELETE', headers }, 15_000);
   } catch {
     // Best-effort — don't block the clear-data flow if this fails
   }
 }
 
-export async function getLatestDigest(): Promise<DigestJobStatus> {
+export async function getLatestDigest(targetDate?: string): Promise<DigestJobStatus> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
   const headers = await authHeaders();
+  const qs = targetDate ? `?targetDate=${encodeURIComponent(targetDate)}` : '';
   let res: Response;
   try {
-    res = await fetchWithTimeout(`${API_BASE}/digests/latest`, { headers }, 10_000);
+    res = await fetchWithTimeout(`${API_BASE}/digests/latest${qs}`, { headers }, 10_000);
   } catch (e: unknown) {
     throw Object.assign(new Error('network_error'), { code: 'network_error' });
   }

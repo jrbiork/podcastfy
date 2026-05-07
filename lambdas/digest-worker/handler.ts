@@ -10,6 +10,7 @@ import { writeDigestStatus, uploadDigestAudio } from '../shared/s3';
 import { fetchRecentArticles, fetchArticlesByTopic } from './feedFetcher';
 import { deduplicateAndRank } from './digestRanker';
 import { enrichWithPopularity } from './popularityFetcher';
+import { filterAdLikeStories } from './adStoryFilter';
 import {
   summarizeArticle,
   generateDigestScript,
@@ -115,7 +116,9 @@ function inferTopicFromUrl(url: string): string | undefined {
   )
     return 'ai-tech';
   if (/startup|venture|ycombinator|producthunt/.test(u)) return 'startups';
-  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto-web3';
+  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto';
+  if (/economic|economy|macro|inflation|gdp|unemployment|cpi/.test(u))
+    return 'economy';
   if (/science|research|scidaily|quanta|newscientist/.test(u)) return 'science';
   if (/finance|invest|market|economic|bloomberg|wsj|nasdaq/.test(u))
     return 'business-finance';
@@ -325,7 +328,48 @@ async function processDigest(msg: DigestMessage): Promise<void> {
     });
   }
 
-  const ranked = deduplicateAndRank(rankingInput, topN, msg.priorityTopicId);
+  let ranked = deduplicateAndRank(rankingInput, topN, msg.priorityTopicId);
+
+  // 2b. Filter ad-like/deal pages before summarization/scripting/TTS
+  // (e.g. promo-code / coupon / shopping deal pages).
+  const minRequiredCandidates = Math.min(topN, 3);
+  {
+    const { kept, removed } = filterAdLikeStories(ranked, { strictness: 'normal' });
+    if (removed.length > 0) {
+      if (kept.length >= minRequiredCandidates) {
+        ranked = kept;
+        console.log('[digest-worker] filtered ad-like stories', {
+          userId,
+          date,
+          removedCount: removed.length,
+          keptCount: kept.length,
+          removedTitles: removed.slice(0, 5).map((r) => r.article.title),
+        });
+      } else {
+        // Avoid empty/too-small digests: fall back to strong-only removal, else keep original.
+        const relaxed = filterAdLikeStories(ranked, { strictness: 'strong_only' });
+        if (relaxed.kept.length >= minRequiredCandidates && relaxed.removed.length > 0) {
+          ranked = relaxed.kept;
+          console.log('[digest-worker] filtered ad-like stories (relaxed)', {
+            userId,
+            date,
+            removedCount: relaxed.removed.length,
+            keptCount: relaxed.kept.length,
+            removedTitles: relaxed.removed.slice(0, 5).map((r) => r.article.title),
+          });
+        } else {
+          console.warn('[digest-worker] ad-like filter would shrink digest too far; skipping filter', {
+            userId,
+            date,
+            topN,
+            candidateCount: ranked.length,
+            wouldKeep: kept.length,
+            removedCount: removed.length,
+          });
+        }
+      }
+    }
+  }
 
   // Detect which topic (if any) had candidates but didn't make it into the final set.
   // The first such topic becomes priorityTopicId for tomorrow's digest.

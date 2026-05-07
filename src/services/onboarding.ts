@@ -11,17 +11,19 @@ const LEGACY_TOPIC_ID_MAP: Record<string, string> = {
   finance: 'business-finance',
   climate: 'environment',
   culture: 'entertainment-news',
-  health: 'health-wellness',
+  health: 'fitness',
+  'health-wellness': 'fitness',
   sports: 'fitness',
-  crypto: 'crypto-web3',
+  crypto: 'crypto',
+  'crypto-web3': 'crypto',
 };
 
 export const ONBOARDING_TOPIC_ORDER: string[] = [
   'news',
   'technology',
+  'economy',
   'business-finance',
   'politics',
-  'health-wellness',
   'science',
   'productivity',
   'fitness',
@@ -33,9 +35,8 @@ export const ONBOARDING_TOPIC_ORDER: string[] = [
   'movies-tv',
   'music',
   'gaming',
-  'books',
   'startups',
-  'crypto-web3',
+  'crypto',
   'environment',
 ];
 
@@ -149,6 +150,13 @@ export const ONBOARDING_TOPICS: TopicDef[] = [
     feedUrls: feedUrlsForTopic('technology'),
   },
   {
+    id: 'economy',
+    label: 'Economy',
+    icon: 'cash-outline',
+    group: 'daily',
+    feedUrls: feedUrlsForTopic('economy'),
+  },
+  {
     id: 'business-finance',
     label: 'Business & Finance',
     icon: 'trending-up-outline',
@@ -161,13 +169,6 @@ export const ONBOARDING_TOPICS: TopicDef[] = [
     icon: 'megaphone-outline',
     group: 'daily',
     feedUrls: feedUrlsForTopic('politics'),
-  },
-  {
-    id: 'health-wellness',
-    label: 'Health & Wellness',
-    icon: 'heart-outline',
-    group: 'daily',
-    feedUrls: feedUrlsForTopic('health-wellness'),
   },
   {
     id: 'science',
@@ -247,13 +248,6 @@ export const ONBOARDING_TOPICS: TopicDef[] = [
     feedUrls: feedUrlsForTopic('gaming'),
   },
   {
-    id: 'books',
-    label: 'Books & Literature',
-    icon: 'book-outline',
-    group: 'entertainment',
-    feedUrls: feedUrlsForTopic('books'),
-  },
-  {
     id: 'startups',
     label: 'Startups & Entrepreneurship',
     icon: 'bulb-outline',
@@ -261,11 +255,11 @@ export const ONBOARDING_TOPICS: TopicDef[] = [
     feedUrls: feedUrlsForTopic('startups'),
   },
   {
-    id: 'crypto-web3',
-    label: 'Crypto & Web3',
+    id: 'crypto',
+    label: 'Crypto',
     icon: 'logo-bitcoin',
     group: 'niche',
-    feedUrls: feedUrlsForTopic('crypto-web3'),
+    feedUrls: feedUrlsForTopic('crypto'),
   },
   {
     id: 'environment',
@@ -305,9 +299,9 @@ export function formatDeliveryHour(hour: number): string {
 const TOPIC_SAMPLE_HEADLINES: Record<string, string> = {
   news: 'G7 leaders gather for annual economic summit amid ongoing trade tensions',
   technology: 'OpenAI unveils next-generation reasoning model with improved accuracy',
+  economy: 'US payroll growth slows while wage gains stay resilient, lifting soft-landing hopes',
   'business-finance': 'Federal Reserve holds rates steady as core inflation cools to 2.3 percent',
   politics: 'Senate advances bipartisan infrastructure bill in rare late-night vote',
-  'health-wellness': 'Daily 30-minute walk reduces heart disease risk by nearly a third, study finds',
   science: 'Scientists confirm first detection of water ice beneath the Martian surface',
   productivity: 'New study links short morning routines to sharper focus through the workday',
   fitness: 'Strength training twice weekly tied to lower all-cause mortality in large cohort',
@@ -319,9 +313,8 @@ const TOPIC_SAMPLE_HEADLINES: Record<string, string> = {
   'movies-tv': 'Award-season favorite adds surprise midnight screenings ahead of global release',
   music: 'Festival organizers announce carbon-neutral stages for flagship summer events',
   gaming: 'Indie breakout hits two million players after word-of-mouth surge on social platforms',
-  books: 'Debut novel lands on year-end best lists after quiet summer release',
   startups: 'Startup funding rebounds sharply in early 2026, led by AI infrastructure companies',
-  'crypto-web3': 'Bitcoin stabilizes above key level as institutional custody products expand',
+  crypto: 'Bitcoin stabilizes above key level as institutional custody products expand',
   environment: 'Record ocean temperatures accelerate push toward renewable energy transition',
 };
 

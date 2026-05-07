@@ -7,6 +7,7 @@ import { startRssGeneration } from './generationService';
 export type FeedCategory =
   | 'news'
   | 'technology'
+  | 'economy'
   | 'business-finance'
   | 'politics'
   | 'health-wellness'
@@ -23,7 +24,7 @@ export type FeedCategory =
   | 'gaming'
   | 'books'
   | 'startups'
-  | 'crypto-web3'
+  | 'crypto'
   | 'environment'
   | 'sports'
   | 'Custom';
@@ -46,7 +47,7 @@ function inferFeedCategoryFromUrl(url: string): FeedCategory {
   if (/openai|deepmind|anthropic|machine.learn|artificial.intell|\/ai\//.test(u)) return 'technology';
   if (/tech|software|hardware|gadget|engadget|theverge|arstechnica|wired\.com/.test(u)) return 'technology';
   if (/startup|venture|ycombinator|producthunt/.test(u)) return 'startups';
-  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto-web3';
+  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u)) return 'crypto';
   if (/science|research|scidaily|quanta|newscientist/.test(u)) return 'science';
   if (/finance|invest|market|economic|bloomberg|wsj|nasdaq/.test(u)) return 'business-finance';
   if (/\/sport|football|soccer|basketball|nfl|nba|espn|bleacher/.test(u)) return 'sports';
@@ -89,7 +90,7 @@ export const RSS_FEEDS: RssFeed[] = [
   { id: 'bbc', name: 'BBC News', url: 'https://feeds.bbci.co.uk/news/rss.xml', category: 'news' },
   { id: 'npr', name: 'NPR News', url: 'https://feeds.npr.org/1001/rss.xml', category: 'news' },
   { id: 'guardian', name: 'The Guardian (World)', url: 'https://www.theguardian.com/world/rss', category: 'news' },
-  { id: 'axios', name: 'Axios', url: 'https://api.axios.com/feed/', category: 'news' },
+  { id: 'axios', name: 'Axios', url: 'https://www.axios.com/feeds/feed.rss', category: 'news' },
   { id: 'reuters_world', name: 'Reuters World', url: 'https://feeds.reuters.com/reuters/worldNews', category: 'news' },
   { id: 'verge', name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', category: 'technology' },
   { id: 'techcrunch', name: 'TechCrunch', url: 'https://techcrunch.com/feed/', category: 'technology' },
@@ -169,11 +170,11 @@ export const RSS_FEEDS: RssFeed[] = [
   { id: 'hackernews', name: 'Hacker News Best', url: 'https://hnrss.org/best', category: 'startups' },
   { id: 'venturebeat', name: 'VentureBeat', url: 'https://venturebeat.com/feed/', category: 'startups' },
   { id: 'inc', name: 'Inc.', url: 'https://www.inc.com/rss', category: 'startups' },
-  { id: 'coindesk', name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', category: 'crypto-web3' },
-  { id: 'cointele', name: 'Cointelegraph', url: 'https://cointelegraph.com/rss', category: 'crypto-web3' },
-  { id: 'bitcoin_mag', name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/.rss/full/', category: 'crypto-web3' },
-  { id: 'decrypt', name: 'Decrypt', url: 'https://decrypt.co/feed', category: 'crypto-web3' },
-  { id: 'theblock', name: 'The Block', url: 'https://www.theblock.co/rss.xml', category: 'crypto-web3' },
+  { id: 'coindesk', name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', category: 'crypto' },
+  { id: 'cointele', name: 'Cointelegraph', url: 'https://cointelegraph.com/rss', category: 'crypto' },
+  { id: 'bitcoin_mag', name: 'Bitcoin Magazine', url: 'https://bitcoinmagazine.com/.rss/full/', category: 'crypto' },
+  { id: 'decrypt', name: 'Decrypt', url: 'https://decrypt.co/feed', category: 'crypto' },
+  { id: 'theblock', name: 'The Block', url: 'https://www.theblock.co/rss.xml', category: 'crypto' },
   { id: 'guardian_env', name: 'Guardian Environment', url: 'https://www.theguardian.com/environment/rss', category: 'environment' },
   { id: 'climatecentral', name: 'Climate Central', url: 'https://www.climatecentral.org/feeds/news.rss', category: 'environment' },
   { id: 'carbonbrief', name: 'Carbon Brief', url: 'https://www.carbonbrief.org/feed', category: 'environment' },
@@ -185,7 +186,6 @@ export const RSS_FEEDS: RssFeed[] = [
   { id: 'skysports', name: 'Sky Sports', url: 'https://www.skysports.com/rss/12040', category: 'sports' },
   { id: 'sports_ill', name: 'Sports Illustrated', url: 'https://www.si.com/rss/si_topstories.rss', category: 'sports' },
   { id: 'cbssports', name: 'CBS Sports', url: 'https://www.cbssports.com/rss/headlines/', category: 'sports' },
-  { id: 'reuters_top_news', name: 'Reuters Top News', url: 'https://www.reuters.com/rssFeed/topNews', category: 'news' },
   { id: 'apnews', name: 'The Guardian (World)', url: 'https://www.theguardian.com/world/rss', category: 'news' },
   { id: 'nytimes_homepage', name: 'NY Times Home Page', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', category: 'news' },
   { id: 'bloomberg_etf_report', name: 'Bloomberg ETF Report', url: 'https://www.bloomberg.com/feed/podcast/etf-report.xml', category: 'business-finance' },
@@ -193,7 +193,7 @@ export const RSS_FEEDS: RssFeed[] = [
   { id: 'wsj_markets_main', name: 'WSJ Markets Main', url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml', category: 'business-finance' },
   { id: 'politico_politics', name: 'POLITICO Politics', url: 'https://www.politico.com/rss/politics08.xml', category: 'politics' },
   { id: 'the_hill_politics', name: 'The Hill Politics', url: 'https://thehill.com/rss/syndicator/19110', category: 'politics' },
-  { id: 'harvard_health_blog', name: 'Harvard Health', url: 'https://www.health.harvard.edu/rss/blog.xml', category: 'health-wellness' },
+  { id: 'harvard_health_blog', name: 'Harvard Health (via BBC Health)', url: 'https://feeds.bbci.co.uk/news/health/rss.xml', category: 'health-wellness' },
   { id: 'webmd_public', name: 'WebMD', url: 'https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC', category: 'health-wellness' },
   { id: 'cdc_health_news', name: 'CDC News', url: 'https://tools.cdc.gov/api/v2/resources/media/403372.rss', category: 'health-wellness' },
   { id: 'scientific_american', name: 'Scientific American', url: 'https://www.scientificamerican.com/feed/rss/', category: 'science' },

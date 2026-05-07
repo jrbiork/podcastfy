@@ -13633,7 +13633,8 @@ var HN_TOPICS = /* @__PURE__ */ new Set([
   "ai-tech",
   "startups",
   "science",
-  "crypto-web3",
+  "crypto",
+  "economy",
   "business-finance",
   "news",
   "politics"
@@ -13740,6 +13741,7 @@ var TTS_WORDS_PER_MINUTE = 150;
 var TOPIC_LABELS = {
   "news": "World News",
   "technology": "Technology",
+  "economy": "Economy",
   "business-finance": "Business & Finance",
   "politics": "Politics",
   "health-wellness": "Health & Wellness",
@@ -13756,7 +13758,7 @@ var TOPIC_LABELS = {
   "gaming": "Gaming",
   "books": "Books",
   "startups": "Startups",
-  "crypto-web3": "Crypto & Web3",
+  "crypto": "Crypto",
   "environment": "Environment",
   "ai-tech": "AI & Tech"
 };
@@ -14343,6 +14345,13 @@ var TOPIC_FEED_URLS_BY_ID = {
     "https://feeds.arstechnica.com/arstechnica/index",
     "https://www.technologyreview.com/feed/"
   ],
+  economy: [
+    "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+    "https://feeds.reuters.com/reuters/businessNews",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Business.xml",
+    "https://www.bloomberg.com/feed/podcast/etf-report.xml",
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html"
+  ],
   "business-finance": [
     "https://www.bloomberg.com/feed/podcast/etf-report.xml",
     "https://www.cnbc.com/id/100003114/device/rss/rss.html",
@@ -14455,7 +14464,7 @@ var TOPIC_FEED_URLS_BY_ID = {
     "https://hnrss.org/best",
     "https://www.inc.com/rss"
   ],
-  "crypto-web3": [
+  crypto: [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
     "https://decrypt.co/feed",
@@ -14519,6 +14528,13 @@ var TOPIC_FEED_URLS_BY_ID = {
     "https://www.cbssports.com/rss/headlines/"
   ],
   crypto: [
+    "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "https://cointelegraph.com/rss",
+    "https://decrypt.co/feed",
+    "https://bitcoinmagazine.com/.rss/full/",
+    "https://www.theblock.co/rss.xml"
+  ],
+  "crypto-web3": [
     "https://www.coindesk.com/arc/outboundfeeds/rss/",
     "https://cointelegraph.com/rss",
     "https://decrypt.co/feed",
@@ -14601,7 +14617,9 @@ function inferTopicFromUrl(url) {
   if (/openai|deepmind|anthropic|machine.learn|artificial.intell|\/ai\//.test(u2))
     return "ai-tech";
   if (/startup|venture|ycombinator|producthunt/.test(u2)) return "startups";
-  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u2)) return "crypto-web3";
+  if (/crypto|bitcoin|ethereum|web3|blockchain/.test(u2)) return "crypto";
+  if (/economic|economy|macro|inflation|gdp|unemployment|cpi/.test(u2))
+    return "economy";
   if (/science|research|scidaily|quanta|newscientist/.test(u2)) return "science";
   if (/finance|invest|market|economic|bloomberg|wsj|nasdaq/.test(u2))
     return "business-finance";

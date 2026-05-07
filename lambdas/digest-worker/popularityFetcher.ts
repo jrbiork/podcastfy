@@ -2,7 +2,7 @@ import type { FeedArticle } from './feedFetcher';
 
 const HN_TOPICS = new Set([
   'technology', 'ai-tech', 'startups', 'science',
-  'crypto-web3', 'business-finance', 'news', 'politics',
+  'crypto', 'economy', 'business-finance', 'news', 'politics',
 ]);
 
 const HN_TIMEOUT_MS = 2500;

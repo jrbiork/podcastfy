@@ -12,6 +12,7 @@ import {
   notificationTargetsToday,
   registerDeviceForPush,
 } from './src/services/pushNotifications';
+import { Analytics } from './src/services/analytics';
 
 const navigationTheme: Theme = {
   ...DarkTheme,
@@ -31,6 +32,7 @@ export default function App() {
   React.useEffect(() => {
     let mounted = true;
 
+    void Analytics.appOpen();
     void registerDeviceForPush().catch(() => {});
 
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {

@@ -18,6 +18,7 @@ export interface ArticleSummary {
 const TOPIC_LABELS: Record<string, string> = {
   'news':               'World News',
   'technology':         'Technology',
+  'economy':            'Economy',
   'business-finance':   'Business & Finance',
   'politics':           'Politics',
   'health-wellness':    'Health & Wellness',
@@ -34,7 +35,7 @@ const TOPIC_LABELS: Record<string, string> = {
   'gaming':             'Gaming',
   'books':              'Books',
   'startups':           'Startups',
-  'crypto-web3':        'Crypto & Web3',
+  'crypto':             'Crypto',
   'environment':        'Environment',
   'ai-tech':            'AI & Tech',
 };
