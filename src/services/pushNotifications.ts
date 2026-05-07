@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { registerPushToken } from './api';
+import { getOrCreateDeviceId } from './deviceId';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -39,6 +40,7 @@ export async function registerDeviceForPush(): Promise<PushRegistrationStatus> {
   const apnsToken = typeof tokenResponse.data === 'string' ? tokenResponse.data : '';
   if (!apnsToken) return 'missing_token';
 
-  await registerPushToken(apnsToken);
+  const deviceId = await getOrCreateDeviceId();
+  await registerPushToken(apnsToken, deviceId);
   return 'registered';
 }
