@@ -21,6 +21,10 @@ import {
   persistServedStories,
 } from './servedHistory';
 import { TOPIC_FEED_URLS_BY_ID } from '../data/topicFeedMap';
+import { mapOrderedConcurrent } from '../shared/concurrency';
+
+// gpt-4o-mini Tier 1 = 500 RPM; conc 3 over 9 articles ≈ 9s wall-clock, well under cap.
+const SUMMARY_CONCURRENCY = 3;
 
 // Default feeds cover multiple topics with several sources each so every category
 // can be represented in the digest (see `TOPIC_FEED_URLS_BY_ID` for canonical lists).
@@ -340,22 +344,26 @@ async function processDigest(msg: DigestMessage): Promise<void> {
     throw new Error('No articles available for digest');
   }
 
-  // 3. Summarize each article (sequential to avoid rate limits)
+  // 3. Summarize each article in parallel with bounded concurrency.
+  // Order is preserved because generateDigestScript consumes summaries in ranked order.
   await writeDigestStatus(userId, date, { status: 'summarizing' });
 
-  const summaries = [];
-  for (const article of ranked) {
-    let fullText = '';
-    try {
-      const extracted = await extractArticle(article.link);
-      fullText = extracted.text ?? '';
-    } catch {
-      fullText = article.description;
-    }
-    const summary = await summarizeArticle(article, fullText);
-    summaries.push(summary);
-    console.log('[digest-worker] summarized', { title: article.title });
-  }
+  const summaries = await mapOrderedConcurrent(
+    ranked,
+    SUMMARY_CONCURRENCY,
+    async (article) => {
+      let fullText = '';
+      try {
+        const extracted = await extractArticle(article.link);
+        fullText = extracted.text ?? '';
+      } catch {
+        fullText = article.description;
+      }
+      const summary = await summarizeArticle(article, fullText);
+      console.log('[digest-worker] summarized', { title: article.title });
+      return summary;
+    },
+  );
 
   // 4. Generate script
   await writeDigestStatus(userId, date, { status: 'scripting' });

@@ -5,7 +5,7 @@
 export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
   news: [
     'https://www.reuters.com/rssFeed/topNews',
-    'https://apnews.com/rss',
+    'https://www.theguardian.com/world/rss',
     'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
     'https://feeds.bbci.co.uk/news/rss.xml',
     'https://feeds.npr.org/1001/rss.xml',
@@ -57,7 +57,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://breakingmuscle.com/feed/',
     'https://www.acefitness.org/resources/everyone/blog/rss/',
     'https://www.runnersworld.com/rss/all/index.xml',
-    'https://www.shape.com/feeds/all.xml',
+    'https://www.self.com/feed/rss',
   ],
   'mental-health': [
     'https://www.psychologytoday.com/us/rss',
@@ -74,7 +74,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.smittenkitchen.com/feed/',
   ],
   travel: [
-    'https://www.lonelyplanet.com/news/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml',
     'https://www.cntraveler.com/feed/rss',
     'https://thepointsguy.com/feed/',
     'https://skift.com/feed/',
@@ -153,7 +153,7 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
   ],
   world: [
     'https://www.reuters.com/rssFeed/topNews',
-    'https://apnews.com/rss',
+    'https://www.theguardian.com/world/rss',
     'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
     'https://feeds.bbci.co.uk/news/rss.xml',
     'https://feeds.npr.org/1001/rss.xml',
