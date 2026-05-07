@@ -317,14 +317,14 @@ export interface UserPreferences {
   subscribed: boolean | null;
 }
 
-export async function registerPushToken(token: string): Promise<void> {
+export async function registerPushToken(token: string, deviceId: string): Promise<void> {
   if (!API_BASE) throw Object.assign(new Error('missing_api_base'), { code: 'missing_api_base' });
   const headers = await authHeaders();
   let res: Response;
   try {
     res = await fetchWithTimeout(
       `${API_BASE}/users/push-token`,
-      { method: 'POST', headers, body: JSON.stringify({ token, enabled: true }) },
+      { method: 'POST', headers, body: JSON.stringify({ token, deviceId, enabled: true }) },
       15_000,
     );
   } catch {

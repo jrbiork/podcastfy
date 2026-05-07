@@ -157,13 +157,22 @@ async function publishDigestReadyPush(
     new GetItemCommand({
       TableName: USERS_TABLE,
       Key: { userId: { S: userId } },
-      ProjectionExpression: 'iosPushEndpointArn, iosPushEnabled',
+      ProjectionExpression: 'iosPushEndpointArn, iosPushEnabled, iosPushEndpoints',
     }),
   );
 
   const endpointArn = user.Item?.iosPushEndpointArn?.S;
   const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
-  if (!endpointArn || !pushEnabled) return;
+  if (!pushEnabled) return;
+
+  const endpoints = user.Item?.iosPushEndpoints?.M;
+  const endpointArns = endpoints
+    ? Object.values(endpoints)
+        .map((v) => v.M?.endpointArn?.S)
+        .filter((v): v is string => typeof v === 'string' && v.length > 0)
+    : [];
+  const targets = [...new Set([...(endpointArn ? [endpointArn] : []), ...endpointArns])];
+  if (targets.length === 0) return;
 
   const payload = {
     aps: {
@@ -177,23 +186,26 @@ async function publishDigestReadyPush(
     digestDate: date,
   };
 
-  const publishResult = await sns.send(
-    new PublishCommand({
-      TargetArn: endpointArn,
-      MessageStructure: 'json',
-      Message: JSON.stringify({
-        default: 'Your daily digest is ready',
-        APNS: JSON.stringify(payload),
-        APNS_SANDBOX: JSON.stringify(payload),
-      }),
-    }),
+  const results = await Promise.all(
+    targets.map((arn) =>
+      sns.send(
+        new PublishCommand({
+          TargetArn: arn,
+          MessageStructure: 'json',
+          Message: JSON.stringify({
+            default: 'Your daily digest is ready',
+            APNS: JSON.stringify(payload),
+            APNS_SANDBOX: JSON.stringify(payload),
+          }),
+        }),
+      ),
+    ),
   );
   console.log('[digest-worker] push publish result', {
     userId,
     date,
-    endpointArn,
-    messageId: publishResult.MessageId,
-    sequenceNumber: publishResult.SequenceNumber ?? null,
+    targets: targets.length,
+    messageIds: results.map((r) => r.MessageId).filter(Boolean),
   });
 }
 

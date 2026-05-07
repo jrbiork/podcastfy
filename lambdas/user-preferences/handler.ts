@@ -488,9 +488,12 @@ async function handlePushToken(userId: string, rawBody: string) {
   }
 
   const tokenRaw = body.token;
+  const deviceIdRaw = body.deviceId;
   const enabledRaw = body.enabled;
 
   const token = typeof tokenRaw === 'string' ? tokenRaw.trim() : '';
+  const deviceId =
+    typeof deviceIdRaw === 'string' ? deviceIdRaw.trim() : '';
   const enabled = enabledRaw === undefined ? true : Boolean(enabledRaw);
 
   if (!enabled) {
@@ -521,6 +524,9 @@ async function handlePushToken(userId: string, rawBody: string) {
     return json(400, {
       error: 'token is required and must be a valid APNs token',
     });
+  }
+  if (!deviceId || deviceId.length < 8) {
+    return json(400, { error: 'deviceId is required' });
   }
   if (!SNS_PLATFORM_APPLICATION_ARN) {
     return json(500, { error: 'Push notifications are not configured' });
@@ -580,12 +586,23 @@ async function handlePushToken(userId: string, rawBody: string) {
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
         UpdateExpression:
-          'SET iosPushToken = :token, iosPushEndpointArn = :endpointArn, iosPushEnabled = :enabled, updatedAt = :updatedAt',
+          'SET iosPushToken = :token, iosPushEndpointArn = :endpointArn, iosPushEnabled = :enabled, updatedAt = :updatedAt, iosPushEndpoints.#deviceId = :device',
         ExpressionAttributeValues: {
           ':token': { S: token },
           ':endpointArn': { S: endpointArn },
           ':enabled': { BOOL: true },
           ':updatedAt': { N: String(Date.now()) },
+          ':device': {
+            M: {
+              token: { S: token },
+              endpointArn: { S: endpointArn },
+              enabled: { BOOL: true },
+              updatedAt: { N: String(Date.now()) },
+            },
+          },
+        },
+        ExpressionAttributeNames: {
+          '#deviceId': deviceId,
         },
       }),
     );
@@ -603,16 +620,25 @@ async function handlePushToken(userId: string, rawBody: string) {
 
 async function handlePushTest(userId: string) {
   let endpointArn = '';
+  let endpointArns: string[] = [];
   try {
     const user = await dynamo.send(
       new GetItemCommand({
         TableName: USERS_TABLE,
         Key: { userId: { S: userId } },
-        ProjectionExpression: 'iosPushEndpointArn, iosPushEnabled',
+        ProjectionExpression: 'iosPushEndpointArn, iosPushEnabled, iosPushEndpoints',
       }),
     );
     endpointArn = user.Item?.iosPushEndpointArn?.S ?? '';
     const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
+    const endpoints = user.Item?.iosPushEndpoints?.M;
+    if (endpoints) {
+      endpointArns = Object.values(endpoints)
+        .map((v) => v.M?.endpointArn?.S)
+        .filter((v): v is string => typeof v === 'string' && v.length > 0);
+    }
+    // Back-compat: include legacy endpointArn as well.
+    if (endpointArn) endpointArns = [...new Set([...endpointArns, endpointArn])];
     if (!endpointArn || !pushEnabled) {
       return json(400, {
         error: 'Push is not enabled for this user on this device.',
@@ -638,16 +664,21 @@ async function handlePushTest(userId: string) {
   };
 
   try {
-    await sns.send(
-      new PublishCommand({
-        TargetArn: endpointArn,
-        MessageStructure: 'json',
-        Message: JSON.stringify({
-          APNS: JSON.stringify(payload),
-          APNS_SANDBOX: JSON.stringify(payload),
-          default: 'Podcastify test notification',
-        }),
-      }),
+    const targets = endpointArns.length ? endpointArns : endpointArn ? [endpointArn] : [];
+    await Promise.all(
+      targets.map((arn) =>
+        sns.send(
+          new PublishCommand({
+            TargetArn: arn,
+            MessageStructure: 'json',
+            Message: JSON.stringify({
+              APNS: JSON.stringify(payload),
+              APNS_SANDBOX: JSON.stringify(payload),
+              default: 'Podcastify test notification',
+            }),
+          }),
+        ),
+      ),
     );
   } catch (err) {
     console.error('[user-preferences] push test publish failed', {
