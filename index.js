@@ -3,6 +3,8 @@ import TrackPlayer from 'react-native-track-player';
 
 import App from './App';
 import { playbackService } from './src/services/playbackService';
+import { ensurePlayerSetup } from './src/hooks/useAudioPlayer';
 
-registerRootComponent(App);
 TrackPlayer.registerPlaybackService(() => playbackService);
+ensurePlayerSetup();
+registerRootComponent(App);

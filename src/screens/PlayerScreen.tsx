@@ -17,6 +17,7 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useEpisodes } from '../hooks/useEpisodes';
 import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import { Analytics } from '../services/analytics';
 
 type Route = RouteProp<RootStackParamList, 'Player'>;
 type Nav = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -60,8 +61,9 @@ export function PlayerScreen() {
     async (s: 0.75 | 1 | 1.25) => {
       setSpeed(s);
       await setRate(s);
+      void Analytics.playbackSpeedChanged(s, episode.title);
     },
-    [setRate],
+    [setRate, episode.title],
   );
 
   const totalMs = durationMs || episode.durationSeconds * 1000 || 1;
@@ -103,11 +105,24 @@ export function PlayerScreen() {
     }
   }, [durationMs, episode.positionMs, seek]);
 
+  useEffect(() => {
+    if (hasEnded) void Analytics.episodeCompleted(episode.title);
+  }, [hasEnded, episode.title]);
+
   const handlePlayPress = useCallback(() => {
-    if (hasEnded) { restart(); return; }
-    if (isPlaying) { pause(); return; }
+    if (hasEnded) {
+      void Analytics.episodeRestarted(episode.title);
+      restart();
+      return;
+    }
+    if (isPlaying) {
+      void Analytics.episodePaused(episode.title, Math.floor(positionMs / 1000));
+      pause();
+      return;
+    }
+    void Analytics.episodePlayed(episode.title, Math.floor(positionMs / 1000));
     play();
-  }, [hasEnded, isPlaying, restart, pause, play]);
+  }, [hasEnded, isPlaying, restart, pause, play, episode.title, positionMs]);
 
   const domain = sourceDomain(episode.sourceUrl);
 

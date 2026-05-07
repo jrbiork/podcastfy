@@ -29,6 +29,7 @@ import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import type { OnboardingPrefs } from '../services/onboarding';
 import { getTopicFeedUrls } from '../services/rssService';
 import { registerDeviceForPush } from '../services/pushNotifications';
+import { Analytics } from '../services/analytics';
 
 /**
  * Push timezone + onboarding prefs to the server **after** sign-in.
@@ -110,6 +111,7 @@ export function AuthScreen() {
         await setOnboardingComplete();
         await clearOnboardingPrefs();
       }
+      void Analytics.signIn('google');
       navigation.replace('Main');
     } catch (e: any) {
       if (e.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -117,6 +119,7 @@ export function AuthScreen() {
       } else if (e.code === statusCodes.IN_PROGRESS) {
         // sign-in already in progress
       } else {
+        void Analytics.signInError('google', e.message ?? 'unknown');
         setError(e.message ?? 'Google Sign-In failed');
       }
     } finally {
@@ -157,12 +160,14 @@ export function AuthScreen() {
         await setOnboardingComplete();
         await clearOnboardingPrefs();
       }
+      void Analytics.signIn('apple');
       navigation.replace('Main');
     } catch (e: unknown) {
       const code = (e as { code?: string }).code;
       if (code === 'ERR_REQUEST_CANCELED') {
         // user canceled — not an error
       } else {
+        void Analytics.signInError('apple', (e as { message?: string }).message ?? 'unknown');
         setError((e as { message?: string }).message ?? 'Apple Sign-In failed');
       }
     } finally {
