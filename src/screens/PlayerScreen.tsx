@@ -18,9 +18,19 @@ import { useEpisodes } from '../hooks/useEpisodes';
 import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import { Analytics } from '../services/analytics';
+import { RSS_FEEDS, feedImageUrl } from '../services/rssService';
+import type { Episode } from '../types';
 
 type Route = RouteProp<RootStackParamList, 'Player'>;
 type Nav = StackNavigationProp<RootStackParamList, 'Player'>;
+
+function digestThumbnailUrl(episode: Episode): string | null {
+  if (episode.sourceType !== 'digest' || !episode.stories?.length) return null;
+  const uniqueFeedIds = [...new Set(episode.stories.map(s => s.feedId))];
+  const charSum = [...episode.id].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const feed = RSS_FEEDS.find(f => f.id === uniqueFeedIds[charSum % uniqueFeedIds.length]);
+  return feed ? feedImageUrl(feed.url) : null;
+}
 
 function sourceDomain(url: string): string {
   try {
@@ -36,6 +46,7 @@ export function PlayerScreen() {
   const { update } = useEpisodes();
 
   const episode = params.episode;
+  const thumbUrl = episode.thumbnailUrl ?? digestThumbnailUrl(episode);
 
   const handleDurationResolved = useCallback(
     (durationSeconds: number) => {
@@ -150,8 +161,8 @@ export function PlayerScreen() {
       <View style={styles.content}>
         {/* Artwork */}
         <View style={styles.artworkWrap}>
-          {episode.thumbnailUrl ? (
-            <Image source={{ uri: episode.thumbnailUrl }} style={styles.artwork} />
+          {thumbUrl ? (
+            <Image source={{ uri: thumbUrl }} style={styles.artwork} />
           ) : (
             <View style={[styles.artwork, styles.artworkPlaceholder]}>
               <Ionicons name="headset" size={64} color={Colors.primary} />

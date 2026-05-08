@@ -28,6 +28,7 @@ import { episodeEvents } from '../utils/episodeEvents';
 import { generationStore, PendingGeneration } from '../utils/generationStore';
 import { Episode, Folder } from '../types';
 import { TRASH_FOLDER_ID, RSS_FOLDER_ID } from '../services/storage';
+import { RSS_FEEDS, feedImageUrl } from '../services/rssService';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 
 type Nav = StackNavigationProp<RootStackParamList>;
@@ -193,6 +194,14 @@ type EpisodeRowProps = {
   onPermanentDelete: (episode: Episode) => void;
 };
 
+function digestThumbnailUrl(episode: Episode): string | null {
+  if (episode.sourceType !== 'digest' || !episode.stories?.length) return null;
+  const uniqueFeedIds = [...new Set(episode.stories.map(s => s.feedId))];
+  const charSum = [...episode.id].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const feed = RSS_FEEDS.find(f => f.id === uniqueFeedIds[charSum % uniqueFeedIds.length]);
+  return feed ? feedImageUrl(feed.url) : null;
+}
+
 function EpisodeRow({
   item,
   folders,
@@ -212,6 +221,7 @@ function EpisodeRow({
     : undefined;
 
   const close = () => swipeRef.current?.close();
+  const thumbUrl = item.thumbnailUrl ?? digestThumbnailUrl(item);
 
   const renderRightActions = () =>
     isTrashView ? (
@@ -307,8 +317,8 @@ function EpisodeRow({
           <View style={[styles.folderPip, { backgroundColor: folderColor }]} />
         )}
         <View style={styles.thumbWrap}>
-          {item.thumbnailUrl ? (
-            <Image source={{ uri: item.thumbnailUrl }} style={styles.thumb} />
+          {thumbUrl ? (
+            <Image source={{ uri: thumbUrl }} style={styles.thumb} />
           ) : (
             <View style={[styles.thumb, styles.thumbPlaceholder]}>
               <Ionicons name="headset" size={22} color={Colors.primary} />
