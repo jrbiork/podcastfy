@@ -20,7 +20,6 @@ export type RootStackParamList = {
   ArticleDetail: {
     item: import('../services/rssService').ExtendedRssItem;
     feed: import('../services/rssService').RssFeed;
-    allItems?: import('../services/rssService').ExtendedRssItem[];
     currentIndex?: number;
   };
 };

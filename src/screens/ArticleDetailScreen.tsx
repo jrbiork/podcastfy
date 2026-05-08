@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { formatRelativeDate } from '../utils/format';
 import { feedImageUrl } from '../services/rssService';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import { getArticleNavList } from '../services/articleNavStore';
 
 type Route = RouteProp<RootStackParamList, 'ArticleDetail'>;
 type Nav   = StackNavigationProp<RootStackParamList, 'ArticleDetail'>;
@@ -55,6 +56,12 @@ export function ArticleDetailScreen() {
   const [feedImgFailed, setFeedImgFailed] = useState(false);
   const [heroImgFailed, setHeroImgFailed] = useState(false);
 
+  const itemGuid = route.params?.item?.guid;
+  useEffect(() => {
+    setFeedImgFailed(false);
+    setHeroImgFailed(false);
+  }, [itemGuid]);
+
   const progress = useProgress(500);
   const positionMs = Math.floor(progress.position * 1000);
 
@@ -62,7 +69,8 @@ export function ArticleDetailScreen() {
   const params = route.params;
   if (!params?.item || !params?.feed) return null;
 
-  const { item, feed, allItems, currentIndex } = params;
+  const { item, feed, currentIndex } = params;
+  const { items: allItems } = getArticleNavList();
 
   const isBeingRead =
     item.audioStartMs !== undefined &&
@@ -115,8 +123,10 @@ export function ArticleDetailScreen() {
           <Text style={[styles.feedPillName, { color }]} numberOfLines={1}>{feed.name}</Text>
         </View>
 
-        {/* Spacer */}
-        <View style={styles.backBtn} />
+        {/* Category chip */}
+        <View style={[styles.chip, styles.headerChip, { backgroundColor: color + '22' }]}>
+          <Text style={[styles.chipText, { color }]}>{feed.category}</Text>
+        </View>
       </View>
 
       {/* Scrollable article body */}
@@ -127,11 +137,6 @@ export function ArticleDetailScreen() {
       >
         {/* Article content — blue border when this story is being narrated */}
         <View style={[styles.articleContent, isBeingRead && styles.articleContentActive]}>
-          {/* Category chip */}
-          <View style={[styles.chip, { backgroundColor: color + '22' }]}>
-            <Text style={[styles.chipText, { color }]}>{feed.category}</Text>
-          </View>
-
           {/* Title */}
           <Text style={styles.title}>{item.title}</Text>
 
@@ -156,29 +161,38 @@ export function ArticleDetailScreen() {
           ) : null}
         </View>
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Sticky action bar */}
       <View style={styles.actions}>
-        {/* Prev / Next row */}
-        {allItems != null && allItems.length > 1 && (
+        {/* Prev / Next navigation */}
+        {currentIndex != null && (
           <View style={styles.navRow}>
             <TouchableOpacity
               onPress={handlePrev}
               disabled={!hasPrev}
               activeOpacity={0.7}
-              style={styles.navBtn}
+              style={[styles.navBtn, !hasPrev && styles.navBtnDisabled]}
             >
-              <Ionicons name="chevron-back-circle" size={32} color={hasPrev ? Colors.primary : Colors.textDim} />
+              <Ionicons name="chevron-back" size={20} color={hasPrev ? Colors.primary : Colors.textDim} />
+              <Text style={[styles.navBtnText, { color: hasPrev ? Colors.primary : Colors.textDim }]}>Previous</Text>
             </TouchableOpacity>
+
+            {allItems != null && (
+              <Text style={styles.navCounter}>
+                {currentIndex + 1} / {allItems.length}
+              </Text>
+            )}
+
             <TouchableOpacity
               onPress={handleNext}
               disabled={!hasNext}
               activeOpacity={0.7}
-              style={styles.navBtn}
+              style={[styles.navBtn, styles.navBtnRight, !hasNext && styles.navBtnDisabled]}
             >
-              <Ionicons name="chevron-forward-circle" size={32} color={hasNext ? Colors.primary : Colors.textDim} />
+              <Text style={[styles.navBtnText, { color: hasNext ? Colors.primary : Colors.textDim }]}>Next</Text>
+              <Ionicons name="chevron-forward" size={20} color={hasNext ? Colors.primary : Colors.textDim} />
             </TouchableOpacity>
           </View>
         )}
@@ -262,6 +276,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     marginBottom: Spacing.sm,
   },
+  headerChip: {
+    alignSelf: 'center',
+    marginBottom: 0,
+    maxWidth: 90,
+  },
   chipText: {
     fontSize: FontSize.xs,
     fontWeight: '700',
@@ -311,12 +330,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   navBtn: {
-    padding: 4,
-    minHeight: 44,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    minWidth: 100,
+  },
+  navBtnRight: {
+    justifyContent: 'flex-end',
+  },
+  navBtnDisabled: {
+    opacity: 0.35,
+  },
+  navBtnText: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+  },
+  navCounter: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
   },
   actionBtn: {
     flexDirection: 'row',

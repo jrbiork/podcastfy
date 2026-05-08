@@ -6,7 +6,7 @@ import {
   generateAlternatingAudio,
   getPairedVoice,
 } from '../worker/tts';
-import { writeDigestStatus, uploadDigestAudio } from '../shared/s3';
+import { readDigestStatus, writeDigestStatus, uploadDigestAudio } from '../shared/s3';
 import { fetchRecentArticles, fetchArticlesByTopic } from './feedFetcher';
 import { deduplicateAndRank } from './digestRanker';
 import { enrichWithPopularity } from './popularityFetcher';
@@ -23,6 +23,15 @@ import {
 } from './servedHistory';
 import { TOPIC_FEED_URLS_BY_ID } from '../data/topicFeedMap';
 import { mapOrderedConcurrent } from '../shared/concurrency';
+
+const ACTIVE_STATUSES = new Set([
+  'fetching_feeds',
+  'enriching_popularity',
+  'ranking',
+  'summarizing',
+  'scripting',
+  'generating_audio',
+]);
 
 // gpt-4o-mini Tier 1 = 500 RPM; conc 3 over 9 articles ≈ 9s wall-clock, well under cap.
 const SUMMARY_CONCURRENCY = 3;
@@ -219,6 +228,25 @@ async function publishDigestReadyPush(
 async function processDigest(msg: DigestMessage): Promise<void> {
   const { userId, date } = msg;
   const statusDate = new Date(date + 'T12:00:00Z');
+
+  // Idempotency guard: skip if another invocation already claimed or completed this digest.
+  // Multiple SQS messages for the same userId/date can arrive concurrently; the first to
+  // write a status past 'queued' wins — subsequent invocations bail out here.
+  const currentStatus = await readDigestStatus(userId, date);
+  if (currentStatus) {
+    if (currentStatus.status === 'done') {
+      console.log('[digest-worker] skipping: digest already done', { userId, date });
+      return;
+    }
+    if (ACTIVE_STATUSES.has(currentStatus.status)) {
+      console.log('[digest-worker] skipping: digest already in progress', {
+        userId,
+        date,
+        status: currentStatus.status,
+      });
+      return;
+    }
+  }
 
   // 1. Fetch feeds
   await writeDigestStatus(userId, date, { status: 'fetching_feeds' });

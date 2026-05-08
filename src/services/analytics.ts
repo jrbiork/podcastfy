@@ -48,7 +48,7 @@ export async function trackEvent(
 
   try {
     const clientId = await getClientId();
-    const res = await fetch(
+    await fetch(
       `https://www.google-analytics.com/mp/collect?measurement_id=${MEASUREMENT_ID}&api_secret=${API_SECRET}`,
       {
         method: 'POST',
@@ -57,14 +57,13 @@ export async function trackEvent(
           client_id: clientId,
           events: [{
             name,
-            params: { engagement_time_msec: 100, debug_mode: 1, ...(params ?? {}) },
+            params: { engagement_time_msec: 100, ...(params ?? {}) },
           }],
         }),
       }
     );
-    console.log(`[Analytics] HTTP ${res.status} for ${name}`);
-  } catch (e) {
-    console.log(`[Analytics] fetch error for ${name}:`, e);
+  } catch {
+    // silently ignore — analytics should never crash the app
   }
 }
 

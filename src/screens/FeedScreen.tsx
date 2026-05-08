@@ -80,7 +80,7 @@ function categoryMeta(category: FeedCategory): { icon: string; color: string } {
 const CATEGORY_LABEL_OVERRIDES: Partial<Record<FeedCategory, string>> = {
   economy: 'Economy',
   'business-finance': 'Business & Finance',
-  'health-wellness': 'Health & Wellness',
+  'health-wellness': 'Health',
   'mental-health': 'Mental Health',
   'entertainment-news': 'Entertainment News',
   'movies-tv': 'Movies & TV',

@@ -21,7 +21,7 @@ const TOPIC_LABELS: Record<string, string> = {
   'economy':            'Economy',
   'business-finance':   'Business & Finance',
   'politics':           'Politics',
-  'health-wellness':    'Health & Wellness',
+  'health-wellness':    'Health',
   'science':            'Science',
   'productivity':       'Productivity',
   'fitness':            'Fitness',

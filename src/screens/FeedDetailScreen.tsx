@@ -25,6 +25,7 @@ import {
   unsubscribe,
 } from '../services/rssService';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
+import { setArticleNavList } from '../services/articleNavStore';
 
 type Route = RouteProp<RootStackParamList, 'FeedDetail'>;
 type Nav   = StackNavigationProp<RootStackParamList, 'FeedDetail'>;
@@ -223,7 +224,10 @@ export function FeedDetailScreen() {
           renderItem={({ item, index }) => (
             <ArticleCard
               item={item}
-              onPress={() => navigation.navigate('ArticleDetail', { item, feed, allItems: items, currentIndex: index })}
+              onPress={() => {
+                setArticleNavList(items, feed);
+                navigation.navigate('ArticleDetail', { item, feed, currentIndex: index });
+              }}
             />
           )}
           contentContainerStyle={styles.listContent}

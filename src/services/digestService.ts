@@ -104,7 +104,24 @@ async function resolvePrefs() {
   return { voice, effectiveTopicFeedUrls };
 }
 
+// Serializes concurrent download attempts: if a download is already in flight,
+// subsequent callers wait for it rather than starting a second parallel download.
+let activeDownload: Promise<Episode> | null = null;
+
 async function downloadAndSaveDigest(
+  digestId: string,
+  audioUrl: string,
+  title: string,
+  durationSeconds: number,
+  stories: import('../types').DigestStory[],
+): Promise<Episode> {
+  if (activeDownload) return activeDownload;
+  activeDownload = _downloadAndSaveDigest(digestId, audioUrl, title, durationSeconds, stories)
+    .finally(() => { activeDownload = null; });
+  return activeDownload;
+}
+
+async function _downloadAndSaveDigest(
   digestId: string,
   audioUrl: string,
   title: string,
@@ -123,6 +140,7 @@ async function downloadAndSaveDigest(
         stories,
       };
       await saveEpisode(updated);
+      episodeEvents.emit();
       return updated;
     }
     return alreadyDownloaded;
@@ -179,8 +197,6 @@ export async function bootTodayDigest(): Promise<DigestBootResult> {
   if (serverStatus.status === 'done') {
     if (isDigestForToday(serverStatus.digestId)) {
       // Today's digest is ready — download and return it
-      if (existing) await permanentDeleteEpisode(existing.id);
-      episodeEvents.emit();
       const episode = await downloadAndSaveDigest(
         serverStatus.digestId,
         serverStatus.audioUrl,
@@ -257,9 +273,6 @@ export async function pollTodayDigestStatus(): Promise<DigestPollResult> {
     const status = await getLatestDigest(targetDate);
 
     if (status.status === 'done' && isDigestForToday(status.digestId)) {
-      const existing = await findTodaysDigestEpisode();
-      if (existing) await permanentDeleteEpisode(existing.id);
-      episodeEvents.emit();
       const episode = await downloadAndSaveDigest(
         status.digestId,
         status.audioUrl,

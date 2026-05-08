@@ -44,8 +44,34 @@ import { useEpisodes } from '../hooks/useEpisodes';
 import { formatDuration } from '../utils/format';
 import type { RootStackParamList } from '../navigation/rootNavigationRef';
 import { feedImageUrl } from '../services/rssService';
-import type { RssFeed, ExtendedRssItem } from '../services/rssService';
+import type { RssFeed, ExtendedRssItem, FeedCategory } from '../services/rssService';
+
+const TOPIC_LABEL_TO_CATEGORY: Record<string, FeedCategory> = {
+  'World News':        'news',
+  'Technology':        'technology',
+  'Economy':           'economy',
+  'Business & Finance':'business-finance',
+  'Politics':          'politics',
+  'Health':            'health-wellness',
+  'Science':           'science',
+  'Productivity':      'productivity',
+  'Fitness':           'fitness',
+  'Mental Health':     'mental-health',
+  'Food':              'food',
+  'Travel':            'travel',
+  'Parenting':         'parenting',
+  'Entertainment':     'entertainment-news',
+  'Movies & TV':       'movies-tv',
+  'Music':             'music',
+  'Gaming':            'gaming',
+  'Books':             'books',
+  'Startups':          'startups',
+  'Crypto':            'crypto',
+  'Environment':       'environment',
+  'Sports':            'sports',
+};
 import { Analytics } from '../services/analytics';
+import { setArticleNavList } from '../services/articleNavStore';
 
 type Nav = StackNavigationProp<RootStackParamList>;
 type Phase = 'loading' | 'preparing' | 'ready' | 'error';
@@ -493,17 +519,23 @@ export function DigestScreen() {
     };
   }, []);
 
+  // Must be declared before handleStoryPress so the useCallback dep array captures
+  // the real stories value, not undefined (temporal dead zone issue).
+  const stories = episode?.stories ?? [];
+
   const handleStoryPress = useCallback(
-    (story: DigestStory, storyIndex: number) => {
+    (story: DigestStory) => {
       const item = storyToItem(story);
       const feed: RssFeed = {
         id: story.feedId,
         name: story.feedName,
         url: '',
-        category: 'news',
+        category: (story.topicLabel ? TOPIC_LABEL_TO_CATEGORY[story.topicLabel] : undefined) ?? 'news',
       };
       const allItems = stories.map(storyToItem);
-      navigation.navigate('ArticleDetail', { item, feed, allItems, currentIndex: storyIndex });
+      const currentIndex = stories.findIndex(s => s.link === story.link);
+      setArticleNavList(allItems, feed);
+      navigation.navigate('ArticleDetail', { item, feed, currentIndex: currentIndex >= 0 ? currentIndex : 0 });
     },
     [navigation, stories, storyToItem],
   );
@@ -522,7 +554,6 @@ export function DigestScreen() {
     month: 'long',
     day: 'numeric',
   });
-  const stories = episode?.stories ?? [];
   const showContentSkeleton = phase === 'loading' || phase === 'preparing';
   const uniqueFeeds = [...new Map(stories.map((s) => [s.feedId, s])).values()];
 
@@ -920,7 +951,7 @@ export function DigestScreen() {
                       <StoryRow
                         story={story}
                         active={activeStoryIndex === globalIndex}
-                        onPress={() => handleStoryPress(story, globalIndex)}
+                        onPress={() => handleStoryPress(story)}
                       />
                       {sIdx < group.entries.length - 1 && (
                         <View style={styles.storyDivider} />
