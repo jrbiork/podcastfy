@@ -479,9 +479,7 @@ export function DigestScreen() {
 
   const handleSoftPaywallContinue = useCallback(() => {
     setShowSoftPaywall(false);
-    if (hasEnded) void restart();
-    else void play();
-  }, [hasEnded, restart, play]);
+  }, []);
 
   const handleStoryPress = useCallback(
     (story: DigestStory) => {
