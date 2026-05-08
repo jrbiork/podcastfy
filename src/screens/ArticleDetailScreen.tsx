@@ -50,22 +50,25 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export function ArticleDetailScreen() {
   const navigation = useNavigation<Nav>();
-  const { params } = useRoute<Route>();
-  const { item, feed, allItems, currentIndex } = params;
+  const route = useRoute<Route>();
 
   const [feedImgFailed, setFeedImgFailed] = useState(false);
   const [heroImgFailed, setHeroImgFailed] = useState(false);
 
   const progress = useProgress(500);
   const positionMs = Math.floor(progress.position * 1000);
+
+  // All hooks above — safe to early-return now
+  const params = route.params;
+  if (!params?.item || !params?.feed) return null;
+
+  const { item, feed, allItems, currentIndex } = params;
+
   const isBeingRead =
-    item != null &&
     item.audioStartMs !== undefined &&
     item.audioEndMs !== undefined &&
     positionMs >= item.audioStartMs &&
     positionMs < item.audioEndMs;
-
-  if (!item || !feed) return null;
 
   const color   = CATEGORY_COLORS[feed.category] ?? Colors.primary;
   const feedImg = feedImageUrl(feed.url);
