@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -59,35 +59,36 @@ export function ArticleDetailScreen() {
   const progress = useProgress(500);
   const positionMs = Math.floor(progress.position * 1000);
   const isBeingRead =
+    item != null &&
     item.audioStartMs !== undefined &&
     item.audioEndMs !== undefined &&
     positionMs >= item.audioStartMs &&
     positionMs < item.audioEndMs;
 
+  if (!item || !feed) return null;
+
   const color   = CATEGORY_COLORS[feed.category] ?? Colors.primary;
   const feedImg = feedImageUrl(feed.url);
 
-  const handleBrowser = useCallback(() => {
-    void Linking.openURL(item.link);
-  }, [item.link]);
+  const bodyText = item.fullDescription?.trim() || item.description?.trim();
 
   const hasPrev = allItems != null && currentIndex != null && currentIndex > 0;
   const hasNext = allItems != null && currentIndex != null && currentIndex < allItems.length - 1;
 
-  const handlePrev = useCallback(() => {
+  const handleBrowser = () => { void Linking.openURL(item.link); };
+
+  const handlePrev = () => {
     if (!allItems || currentIndex == null || currentIndex <= 0) return;
     navigation.setParams({ item: allItems[currentIndex - 1], currentIndex: currentIndex - 1 });
-  }, [navigation, allItems, currentIndex]);
+  };
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     if (!allItems || currentIndex == null || currentIndex >= allItems.length - 1) return;
     navigation.setParams({ item: allItems[currentIndex + 1], currentIndex: currentIndex + 1 });
-  }, [navigation, allItems, currentIndex]);
-
-  const bodyText = item.fullDescription?.trim() || item.description?.trim();
+  };
 
   return (
-    <SafeAreaView style={[styles.safe, isBeingRead && styles.safeActive]}>
+    <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
 
       {/* Header */}
@@ -111,15 +112,8 @@ export function ArticleDetailScreen() {
           <Text style={[styles.feedPillName, { color }]} numberOfLines={1}>{feed.name}</Text>
         </View>
 
-        {/* Prev / Next */}
-        <View style={styles.navBtns}>
-          <TouchableOpacity onPress={handlePrev} disabled={!hasPrev} activeOpacity={0.7} style={styles.navBtn}>
-            <Ionicons name="chevron-back" size={20} color={hasPrev ? Colors.primary : Colors.textDim} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleNext} disabled={!hasNext} activeOpacity={0.7} style={styles.navBtn}>
-            <Ionicons name="chevron-forward" size={20} color={hasNext ? Colors.primary : Colors.textDim} />
-          </TouchableOpacity>
-        </View>
+        {/* Spacer */}
+        <View style={styles.backBtn} />
       </View>
 
       {/* Scrollable article body */}
@@ -128,39 +122,65 @@ export function ArticleDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Category chip */}
-        <View style={[styles.chip, { backgroundColor: color + '22' }]}>
-          <Text style={[styles.chipText, { color }]}>{feed.category}</Text>
+        {/* Article content — blue border when this story is being narrated */}
+        <View style={[styles.articleContent, isBeingRead && styles.articleContentActive]}>
+          {/* Category chip */}
+          <View style={[styles.chip, { backgroundColor: color + '22' }]}>
+            <Text style={[styles.chipText, { color }]}>{feed.category}</Text>
+          </View>
+
+          {/* Title */}
+          <Text style={styles.title}>{item.title}</Text>
+
+          {/* Date */}
+          {item.pubDate ? (
+            <Text style={styles.date}>{formatRelativeDate(item.pubDate)}</Text>
+          ) : null}
+
+          {/* Hero image */}
+          {item.imageUrl && !heroImgFailed ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.hero}
+              resizeMode="cover"
+              onError={() => setHeroImgFailed(true)}
+            />
+          ) : null}
+
+          {/* Body text */}
+          {bodyText ? (
+            <Text style={styles.body}>{bodyText}</Text>
+          ) : null}
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>{item.title}</Text>
-
-        {/* Date */}
-        {item.pubDate ? (
-          <Text style={styles.date}>{formatRelativeDate(item.pubDate)}</Text>
-        ) : null}
-
-        {/* Hero image */}
-        {item.imageUrl && !heroImgFailed ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.hero}
-            resizeMode="cover"
-            onError={() => setHeroImgFailed(true)}
-          />
-        ) : null}
-
-        {/* Body text — digest summaries and RSS excerpts */}
-        {bodyText ? (
-          <Text style={styles.body}>{bodyText}</Text>
-        ) : null}
-
-        <View style={{ height: 96 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Sticky action bar */}
       <View style={styles.actions}>
+        {/* Prev / Next row */}
+        {allItems != null && allItems.length > 1 && (
+          <View style={styles.navRow}>
+            <TouchableOpacity
+              onPress={handlePrev}
+              disabled={!hasPrev}
+              activeOpacity={0.7}
+              style={styles.navBtn}
+            >
+              <Ionicons name="chevron-back-circle" size={32} color={hasPrev ? Colors.primary : Colors.textDim} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleNext}
+              disabled={!hasNext}
+              activeOpacity={0.7}
+              style={styles.navBtn}
+            >
+              <Ionicons name="chevron-forward-circle" size={32} color={hasNext ? Colors.primary : Colors.textDim} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Open in browser */}
         <TouchableOpacity
           style={[styles.actionBtn, styles.primaryOutlineBtn]}
           onPress={handleBrowser}
@@ -178,10 +198,6 @@ export function ArticleDetailScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
-  safeActive: {
-    borderWidth: 2,
-    borderColor: Colors.primary,
-  },
 
   header: {
     flexDirection: 'row',
@@ -201,18 +217,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: FontSize.md,
     fontWeight: '600',
-  },
-  navBtns: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: 72,
-    justifyContent: 'flex-end',
-  },
-  navBtn: {
-    padding: 4,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   feedPill: {
     flex: 1,
@@ -236,6 +240,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.lg,
+  },
+
+  articleContent: {
+    borderRadius: Radius.md,
+    padding: Spacing.sm,
+  },
+  articleContentActive: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(96, 165, 250, 0.05)',
   },
 
   chip: {
@@ -288,6 +302,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+    gap: Spacing.sm,
+  },
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  navBtn: {
+    padding: 4,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionBtn: {
     flexDirection: 'row',
