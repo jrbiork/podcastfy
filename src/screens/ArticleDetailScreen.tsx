@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useProgress } from 'react-native-track-player';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Radius, FontSize } from '../utils/theme';
 import { formatRelativeDate } from '../utils/format';
@@ -50,10 +51,18 @@ const CATEGORY_COLORS: Record<string, string> = {
 export function ArticleDetailScreen() {
   const navigation = useNavigation<Nav>();
   const { params } = useRoute<Route>();
-  const { item, feed } = params;
+  const { item, feed, allItems, currentIndex } = params;
 
   const [feedImgFailed, setFeedImgFailed] = useState(false);
   const [heroImgFailed, setHeroImgFailed] = useState(false);
+
+  const progress = useProgress(500);
+  const positionMs = Math.floor(progress.position * 1000);
+  const isBeingRead =
+    item.audioStartMs !== undefined &&
+    item.audioEndMs !== undefined &&
+    positionMs >= item.audioStartMs &&
+    positionMs < item.audioEndMs;
 
   const color   = CATEGORY_COLORS[feed.category] ?? Colors.primary;
   const feedImg = feedImageUrl(feed.url);
@@ -62,10 +71,23 @@ export function ArticleDetailScreen() {
     void Linking.openURL(item.link);
   }, [item.link]);
 
+  const hasPrev = allItems != null && currentIndex != null && currentIndex > 0;
+  const hasNext = allItems != null && currentIndex != null && currentIndex < allItems.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (!allItems || currentIndex == null || currentIndex <= 0) return;
+    navigation.setParams({ item: allItems[currentIndex - 1], currentIndex: currentIndex - 1 });
+  }, [navigation, allItems, currentIndex]);
+
+  const handleNext = useCallback(() => {
+    if (!allItems || currentIndex == null || currentIndex >= allItems.length - 1) return;
+    navigation.setParams({ item: allItems[currentIndex + 1], currentIndex: currentIndex + 1 });
+  }, [navigation, allItems, currentIndex]);
+
   const bodyText = item.fullDescription?.trim() || item.description?.trim();
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, isBeingRead && styles.safeActive]}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.bg} />
 
       {/* Header */}
@@ -89,8 +111,15 @@ export function ArticleDetailScreen() {
           <Text style={[styles.feedPillName, { color }]} numberOfLines={1}>{feed.name}</Text>
         </View>
 
-        {/* Spacer to mirror back button width */}
-        <View style={styles.backBtn} />
+        {/* Prev / Next */}
+        <View style={styles.navBtns}>
+          <TouchableOpacity onPress={handlePrev} disabled={!hasPrev} activeOpacity={0.7} style={styles.navBtn}>
+            <Ionicons name="chevron-back" size={20} color={hasPrev ? Colors.primary : Colors.textDim} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleNext} disabled={!hasNext} activeOpacity={0.7} style={styles.navBtn}>
+            <Ionicons name="chevron-forward" size={20} color={hasNext ? Colors.primary : Colors.textDim} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Scrollable article body */}
@@ -149,6 +178,10 @@ export function ArticleDetailScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
+  safeActive: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
 
   header: {
     flexDirection: 'row',
@@ -168,6 +201,18 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: FontSize.md,
     fontWeight: '600',
+  },
+  navBtns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 72,
+    justifyContent: 'flex-end',
+  },
+  navBtn: {
+    padding: 4,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   feedPill: {
     flex: 1,

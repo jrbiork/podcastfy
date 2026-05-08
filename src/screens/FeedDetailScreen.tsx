@@ -220,10 +220,10 @@ export function FeedDetailScreen() {
         <FlatList
           data={items}
           keyExtractor={(item) => item.guid}
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => (
             <ArticleCard
               item={item}
-              onPress={() => navigation.navigate('ArticleDetail', { item, feed })}
+              onPress={() => navigation.navigate('ArticleDetail', { item, feed, allItems: items, currentIndex: index })}
             />
           )}
           contentContainerStyle={styles.listContent}

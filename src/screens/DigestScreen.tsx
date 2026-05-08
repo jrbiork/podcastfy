@@ -481,24 +481,31 @@ export function DigestScreen() {
     setShowSoftPaywall(false);
   }, []);
 
+  const storyToItem = useCallback((s: DigestStory): ExtendedRssItem => {
+    const preview = extractDetailText(s.spokenText, s.summary);
+    return {
+      title: s.title,
+      link: s.link,
+      guid: s.link,
+      audioStartMs: s.audioStartMs,
+      audioEndMs: s.audioEndMs,
+      ...(preview ? { description: preview, fullDescription: preview } : {}),
+    };
+  }, []);
+
   const handleStoryPress = useCallback(
-    (story: DigestStory) => {
-      const preview = extractDetailText(story.spokenText, story.summary);
-      const item: ExtendedRssItem = {
-        title: story.title,
-        link: story.link,
-        guid: story.link,
-        ...(preview ? { description: preview, fullDescription: preview } : {}),
-      };
+    (story: DigestStory, storyIndex: number) => {
+      const item = storyToItem(story);
       const feed: RssFeed = {
         id: story.feedId,
         name: story.feedName,
         url: '',
         category: 'news',
       };
-      navigation.navigate('ArticleDetail', { item, feed });
+      const allItems = stories.map(storyToItem);
+      navigation.navigate('ArticleDetail', { item, feed, allItems, currentIndex: storyIndex });
     },
-    [navigation],
+    [navigation, stories, storyToItem],
   );
 
   const handleDateShift = useCallback(
@@ -913,7 +920,7 @@ export function DigestScreen() {
                       <StoryRow
                         story={story}
                         active={activeStoryIndex === globalIndex}
-                        onPress={() => handleStoryPress(story)}
+                        onPress={() => handleStoryPress(story, globalIndex)}
                       />
                       {sIdx < group.entries.length - 1 && (
                         <View style={styles.storyDivider} />

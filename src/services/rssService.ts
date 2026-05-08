@@ -81,6 +81,10 @@ export interface ExtendedRssItem {
   fullDescription?: string;
   imageUrl?: string;
   pubDate?: string;
+  /** Digest audio start offset (ms) — set only for digest stories. */
+  audioStartMs?: number;
+  /** Digest audio end offset (ms), exclusive — set only for digest stories. */
+  audioEndMs?: number;
 }
 
 // ── Predefined feeds ─────────────────────────────────────────────────────────
