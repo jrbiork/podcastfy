@@ -29,6 +29,7 @@ import {
   bootTodayDigest,
   pollTodayDigestStatus,
 } from '../services/digestService';
+import { TRASH_FOLDER_ID } from '../services/storage';
 import {
   getDebugDateOffset,
   setDebugDateOffset,
@@ -261,19 +262,30 @@ function ActionButton({
 
 export function DigestScreen() {
   const navigation = useNavigation<Nav>();
-  const { update: updateEpisode } = useEpisodes();
+  const { episodes, update: updateEpisode } = useEpisodes();
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [progressStatus, setProgressStatus] = useState<string>('');
   const [cyclingStepIndex, setCyclingStepIndex] = useState(0);
   const [episode, setEpisode] = useState<Episode | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [digestNavIndex, setDigestNavIndex] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
   const [dateOffset, setDateOffset] = useState(() => getDebugDateOffset());
   const [speed, setSpeed] = useState<0.75 | 1 | 1.25>(1);
   const SPEEDS: (0.75 | 1 | 1.25)[] = [0.75, 1, 1.25];
   const [scrubPositionMs, setScrubPositionMs] = useState<number | null>(null);
   const [showSoftPaywall, setShowSoftPaywall] = useState(false);
+
+  const allDigests = useMemo(() =>
+    episodes
+      .filter(e => e.sourceType === 'digest' && e.folderId !== TRASH_FOLDER_ID)
+      .sort((a, b) => b.createdAt - a.createdAt),
+    [episodes],
+  );
+
+  const viewedEpisode = digestNavIndex === 0 ? episode : (allDigests[digestNavIndex] ?? null);
+  const isViewingReady = digestNavIndex === 0 ? (phase === 'ready' && !!episode) : !!viewedEpisode;
 
   const digestScrollRef = useRef<ScrollView>(null);
   /** Top of storiesSection inside scroll content (from onLayout). */
@@ -294,12 +306,12 @@ export function DigestScreen() {
 
   const handleDurationResolved = useCallback(
     (durationSeconds: number) => {
-      if (!episode || durationSeconds === episode.durationSeconds) return;
+      if (digestNavIndex !== 0 || !episode || durationSeconds === episode.durationSeconds) return;
       const updated = { ...episode, durationSeconds };
       setEpisode(updated);
       void updateEpisode(updated);
     },
-    [episode, updateEpisode],
+    [digestNavIndex, episode, updateEpisode],
   );
 
   const {
@@ -314,11 +326,11 @@ export function DigestScreen() {
     restart,
     setRate,
   } = useAudioPlayer(
-    episode?.uri ?? null,
-    episode
+    viewedEpisode?.uri ?? null,
+    viewedEpisode
       ? {
-          title: episode.title,
-          durationSeconds: episode.durationSeconds,
+          title: viewedEpisode.title,
+          durationSeconds: viewedEpisode.durationSeconds,
           onDurationResolved: handleDurationResolved,
         }
       : undefined,
@@ -334,20 +346,20 @@ export function DigestScreen() {
 
   // Log when episode becomes available for playback
   useEffect(() => {
-    if (!episode) return;
-    void Analytics.playerOpened(episode.title, episode.mode);
+    if (!viewedEpisode) return;
+    void Analytics.playerOpened(viewedEpisode.title, viewedEpisode.mode);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [episode?.id]);
+  }, [viewedEpisode?.id]);
 
   // Trigger paywall milestone when a daily digest is fully listened.
   useEffect(() => {
-    if (!hasEnded || !episode) return;
-    void Analytics.episodeCompleted(episode.title, Math.floor((durationMs || episode.durationSeconds * 1000) / 1000));
-    const date = new Date(episode.createdAt).toISOString().slice(0, 10);
+    if (!hasEnded || !viewedEpisode) return;
+    void Analytics.episodeCompleted(viewedEpisode.title, Math.floor((durationMs || viewedEpisode.durationSeconds * 1000) / 1000));
+    const date = new Date(viewedEpisode.createdAt).toISOString().slice(0, 10);
     void recordDigestListened(date).then((shouldShowSoftPaywall) => {
       if (shouldShowSoftPaywall) setShowSoftPaywall(true);
     });
-  }, [hasEnded, episode, durationMs]);
+  }, [hasEnded, viewedEpisode, durationMs]);
 
   const digestInProgress = phase === 'loading' || phase === 'preparing';
   useEffect(() => {
@@ -469,7 +481,7 @@ export function DigestScreen() {
     ? statusToStepIndex(progressStatus)
     : cyclingStepIndex;
 
-  const totalMs = durationMs || (episode?.durationSeconds ?? 0) * 1000 || 1;
+  const totalMs = durationMs || (viewedEpisode?.durationSeconds ?? 0) * 1000 || 1;
 
   const handleSpeedPress = useCallback(async () => {
     const idx = SPEEDS.indexOf(speed);
@@ -485,18 +497,18 @@ export function DigestScreen() {
       return;
     }
     if (hasEnded) {
-      if (episode) void Analytics.episodeRestarted(episode.title);
+      if (viewedEpisode) void Analytics.episodeRestarted(viewedEpisode.title);
       void restart();
       return;
     }
     if (isPlaying) {
-      if (episode) void Analytics.episodePaused(episode.title, Math.floor(positionMs / 1000));
+      if (viewedEpisode) void Analytics.episodePaused(viewedEpisode.title, Math.floor(positionMs / 1000));
       void pause();
       return;
     }
-    if (episode) void Analytics.episodePlayed(episode.title, Math.floor(positionMs / 1000));
+    if (viewedEpisode) void Analytics.episodePlayed(viewedEpisode.title, Math.floor(positionMs / 1000));
     void play();
-  }, [hasEnded, isPlaying, restart, pause, play, episode, positionMs]);
+  }, [hasEnded, isPlaying, restart, pause, play, viewedEpisode, positionMs]);
 
   const handleSoftPaywallSubscribe = useCallback(() => {
     setShowSoftPaywall(false);
@@ -521,7 +533,7 @@ export function DigestScreen() {
 
   // Must be declared before handleStoryPress so the useCallback dep array captures
   // the real stories value, not undefined (temporal dead zone issue).
-  const stories = episode?.stories ?? [];
+  const stories = viewedEpisode?.stories ?? [];
 
   const handleStoryPress = useCallback(
     (story: DigestStory) => {
@@ -534,7 +546,13 @@ export function DigestScreen() {
       };
       const allItems = stories.map(storyToItem);
       const currentIndex = stories.findIndex(s => s.link === story.link);
-      setArticleNavList(allItems, feed);
+      const allFeeds: RssFeed[] = stories.map(s => ({
+        id: s.feedId,
+        name: s.feedName,
+        url: '',
+        category: (s.topicLabel ? TOPIC_LABEL_TO_CATEGORY[s.topicLabel] : undefined) ?? 'news',
+      }));
+      setArticleNavList(allItems, allFeeds);
       navigation.navigate('ArticleDetail', { item, feed, currentIndex: currentIndex >= 0 ? currentIndex : 0 });
     },
     [navigation, stories, storyToItem],
@@ -554,15 +572,25 @@ export function DigestScreen() {
     month: 'long',
     day: 'numeric',
   });
-  const showContentSkeleton = phase === 'loading' || phase === 'preparing';
+
+  const viewedDateLabel = useMemo(() => {
+    if (digestNavIndex === 0) return dateLabel;
+    const dateStr = viewedEpisode?.sourceUrl?.split('/').pop();
+    if (!dateStr) return dateLabel;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year!, (month! - 1), day!);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }, [digestNavIndex, viewedEpisode, dateLabel]);
+
+  const showContentSkeleton = digestNavIndex === 0 && (phase === 'loading' || phase === 'preparing');
   const uniqueFeeds = [...new Map(stories.map((s) => [s.feedId, s])).values()];
 
   const effectivePlaybackMs = scrubPositionMs ?? positionMs;
 
   const activeStoryIndex = useMemo(() => {
-    if (phase !== 'ready' || !episode || stories.length === 0) return null;
+    if (!isViewingReady || !viewedEpisode || stories.length === 0) return null;
     return findActiveDigestStoryIndex(stories, effectivePlaybackMs);
-  }, [phase, episode, stories, effectivePlaybackMs]);
+  }, [isViewingReady, viewedEpisode, stories, effectivePlaybackMs]);
   activeStoryIndexRef.current = activeStoryIndex;
 
   const groupedStoriesWithGlobalIndex = useMemo(() => {
@@ -640,7 +668,7 @@ export function DigestScreen() {
   }, [endDigestListUserScroll]);
 
   useEffect(() => {
-    if (phase !== 'ready' || stories.length === 0) {
+    if (!isViewingReady || stories.length === 0) {
       return;
     }
     if (activeStoryIndex == null) {
@@ -673,7 +701,7 @@ export function DigestScreen() {
       cancelled = true;
       cancelAnimationFrame(id);
     };
-  }, [phase, activeStoryIndex, stories.length, scrollActiveStoryIntoView]);
+  }, [isViewingReady, activeStoryIndex, stories.length, scrollActiveStoryIntoView]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -709,8 +737,35 @@ export function DigestScreen() {
         )}
 
         {/* ── Player card (ready phase) ── */}
-        {phase === 'ready' && episode && (
+        {isViewingReady && viewedEpisode && (
           <View style={styles.playerCard}>
+            {/* Digest date navigation */}
+            <View style={styles.digestNavRow}>
+              <TouchableOpacity
+                style={styles.digestNavBtn}
+                onPress={() => setDigestNavIndex(i => i + 1)}
+                disabled={digestNavIndex >= allDigests.length - 1}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={20}
+                  color={digestNavIndex < allDigests.length - 1 ? Colors.text : Colors.textDim}
+                />
+              </TouchableOpacity>
+              <Text style={styles.digestNavLabel}>{viewedDateLabel}</Text>
+              <TouchableOpacity
+                style={styles.digestNavBtn}
+                onPress={() => setDigestNavIndex(i => Math.max(0, i - 1))}
+                disabled={digestNavIndex === 0}
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={digestNavIndex > 0 ? Colors.text : Colors.textDim}
+                />
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.statusRow}>
               <Text style={styles.playerCardSubtitle} numberOfLines={2}>
                 Daily update
@@ -718,7 +773,7 @@ export function DigestScreen() {
               <Text
                 style={[styles.playerCardSubtitle, { textAlign: 'right' }]}
               >
-                {dateLabel} · {stories.length}{' '}
+                {stories.length}{' '}
                 {stories.length === 1 ? 'story' : 'stories'}
               </Text>
             </View>
@@ -763,7 +818,7 @@ export function DigestScreen() {
                 thumbTintColor={Colors.primary}
                 onValueChange={(v) => setScrubPositionMs(v)}
                 onSlidingComplete={(v) => {
-                  if (episode) void Analytics.episodeSeeked(episode.title, Math.floor(positionMs / 1000), Math.floor(v / 1000));
+                  if (viewedEpisode) void Analytics.episodeSeeked(viewedEpisode.title, Math.floor(positionMs / 1000), Math.floor(v / 1000));
                   seek(v);
                   setScrubPositionMs(v);
                 }}
@@ -784,7 +839,7 @@ export function DigestScreen() {
             <View style={styles.controlsRow}>
               <TouchableOpacity
                 style={styles.iconBtn}
-                onPress={() => { if (episode) void Analytics.episodeSkipped(episode.title, 'back', 15, Math.floor(positionMs / 1000)); skip(-15_000); }}
+                onPress={() => { if (viewedEpisode) void Analytics.episodeSkipped(viewedEpisode.title, 'back', 15, Math.floor(positionMs / 1000)); skip(-15_000); }}
               >
                 <Ionicons name="play-back" size={18} color={Colors.text} />
                 <Text style={styles.skipLabel}>15</Text>
@@ -811,7 +866,7 @@ export function DigestScreen() {
 
               <TouchableOpacity
                 style={styles.iconBtn}
-                onPress={() => { if (episode) void Analytics.episodeSkipped(episode.title, 'forward', 15, Math.floor(positionMs / 1000)); skip(15_000); }}
+                onPress={() => { if (viewedEpisode) void Analytics.episodeSkipped(viewedEpisode.title, 'forward', 15, Math.floor(positionMs / 1000)); skip(15_000); }}
               >
                 <Ionicons name="play-forward" size={18} color={Colors.text} />
                 <Text style={styles.skipLabel}>15</Text>
@@ -830,7 +885,7 @@ export function DigestScreen() {
         )}
 
         {/* ── Loading / Preparing card ── */}
-        {(phase === 'loading' || phase === 'preparing') && (
+        {digestNavIndex === 0 && (phase === 'loading' || phase === 'preparing') && (
           <View style={styles.preparingCard}>
             <Text style={styles.preparingTitle}>Preparing your briefing…</Text>
             {phase === 'preparing' && (
@@ -883,7 +938,7 @@ export function DigestScreen() {
         )}
 
         {/* ── Error ── */}
-        {phase === 'error' && (
+        {digestNavIndex === 0 && phase === 'error' && (
           <View style={styles.errorCard}>
             <Ionicons
               name="alert-circle-outline"
@@ -1067,6 +1122,21 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Colors.border,
     gap: Spacing.sm,
+  },
+
+  digestNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 2,
+  },
+  digestNavBtn: {
+    padding: 4,
+  },
+  digestNavLabel: {
+    fontSize: FontSize.md,
+    fontWeight: '600',
+    color: Colors.text,
   },
 
   statusRow: {

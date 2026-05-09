@@ -460,6 +460,7 @@ export function LibraryScreen() {
   }, [loadEpisodes]);
 
   const filteredEpisodes = episodes.filter((e) => {
+    if (e.sourceType === 'digest') return false;
     if (selectedFolderId === 'all') return e.folderId !== TRASH_FOLDER_ID;
     return e.folderId === selectedFolderId;
   });

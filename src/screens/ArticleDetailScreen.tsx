@@ -70,7 +70,7 @@ export function ArticleDetailScreen() {
   if (!params?.item || !params?.feed) return null;
 
   const { item, feed, currentIndex } = params;
-  const { items: allItems } = getArticleNavList();
+  const { items: allItems, feeds } = getArticleNavList();
 
   const isBeingRead =
     item.audioStartMs !== undefined &&
@@ -90,12 +90,14 @@ export function ArticleDetailScreen() {
 
   const handlePrev = () => {
     if (!allItems || currentIndex == null || currentIndex <= 0) return;
-    navigation.setParams({ item: allItems[currentIndex - 1], currentIndex: currentIndex - 1 });
+    const newIndex = currentIndex - 1;
+    navigation.setParams({ item: allItems[newIndex], feed: feeds[newIndex] ?? feed, currentIndex: newIndex });
   };
 
   const handleNext = () => {
     if (!allItems || currentIndex == null || currentIndex >= allItems.length - 1) return;
-    navigation.setParams({ item: allItems[currentIndex + 1], currentIndex: currentIndex + 1 });
+    const newIndex = currentIndex + 1;
+    navigation.setParams({ item: allItems[newIndex], feed: feeds[newIndex] ?? feed, currentIndex: newIndex });
   };
 
   return (

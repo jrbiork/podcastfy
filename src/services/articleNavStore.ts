@@ -7,13 +7,13 @@ import type { ExtendedRssItem, RssFeed } from './rssService';
  * with React Navigation.
  */
 let _items: ExtendedRssItem[] = [];
-let _feed: RssFeed | null = null;
+let _feeds: RssFeed[] = [];
 
-export function setArticleNavList(items: ExtendedRssItem[], feed: RssFeed) {
+export function setArticleNavList(items: ExtendedRssItem[], feeds: RssFeed | RssFeed[]) {
   _items = items;
-  _feed  = feed;
+  _feeds = Array.isArray(feeds) ? feeds : items.map(() => feeds);
 }
 
-export function getArticleNavList(): { items: ExtendedRssItem[]; feed: RssFeed | null } {
-  return { items: _items, feed: _feed };
+export function getArticleNavList(): { items: ExtendedRssItem[]; feeds: RssFeed[] } {
+  return { items: _items, feeds: _feeds };
 }

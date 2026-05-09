@@ -6,6 +6,7 @@ const EPISODES_KEY = 'podcastify_episodes';
 export const TRASH_FOLDER_ID = 'trash';
 export const RSS_FOLDER_ID = 'rss';
 const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const DIGEST_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const TRASH_FOLDER: Folder = {
   id: TRASH_FOLDER_ID,
   name: 'Trash',
@@ -42,6 +43,22 @@ export async function loadEpisodes(): Promise<Episode[]> {
     const migratedAndPurged: Episode[] = [];
     for (const e of list) {
       if (shouldPurgeEpisode(e, now)) {
+        if (e.uri) {
+          try {
+            await FileSystem.deleteAsync(e.uri, { idempotent: true });
+          } catch {
+            /* best-effort */
+          }
+        }
+        changed = true;
+        continue;
+      }
+      // Auto-delete non-trashed digest episodes older than 7 days
+      if (
+        e.sourceType === 'digest' &&
+        e.folderId !== TRASH_FOLDER_ID &&
+        now - e.createdAt > DIGEST_RETENTION_MS
+      ) {
         if (e.uri) {
           try {
             await FileSystem.deleteAsync(e.uri, { idempotent: true });

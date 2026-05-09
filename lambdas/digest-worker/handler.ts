@@ -1,6 +1,6 @@
 import { SQSHandler } from 'aws-lambda';
 import { DynamoDBClient, GetItemCommand } from '@aws-sdk/client-dynamodb';
-import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import { SNSClient, PublishCommand, GetEndpointAttributesCommand } from '@aws-sdk/client-sns';
 import { extractArticle } from '../shared/scraper';
 import {
   generateAlternatingAudio,
@@ -179,7 +179,10 @@ async function publishDigestReadyPush(
 
   const endpointArn = user.Item?.iosPushEndpointArn?.S;
   const pushEnabled = user.Item?.iosPushEnabled?.BOOL ?? false;
-  if (!pushEnabled) return;
+  if (!pushEnabled) {
+    console.warn('[digest-worker] push skipped: pushEnabled is false in DynamoDB', { userId, date });
+    return;
+  }
 
   const endpoints = user.Item?.iosPushEndpoints?.M;
   const endpointArns = endpoints
@@ -188,7 +191,10 @@ async function publishDigestReadyPush(
         .filter((v): v is string => typeof v === 'string' && v.length > 0)
     : [];
   const targets = [...new Set([...(endpointArn ? [endpointArn] : []), ...endpointArns])];
-  if (targets.length === 0) return;
+  if (targets.length === 0) {
+    console.warn('[digest-worker] push skipped: no endpoint ARNs in DynamoDB', { userId, date, endpointArn, endpointCount: endpointArns.length });
+    return;
+  }
 
   const payload = {
     aps: {
@@ -201,6 +207,22 @@ async function publishDigestReadyPush(
     target: 'today',
     digestDate: date,
   };
+
+  // Log endpoint state before publishing so CloudWatch shows exactly why a push
+  // was skipped — distinguishes disabled endpoints from publish errors.
+  const endpointStates = await Promise.allSettled(
+    targets.map(async (arn) => {
+      const attrs = await sns.send(new GetEndpointAttributesCommand({ EndpointArn: arn }));
+      return { arn, enabled: attrs.Attributes?.Enabled, token: attrs.Attributes?.Token?.slice(-8) };
+    }),
+  );
+  console.log('[digest-worker] push endpoint states', {
+    userId,
+    date,
+    states: endpointStates.map((r) =>
+      r.status === 'fulfilled' ? r.value : { error: String((r as PromiseRejectedResult).reason) },
+    ),
+  });
 
   const results = await Promise.allSettled(
     targets.map((arn) =>

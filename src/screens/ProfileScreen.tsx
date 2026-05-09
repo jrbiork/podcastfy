@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   Linking,
+  Share,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -220,6 +221,16 @@ export function ProfileScreen() {
   }, [pickerDate, prefs, applyPrefs]);
 
   // ── Destructive actions ──────────────────────────────────────────────────────
+
+  const handleShareApp = useCallback(async () => {
+    try {
+      await Share.share({
+        message: 'Check out Sonera — daily audio briefings from the news you care about. https://apps.apple.com/app/sonera',
+      });
+    } catch {
+      // user dismissed
+    }
+  }, []);
 
   const onSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -501,6 +512,12 @@ export function ProfileScreen() {
             icon="information-circle-outline"
             label="App Version"
             value={APP_VERSION}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="share-social-outline"
+            label="Share App"
+            onPress={handleShareApp}
           />
         </View>
 

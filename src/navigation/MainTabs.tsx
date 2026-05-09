@@ -60,8 +60,8 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const isTodayActive   = state.index === 0;
   const isFeedActive    = state.index === 1;
-  const isLibraryActive = state.index === 2;
-  const isHomeActive    = state.index === 3;
+  const isHomeActive    = state.index === 2;
+  const isLibraryActive = state.index === 3;
   const isProfileActive = state.index === 4;
 
   const blurProps = Platform.select({
@@ -105,20 +105,6 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             <View style={tabStyles.tabDivider} />
 
             <TabBarButton
-              active={isLibraryActive}
-              onPress={() => navigation.navigate('LibraryTab')}
-              style={[tabStyles.tab, isLibraryActive && tabStyles.tabActive]}
-            >
-              <Ionicons
-                name={isLibraryActive ? 'albums' : 'albums-outline'}
-                size={22}
-                color={isLibraryActive ? Colors.primary : Colors.textDim}
-              />
-            </TabBarButton>
-
-            <View style={tabStyles.tabDivider} />
-
-            <TabBarButton
               active={isHomeActive}
               onPress={() => navigation.navigate('HomeTab')}
               style={[tabStyles.tab, isHomeActive && tabStyles.tabActive]}
@@ -127,6 +113,20 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                 name={isHomeActive ? 'color-wand' : 'color-wand-outline'}
                 size={22}
                 color={isHomeActive ? Colors.primary : Colors.textDim}
+              />
+            </TabBarButton>
+
+            <View style={tabStyles.tabDivider} />
+
+            <TabBarButton
+              active={isLibraryActive}
+              onPress={() => navigation.navigate('LibraryTab')}
+              style={[tabStyles.tab, isLibraryActive && tabStyles.tabActive]}
+            >
+              <Ionicons
+                name={isLibraryActive ? 'albums' : 'albums-outline'}
+                size={22}
+                color={isLibraryActive ? Colors.primary : Colors.textDim}
               />
             </TabBarButton>
           </View>
@@ -168,8 +168,8 @@ export function MainTabs() {
     >
       <Tab.Screen name="TodayTab"   component={DigestScreen} />
       <Tab.Screen name="FeedTab"    component={FeedScreen} />
-      <Tab.Screen name="LibraryTab" component={LibraryScreen} />
       <Tab.Screen name="HomeTab"    component={HomeScreen} />
+      <Tab.Screen name="LibraryTab" component={LibraryScreen} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>
   );
