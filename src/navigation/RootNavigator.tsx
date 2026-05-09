@@ -16,12 +16,15 @@ import { loadSession } from '../services/auth';
 import { initPurchases, syncSubscriptionToServer } from '../services/subscription';
 import { Colors } from '../utils/theme';
 import type { RootStackParamList } from './rootNavigationRef';
+import { usePushTokenRefresh } from '../hooks/usePushTokenRefresh';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const [ready, setReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<keyof RootStackParamList>('Main');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  usePushTokenRefresh(isAuthenticated);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,7 +40,7 @@ export function RootNavigator() {
       if (cancelled) return;
       if (!onboard) setInitialRoute('Onboarding');
       else if (!session) setInitialRoute('Auth');
-      else setInitialRoute('Main');
+      else { setInitialRoute('Main'); setIsAuthenticated(true); }
       setReady(true);
     })();
     return () => { cancelled = true; };

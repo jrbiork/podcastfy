@@ -70,6 +70,13 @@ export class PodcastifyStack extends cdk.Stack {
       description: 'Existing SNS PlatformApplication ARN for APNS/APNS_SANDBOX',
     });
 
+    // ── RevenueCat webhook shared secret ──────────────────────────────────────
+    const revenueCatWebhookSecret = new cdk.CfnParameter(this, 'RevenueCatWebhookSecret', {
+      type: 'String',
+      noEcho: true,
+      description: 'Authorization header value configured in RevenueCat webhook settings',
+    });
+
     // Shared Lambda environment for all functions
     const sharedEnv: Record<string, string> = {
       S3_BUCKET: jobsBucket.bucketName,
@@ -412,6 +419,36 @@ export class PodcastifyStack extends cdk.Stack {
       path: '/users/push-test',
       methods: [apigwv2.HttpMethod.POST],
       integration: prefsIntegration,
+    });
+
+    // ── Lambda: RevenueCat Webhook ────────────────────────────────────────────
+    const revenueCatWebhook = new lambdaNode.NodejsFunction(this, 'RevenueCatWebhook', {
+      functionName: 'podcastify-revenuecat-webhook',
+      entry: path.join(lambdaRoot, 'revenuecat-webhook/handler.ts'),
+      projectRoot,
+      depsLockFilePath,
+      handler: 'handler',
+      runtime: lambda.Runtime.NODEJS_20_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(10),
+      bundling,
+      environment: {
+        USERS_TABLE: usersTable.tableName,
+        REVENUECAT_WEBHOOK_SECRET: revenueCatWebhookSecret.valueAsString,
+      },
+    });
+
+    usersTable.grantWriteData(revenueCatWebhook);
+
+    api.addRoutes({
+      path: '/webhooks/revenuecat',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration(
+        'RevenueCatWebhookIntegration',
+        revenueCatWebhook,
+      ),
+      // No JWT authorizer — auth is handled inside the Lambda via shared secret
     });
 
     // ── Outputs ───────────────────────────────────────────────────────────────

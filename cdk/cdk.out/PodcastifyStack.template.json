@@ -1429,6 +1429,81 @@
     "aws:cdk:path": "PodcastifyStack/Api/POST--users--push-test/Resource"
    }
   },
+  "ApiPOSTwebhooksrevenuecatRevenueCatWebhookIntegration206BB136": {
+   "Type": "AWS::ApiGatewayV2::Integration",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+     "Fn::GetAtt": [
+      "RevenueCatWebhook8F16B44D",
+      "Arn"
+     ]
+    },
+    "PayloadFormatVersion": "2.0"
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--webhooks--revenuecat/RevenueCatWebhookIntegration/Resource"
+   }
+  },
+  "ApiPOSTwebhooksrevenuecatRevenueCatWebhookIntegrationPermissionE05B54ED": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "RevenueCatWebhook8F16B44D",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:445241615553:",
+       {
+        "Ref": "ApiF70053CD"
+       },
+       "/*/*/webhooks/revenuecat"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--webhooks--revenuecat/RevenueCatWebhookIntegration-Permission"
+   }
+  },
+  "ApiPOSTwebhooksrevenuecatE64956EF": {
+   "Type": "AWS::ApiGatewayV2::Route",
+   "Properties": {
+    "ApiId": {
+     "Ref": "ApiF70053CD"
+    },
+    "AuthorizationType": "NONE",
+    "RouteKey": "POST /webhooks/revenuecat",
+    "Target": {
+     "Fn::Join": [
+      "",
+      [
+       "integrations/",
+       {
+        "Ref": "ApiPOSTwebhooksrevenuecatRevenueCatWebhookIntegration206BB136"
+       }
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/Api/POST--webhooks--revenuecat/Resource"
+   }
+  },
   "UsersTable9725E9C8": {
    "Type": "AWS::DynamoDB::Table",
    "Properties": {
@@ -1872,7 +1947,7 @@
     ],
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
-     "S3Key": "bd6757f5b967c3f8a094309d58d1cdf7babbca2e48b45f67e1964a864b9e2df1.zip"
+     "S3Key": "cf36147504695851208f164d7b3fea5eb466465b62ab14e4eaae23588fa50fd0.zip"
     },
     "Environment": {
      "Variables": {
@@ -1912,7 +1987,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "PodcastifyStack/DigestWorker/Resource",
-    "aws:asset:path": "asset.bd6757f5b967c3f8a094309d58d1cdf7babbca2e48b45f67e1964a864b9e2df1",
+    "aws:asset:path": "asset.cf36147504695851208f164d7b3fea5eb466465b62ab14e4eaae23588fa50fd0",
     "aws:asset:is-bundled": true,
     "aws:asset:property": "Code"
    }
@@ -2375,6 +2450,120 @@
     "aws:asset:property": "Code"
    }
   },
+  "RevenueCatWebhookServiceRoleACF0EA51": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/RevenueCatWebhook/ServiceRole/Resource"
+   }
+  },
+  "RevenueCatWebhookServiceRoleDefaultPolicy4B463C8F": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "UsersTable9725E9C8",
+          "Arn"
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "RevenueCatWebhookServiceRoleDefaultPolicy4B463C8F",
+    "Roles": [
+     {
+      "Ref": "RevenueCatWebhookServiceRoleACF0EA51"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/RevenueCatWebhook/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "RevenueCatWebhook8F16B44D": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Architectures": [
+     "arm64"
+    ],
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-445241615553-us-east-1",
+     "S3Key": "d9da03d5434702b12c255670a5ad432f931321e9fe2ead7d448ef548011feea8.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "USERS_TABLE": {
+       "Ref": "UsersTable9725E9C8"
+      },
+      "REVENUECAT_WEBHOOK_SECRET": {
+       "Ref": "RevenueCatWebhookSecret"
+      }
+     }
+    },
+    "FunctionName": "podcastify-revenuecat-webhook",
+    "Handler": "index.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "RevenueCatWebhookServiceRoleACF0EA51",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs20.x",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "RevenueCatWebhookServiceRoleDefaultPolicy4B463C8F",
+    "RevenueCatWebhookServiceRoleACF0EA51"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "PodcastifyStack/RevenueCatWebhook/Resource",
+    "aws:asset:path": "asset.d9da03d5434702b12c255670a5ad432f931321e9fe2ead7d448ef548011feea8",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
@@ -2389,6 +2578,11 @@
   "ApnsPlatformApplicationArn": {
    "Type": "String",
    "Description": "Existing SNS PlatformApplication ARN for APNS/APNS_SANDBOX"
+  },
+  "RevenueCatWebhookSecret": {
+   "Type": "String",
+   "Description": "Authorization header value configured in RevenueCat webhook settings",
+   "NoEcho": true
   },
   "BootstrapVersion": {
    "Type": "AWS::SSM::Parameter::Value<String>",

@@ -28,6 +28,20 @@
       ]
     }
   ],
+  "/PodcastifyStack/RevenueCatWebhookSecret": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RevenueCatWebhookSecret"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:74:37)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
   "/PodcastifyStack/UsersTable": [
     {
       "type": "aws:cdk:hasPhysicalName",
@@ -52,7 +66,7 @@
     {
       "type": "aws:cdk:creationStack",
       "data": [
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:300:5)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:307:5)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -66,7 +80,7 @@
     {
       "type": "aws:cdk:creationStack",
       "data": [
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:418:5)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:455:5)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -80,7 +94,7 @@
     {
       "type": "aws:cdk:creationStack",
       "data": [
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:423:5)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:460:5)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -94,7 +108,7 @@
     {
       "type": "aws:cdk:creationStack",
       "data": [
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:427:5)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:464:5)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -108,7 +122,7 @@
     {
       "type": "aws:cdk:creationStack",
       "data": [
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:431:5)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:468:5)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -230,7 +244,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:102:24)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:109:24)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -245,7 +259,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:123:22)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:130:22)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -260,7 +274,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:141:20)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:148:20)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -275,7 +289,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new HttpApi2 in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:169:17)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:176:17)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -290,7 +304,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new Table2 in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:203:24)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:210:24)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -305,7 +319,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new Table2 in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:210:31)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:217:31)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -320,7 +334,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:220:30)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:227:30)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -335,7 +349,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:243:26)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:250:26)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -350,7 +364,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new Role2 in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:293:36)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:300:36)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -365,7 +379,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:306:36)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:313:36)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -380,7 +394,22 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:335:29)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:342:29)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/RevenueCatWebhook/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RevenueCatWebhook8F16B44D"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:425:31)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -444,7 +473,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:102:24)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:109:24)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -459,7 +488,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:123:22)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:130:22)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -474,7 +503,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:141:20)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:148:20)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -489,7 +518,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...NodejsFunction.addEventSource in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:161:12)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:168:12)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -504,7 +533,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new HttpApi2 in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:169:17)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:176:17)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -521,7 +550,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:178:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:185:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -538,7 +567,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:178:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:185:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -555,7 +584,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:184:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:191:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -572,7 +601,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:184:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:191:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -589,7 +618,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:190:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:197:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -606,7 +635,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:190:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:197:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -623,7 +652,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:196:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:203:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -640,7 +669,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:196:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:203:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -657,7 +686,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:280:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:287:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -674,7 +703,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:280:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:287:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -691,7 +720,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:280:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:287:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -708,7 +737,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:280:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:287:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -725,7 +754,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:286:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:293:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -742,7 +771,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:286:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:293:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -759,7 +788,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:401:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:408:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -776,7 +805,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:401:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:408:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -793,7 +822,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:401:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:408:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -810,7 +839,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:401:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:408:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -827,7 +856,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:406:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:413:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -844,7 +873,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:406:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:413:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -861,7 +890,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:411:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:418:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -878,7 +907,41 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:411:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:418:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--webhooks--revenuecat/RevenueCatWebhookIntegration-Permission": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTwebhooksrevenuecatRevenueCatWebhookIntegrationPermissionE05B54ED"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:444:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--webhooks--revenuecat/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTwebhooksrevenuecatE64956EF"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:444:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -893,7 +956,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:220:30)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:227:30)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -908,7 +971,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:243:26)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:250:26)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -923,7 +986,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...NodejsFunction.addEventSource in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:267:18)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:274:18)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -938,7 +1001,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:329:28)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:336:28)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -953,7 +1016,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:306:36)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:313:36)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -968,7 +1031,22 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...new NodejsFunction in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:335:29)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:342:29)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/RevenueCatWebhook/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RevenueCatWebhookServiceRoleACF0EA51"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...new NodejsFunction in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:425:31)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -983,7 +1061,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadWrite in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:119:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:126:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -998,7 +1076,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantRead in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:137:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:144:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1013,7 +1091,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadWrite in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:158:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:165:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1030,7 +1108,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:178:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:185:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1047,7 +1125,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:184:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:191:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1064,7 +1142,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:190:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:197:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1081,7 +1159,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:196:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:203:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1098,7 +1176,7 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:280:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:287:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1115,7 +1193,24 @@
         ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
         "Array.map (:)",
         "...WrappedClass.<anonymous> in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:401:9)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:408:9)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/Api/POST--webhooks--revenuecat/RevenueCatWebhookIntegration/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiPOSTwebhooksrevenuecatRevenueCatWebhookIntegration206BB136"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        ".../Users/rbiork/Personal/Podcastify/cdk/node_modules/aws-cdk-lib/aws-apigatewayv2/lib/http/api.js:1:96 in aws-cdk-lib...",
+        "Array.map (:)",
+        "...WrappedClass.<anonymous> in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:444:9)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1130,7 +1225,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadWrite in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:238:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:245:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1145,7 +1240,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadWrite in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:263:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:270:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1160,7 +1255,7 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadData in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:324:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:331:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]
@@ -1175,7 +1270,22 @@
       "type": "aws:cdk:creationStack",
       "data": [
         "...WrappedClass.grantReadWriteData in aws-cdk-lib...",
-        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:356:16)",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:363:16)",
+        "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
+        "...node internals, ts-node, ts-node, ts-node..."
+      ]
+    }
+  ],
+  "/PodcastifyStack/RevenueCatWebhook/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "RevenueCatWebhookServiceRoleDefaultPolicy4B463C8F"
+    },
+    {
+      "type": "aws:cdk:creationStack",
+      "data": [
+        "...WrappedClass.grantWriteData in aws-cdk-lib...",
+        "new PodcastifyStack (/Users/rbiork/Personal/Podcastify/cdk/lib/podcastify-stack.ts:442:16)",
         "<anonymous> (/Users/rbiork/Personal/Podcastify/cdk/bin/podcastify.ts:8:1)",
         "...node internals, ts-node, ts-node, ts-node..."
       ]

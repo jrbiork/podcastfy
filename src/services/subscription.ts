@@ -54,6 +54,26 @@ export async function getIsSubscribed(): Promise<boolean> {
   }
 }
 
+export async function getSubscriptionDetails(): Promise<{
+  isSubscribed: boolean;
+  expirationDate: string | null;
+}> {
+  if (!configured) return { isSubscribed: false, expirationDate: null };
+  try {
+    const info = await Purchases.getCustomerInfo();
+    const entitlement = info.entitlements.active[ENTITLEMENT_ID];
+    const isSubscribed = entitlement != null || info.activeSubscriptions.length > 0;
+    return {
+      isSubscribed,
+      // expirationDate on the entitlement can be null for some plan types;
+      // latestExpirationDate is the most reliable fallback across all active subs.
+      expirationDate: entitlement?.expirationDate ?? info.latestExpirationDate ?? null,
+    };
+  } catch {
+    return { isSubscribed: false, expirationDate: null };
+  }
+}
+
 export type DigestTrialState = 'active' | 'hard';
 
 async function getListenedDigestDates(): Promise<string[]> {

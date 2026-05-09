@@ -201,13 +201,6 @@ export const TOPIC_FEED_URLS_BY_ID: Record<string, readonly string[]> = {
     'https://www.si.com/rss/si_topstories.rss',
     'https://www.cbssports.com/rss/headlines/',
   ],
-  crypto: [
-    'https://www.coindesk.com/arc/outboundfeeds/rss/',
-    'https://cointelegraph.com/rss',
-    'https://decrypt.co/feed',
-    'https://bitcoinmagazine.com/.rss/full/',
-    'https://www.theblock.co/rss.xml',
-  ],
   'crypto-web3': [
     'https://www.coindesk.com/arc/outboundfeeds/rss/',
     'https://cointelegraph.com/rss',

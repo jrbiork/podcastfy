@@ -13,6 +13,7 @@ import {
   ActionSheetIOS,
   Modal,
   Platform,
+  Linking,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +30,7 @@ import {
   type UserPreferences,
 } from '../services/api';
 import {
-  getIsSubscribed,
+  getSubscriptionDetails,
   clearLocalData,
 } from '../services/subscription';
 import { clearAllEpisodes } from '../services/storage';
@@ -82,6 +83,7 @@ export function ProfileScreen() {
   const { episodes, load } = useEpisodes();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [expirationDate, setExpirationDate] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [prefs, setPrefs] = useState<OnboardingPrefs | null>(null);
@@ -98,8 +100,11 @@ export function ProfileScreen() {
       loadSession().then((s) => {
         if (!cancelled) setSession(s);
       });
-      getIsSubscribed().then((v) => {
-        if (!cancelled) setIsSubscribed(v);
+      getSubscriptionDetails().then(({ isSubscribed: sub, expirationDate: exp }) => {
+        if (!cancelled) {
+          setIsSubscribed(sub);
+          setExpirationDate(exp);
+        }
       });
       void (async () => {
         const [server, local] = await Promise.all([
@@ -396,6 +401,21 @@ export function ProfileScreen() {
               </TouchableOpacity>
             )}
           </View>
+          {isSubscribed ? (
+            <View style={styles.subscriptionMeta}>
+              {expirationDate ? (
+                <Text style={styles.renewalText}>
+                  Renews {new Date(expirationDate).toLocaleDateString()}
+                </Text>
+              ) : null}
+              <TouchableOpacity
+                onPress={() => Linking.openURL('itms-apps://apps.apple.com/account/subscriptions')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.manageSubText}>Manage Subscription</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </View>
 
         {/* ── Stats ───────────────────────────────────────────────────────── */}
@@ -613,6 +633,20 @@ const styles = StyleSheet.create({
     color: Colors.textDim,
     fontSize: FontSize.xs,
     fontWeight: '600',
+  },
+  subscriptionMeta: {
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
+  },
+  renewalText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+  },
+  manageSubText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    textDecorationLine: 'underline',
   },
 
   card: {

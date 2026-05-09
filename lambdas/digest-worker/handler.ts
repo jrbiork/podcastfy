@@ -202,7 +202,7 @@ async function publishDigestReadyPush(
     digestDate: date,
   };
 
-  const results = await Promise.all(
+  const results = await Promise.allSettled(
     targets.map((arn) =>
       sns.send(
         new PublishCommand({
@@ -217,12 +217,29 @@ async function publishDigestReadyPush(
       ),
     ),
   );
+
+  const succeeded = results.filter((r) => r.status === 'fulfilled');
+  const failed = results.filter((r) => r.status === 'rejected');
+  const disabledCount = failed.filter((r) =>
+    String((r as PromiseRejectedResult).reason).includes('EndpointDisabled'),
+  ).length;
+
   console.log('[digest-worker] push publish result', {
     userId,
     date,
     targets: targets.length,
-    messageIds: results.map((r) => r.MessageId).filter(Boolean),
+    delivered: succeeded.length,
+    failed: failed.length,
+    disabledEndpoints: disabledCount,
+    messageIds: succeeded.map((r) => (r as PromiseFulfilledResult<any>).value.MessageId).filter(Boolean),
   });
+  if (disabledCount > 0) {
+    // Endpoint was disabled by Apple after a previous delivery failure — the device
+    // has not opened the app recently enough to re-register a fresh APNs token.
+    // Nothing can be done server-side; the endpoint will be re-enabled the next
+    // time the user opens the app and usePushTokenRefresh calls registerDeviceForPush.
+    console.warn('[digest-worker] push skipped: endpoint disabled by Apple', { userId, date, disabledCount });
+  }
 }
 
 async function processDigest(msg: DigestMessage): Promise<void> {
