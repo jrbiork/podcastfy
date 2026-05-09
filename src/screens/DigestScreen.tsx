@@ -262,7 +262,7 @@ function ActionButton({
 
 export function DigestScreen() {
   const navigation = useNavigation<Nav>();
-  const { episodes, update: updateEpisode } = useEpisodes();
+  const { episodes, load: loadEpisodes, update: updateEpisode } = useEpisodes();
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [progressStatus, setProgressStatus] = useState<string>('');
@@ -471,6 +471,18 @@ export function DigestScreen() {
       clearInterval(interval);
       sub.remove();
     };
+  }, [phase]);
+
+  // Load all saved episodes on mount and whenever today's digest becomes ready
+  // so allDigests (for history nav) is populated from storage.
+  useEffect(() => {
+    void loadEpisodes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (phase === 'ready') void loadEpisodes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const spin = spinAnim.interpolate({

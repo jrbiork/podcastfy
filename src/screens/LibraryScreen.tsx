@@ -689,11 +689,11 @@ export function LibraryScreen() {
             All
           </Text>
           <Text style={styles.folderChipCount}>
-            {episodes.filter((e) => e.folderId !== TRASH_FOLDER_ID).length}
+            {episodes.filter((e) => e.folderId !== TRASH_FOLDER_ID && e.sourceType !== 'digest').length}
           </Text>
         </TouchableOpacity>
 
-        {folders.map((folder) => (
+        {folders.filter((f) => f.id !== RSS_FOLDER_ID).map((folder) => (
           <TouchableOpacity
             key={folder.id}
             style={[
