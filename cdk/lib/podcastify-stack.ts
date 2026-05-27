@@ -15,14 +15,14 @@ export interface PodcastifyStackProps extends cdk.StackProps {
   googleClientId: string;        // Web client ID
   googleIosClientId?: string;    // iOS client ID (token aud on iOS)
   appleClientId: string;
-  openAiApiKey: string;
 }
 
 export class PodcastifyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: PodcastifyStackProps) {
     super(scope, id, props);
 
-    const { googleClientId, googleIosClientId, appleClientId, openAiApiKey } = props;
+    const { googleClientId, googleIosClientId, appleClientId } = props;
+    const openAiApiKey = cdk.SecretValue.secretsManager('podcastify/openai-api-key').unsafeUnwrap();
 
     // ── S3: job storage ──────────────────────────────────────────────────────
     const jobsBucket = new s3.Bucket(this, 'JobsBucket', {
@@ -325,10 +325,11 @@ export class PodcastifyStack extends cdk.Stack {
         ...sharedEnv,
         USERS_TABLE: usersTable.tableName,
         DIGEST_QUEUE_URL: digestQueue.queueUrl,
+        OPENAI_API_KEY: openAiApiKey,
       },
     });
 
-    usersTable.grantReadData(digestSchedulerTrigger);
+    usersTable.grantReadWriteData(digestSchedulerTrigger);
     digestQueue.grantSendMessages(digestSchedulerTrigger);
     jobsBucket.grantRead(digestSchedulerTrigger); // for readDigestStatus idempotency check
 
@@ -357,6 +358,7 @@ export class PodcastifyStack extends cdk.Stack {
         SCHEDULER_ROLE_ARN: schedulerExecutionRole.roleArn,
         SCHEDULE_GROUP: scheduleGroupName,
         SNS_PLATFORM_APPLICATION_ARN: apnsPlatformApplicationArn.valueAsString,
+        OPENAI_API_KEY: openAiApiKey,
       },
     });
 
@@ -417,6 +419,21 @@ export class PodcastifyStack extends cdk.Stack {
     });
     api.addRoutes({
       path: '/users/push-test',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: prefsIntegration,
+    });
+    api.addRoutes({
+      path: '/users/preferences',
+      methods: [apigwv2.HttpMethod.DELETE],
+      integration: prefsIntegration,
+    });
+    api.addRoutes({
+      path: '/users/feedback',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: prefsIntegration,
+    });
+    api.addRoutes({
+      path: '/feeds/classify',
       methods: [apigwv2.HttpMethod.POST],
       integration: prefsIntegration,
     });
